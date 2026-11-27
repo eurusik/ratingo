@@ -22,10 +22,17 @@ import {
 
 import { MODEL_PRICES } from '../../src/config/models.config';
 import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
+import { DumeDelegationService } from '../../src/modules/chat/application/services/dume-delegation.service';
 import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
+import {
+  DumeRejectionReason,
+  DumeState,
+  DumeSubmitKind,
+} from '../../src/modules/chat/domain/entities/dume';
+import { DumeUnavailableError } from '../../src/modules/chat/domain/ports/dume-client.port';
 import { withoutFlaggedNote } from '../../src/modules/chat/domain/policies/flagged-numbers.policy';
 import {
   answerStep,
@@ -35,7 +42,7 @@ import {
 
 import type { ExternalTools } from '../../src/modules/chat/application/tools/external-tools';
 
-import { callKey, type EvalCase, type Fixture } from './eval-case';
+import { DumeScenario, callKey, type EvalCase, type Fixture } from './eval-case';
 import { EVAL_NOW_MS } from './eval-clock';
 import {
   GA_SERVER,
@@ -47,6 +54,8 @@ import { simulatedLokiFetch } from './loki.simulator';
 import type { CaseResult } from './scorer';
 
 const CHAT_ID = 'eval';
+const UPDATE_ID = 900_001;
+const DUME_FIXTURE_TOOL = 'ask_dume';
 const SNAPSHOT_STUB_HTML = 'SNAPSHOT';
 const EVAL_GA_ENV = {
   [GoogleAnalyticsMcpKey.CREDENTIALS_FILE]: '/eval/no-key.json',
@@ -87,6 +96,44 @@ const lokiExecutor = (testCase: EvalCase): LogsSearchExecutor => {
     ),
     new FixedClock(EVAL_NOW_MS),
     new Logger(LogsSearchExecutor.name),
+  );
+};
+
+const fixtureDelegation = (testCase: EvalCase): DumeDelegationService => {
+  const scenario =
+    (testCase.fixtures.find((entry) => entry.tool === DUME_FIXTURE_TOOL)?.response as
+      DumeScenario | undefined) ?? DumeScenario.UNAVAILABLE;
+  const view = { requestId: `tg${UPDATE_ID}`, state: DumeState.QUEUED, createdAtMs: EVAL_NOW_MS };
+  return new DumeDelegationService(
+    {
+      submit: async () => {
+        if (scenario === DumeScenario.UNAVAILABLE) throw new DumeUnavailableError('not_configured');
+        if (scenario === DumeScenario.DAILY_CAP) {
+          return { kind: DumeSubmitKind.REJECTED, reason: DumeRejectionReason.DAILY_COUNT_CAP };
+        }
+        return {
+          kind: DumeSubmitKind.ACCEPTED,
+          created: scenario === DumeScenario.STARTS,
+          request: view,
+        };
+      },
+      find: async () => ({ kind: 'found', request: view }),
+    },
+    {
+      claimInFlight: async () =>
+        scenario === DumeScenario.ALREADY_RUNNING
+          ? { claimed: false, heldBy: 'tg900000' }
+          : { claimed: true },
+      releaseInFlight: async () => undefined,
+      claimDelivery: async () => true,
+      confirmDelivery: async () => undefined,
+      releaseDelivery: async () => undefined,
+    },
+    {
+      enqueue: async () => undefined,
+      scheduleHappyFollowUp: async () => undefined,
+      scheduleDumeFollowUp: async () => undefined,
+    },
   );
 };
 
@@ -169,8 +216,9 @@ export const runCase = async (
     },
     { status: async () => ({ html: SNAPSHOT_STUB_HTML, silent: true }) } as never,
     await fixtureGaTools(testCase, clock),
+    fixtureDelegation(testCase),
   );
-  const outcome = await runner.answer(CHAT_ID, testCase.question);
+  const outcome = await runner.answer(CHAT_ID, UPDATE_ID, testCase.question);
   return {
     costUsd: outcome.costUsd,
     result: {

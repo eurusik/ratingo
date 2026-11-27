@@ -11,10 +11,12 @@ const workerWith = (
   handle: jest.Mock,
   followUp: jest.Mock = jest.fn(),
   purge: jest.Mock = jest.fn(),
+  dumeFollowUp: jest.Mock = jest.fn(),
 ) =>
   new ChatWorker(
     { handle } as unknown as ChatService,
     { handle: followUp } as never,
+    { handle: dumeFollowUp } as never,
     { purge } as never,
     {} as never,
   );
@@ -80,5 +82,17 @@ describe('ChatWorker', () => {
     await expect(
       workerWith(jest.fn(), followUp).process({ name: 'happy-follow-up', data: { chatId: 1 } }),
     ).resolves.toBe('ignored');
+  });
+
+  it('hands a DUM-E follow-up job to its service and ignores a malformed one', async () => {
+    const dumeFollowUp = jest.fn().mockResolvedValue('delivered');
+    const worker = workerWith(jest.fn(), jest.fn(), jest.fn(), dumeFollowUp);
+    const data = { chatId: '10', requestId: 'tg1000001', createdAtMs: 1, attempt: 1 };
+
+    await expect(worker.process({ name: 'dume-follow-up', data })).resolves.toBe('delivered');
+    await expect(worker.process({ name: 'dume-follow-up', data: { chatId: '10' } })).resolves.toBe(
+      'ignored',
+    );
+    expect(dumeFollowUp).toHaveBeenCalledTimes(1);
   });
 });

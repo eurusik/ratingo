@@ -3,6 +3,7 @@ import * as fc from 'fast-check';
 import { CHAT_QUEUE, CHAT_QUEUE_PREFIX } from '../modules/chat/chat.constants';
 import { TurnRole } from '../modules/chat/domain/entities/conversation-turn';
 import { RedisConversationStore } from '../modules/chat/infrastructure/stores/redis.conversation-store';
+import { RedisDelegationStore } from '../modules/chat/infrastructure/stores/redis.delegation-store';
 import { DIGEST_QUEUE, DIGEST_QUEUE_PREFIX } from '../modules/digest/digest.constants';
 import { AlertKey } from '../modules/watchdog/domain/constants/watchdog-rules.constants';
 import { RedisWatchdogStateStore } from '../modules/watchdog/infrastructure/stores/redis.watchdog-state.store';
@@ -27,12 +28,18 @@ const recordKeysUsedByStores = async (): Promise<string[]> => {
   const redis = {
     get: async (key: string) => (keys.push(key), null),
     set: async (key: string) => (keys.push(key), 'OK'),
+    del: async (key: string) => (keys.push(key), 1),
     lrange: async (key: string) => (keys.push(key), []),
     multi: () => chain,
   };
   const conversation = new RedisConversationStore(redis as never);
   await conversation.recent('10');
   await conversation.append('10', [{ role: TurnRole.USER, text: 'q' }]);
+  const delegation = new RedisDelegationStore(redis as never);
+  await delegation.claimInFlight('10', 'tg1');
+  await delegation.releaseInFlight('10', 'tg1');
+  await delegation.claimDelivery('tg1');
+  await delegation.releaseDelivery('tg1');
   const watchdog = new RedisWatchdogStateStore(redis as never);
   await watchdog.loadActive();
   await watchdog.saveActive([AlertKey.HAPPY_DOWN]);

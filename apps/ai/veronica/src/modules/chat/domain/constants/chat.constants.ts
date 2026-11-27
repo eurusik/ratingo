@@ -5,6 +5,7 @@ export const ChatCommand = {
   QUEUES: 'queues',
   SITE: 'site',
   LAST: 'last',
+  WHY: 'why',
 } as const;
 export type ChatCommand = (typeof ChatCommand)[keyof typeof ChatCommand];
 
@@ -15,6 +16,7 @@ export const COMMAND_DESCRIPTIONS: Readonly<Record<ChatCommand, string>> = {
   [ChatCommand.QUEUES]: 'фонові завдання детально',
   [ChatCommand.SITE]: 'сайт детально',
   [ChatCommand.LAST]: 'три останні відповіді: питання, результат, ціна',
+  [ChatCommand.WHY]: 'глибоке розслідування «чому так» у коді й даних: /why і питання',
 };
 
 export const AgentName = {

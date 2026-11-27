@@ -22,6 +22,7 @@ import { renderSystemCard } from '../../domain/policies/system-card.policy';
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
+import { NO_DELEGATION } from './no-delegation.testing';
 
 const QUIET = { warn: () => undefined };
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 0, 0);
@@ -279,7 +280,7 @@ const registryFor = ({ logs, failures, metrics }: Executors): Promise<ToolRegist
     jobFailures: (input) => failures.run(input),
     logsSearch: (input) => logs.run(input),
   } as InvestigationExecutors;
-  const tools = buildInvestigationTools(executors);
+  const tools = buildInvestigationTools(executors, NO_DELEGATION);
   return ToolRegistry.create(
     [new NativeToolSource(tools)],
     tools.map((tool) => tool.name),
@@ -308,7 +309,7 @@ const lokiAdapterAnswering = (status: number): GrafanaLokiLogsAdapter =>
   );
 
 describe('Veronica ops tools, golden outputs', () => {
-  it('offers the seven tools in this order with these exact definitions', async () => {
+  it('offers the eight tools in this order with these exact definitions', async () => {
     const registry = await registryFor(healthy());
 
     expect(registry.definitions()).toMatchSnapshot();

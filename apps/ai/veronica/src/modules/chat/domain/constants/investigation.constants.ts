@@ -19,6 +19,7 @@ export const PRODUCT_OUTPUT_CAP = 3000;
 export const SNAPSHOT_OUTPUT_CAP = 6000;
 export const CHANGES_OUTPUT_CAP = 4000;
 
+export const ASK_DUME_OUTPUT_CAP = 1000;
 export const CHANGES_ITEM_CAP = 20;
 export const CHANGE_TITLE_MAX_CHARS = 120;
 
@@ -30,5 +31,6 @@ export const InvestigationTool = {
   ASK_HAPPY: 'ask_happy',
   JOB_FAILURES: OpsTool.JOB_FAILURES,
   LOGS_SEARCH: OpsTool.LOGS_SEARCH,
+  ASK_DUME: 'ask_dume',
 } as const;
 export type InvestigationTool = (typeof InvestigationTool)[keyof typeof InvestigationTool];

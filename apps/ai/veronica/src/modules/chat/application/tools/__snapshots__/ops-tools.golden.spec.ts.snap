@@ -443,7 +443,7 @@ exports[`Veronica ops tools, golden outputs metrics_query site_requests with its
 }
 `;
 
-exports[`Veronica ops tools, golden outputs offers the seven tools in this order with these exact definitions 1`] = `
+exports[`Veronica ops tools, golden outputs offers the eight tools in this order with these exact definitions 1`] = `
 [
   {
     "description": "Runs one ready-made Prometheus query. Only these templates exist. queue_throughput: Completed, failed and retried jobs per queue within the window. queue_backlog_peak: Jobs waiting now and the highest backlog within the window, per queue. http_client_errors: Outgoing HTTP errors (401, 403, 429 by default, or one status) per provider host within the window. site_requests: Storefront requests and server errors (5xx) within the window. site_latency_p95: Storefront page render time, 95th percentile, in milliseconds. site_memory_peak: Highest storefront process memory (RSS) within the window, in megabytes. scheduler_last_runs: For each scheduled job: how often it runs, when it last succeeded and last failed (Kyiv time and hours ago) and its next planned run. A missing last success means no run was seen in the last eight days, not that the job never worked. A missing last failure means no failed run was seen in the last eight days. scheduled=false means the job is not in the schedule at all. Optional job keeps only jobs whose name contains that text. backup_status: Hours since the last database backup, its result and its size in megabytes. Takes no parameters, not even window. infra_health: Whether PostgreSQL and Redis are up, and Redis memory in megabytes. Takes no parameters, not even window.",
@@ -661,6 +661,25 @@ exports[`Veronica ops tools, golden outputs offers the seven tools in this order
       "type": "object",
     },
     "name": "logs_search",
+  },
+  {
+    "description": "Hands one question to DUM-E, the code investigator, to run in the background. DUM-E reads the code of the main branch together with production logs, failed jobs and metrics, and answers why something behaves as it does; every claim is checked against the code lines and data rows it actually read. It takes several minutes and costs real money, and its answer arrives later as a separate message sent by the system, not by you. Use it only for a "why" or "how does this work" question that cannot be settled from the numbers, logs, job failures, changes and pull request results your other tools return, because the code has to be read as well. Do not use it for the current state, counts, lists, schedules, recent errors, what Happy said, or anything another tool answers directly. Call it at most once per message. It returns at once with a status and an ownerNotice: tell the owner that notice in one short line, and do not guess the cause yourself.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "description": "The question to investigate, written so it stands on its own: include the names, services and times from the conversation",
+          "maxLength": 1000,
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "question",
+      ],
+      "type": "object",
+    },
+    "name": "ask_dume",
   },
 ]
 `;

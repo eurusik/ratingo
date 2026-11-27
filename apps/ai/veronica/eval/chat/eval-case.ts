@@ -6,6 +6,15 @@ export const EvalKind = {
 } as const;
 export type EvalKind = (typeof EvalKind)[keyof typeof EvalKind];
 
+export const DumeScenario = {
+  STARTS: 'starts',
+  ALREADY_STARTED: 'already_started',
+  ALREADY_RUNNING: 'already_running',
+  DAILY_CAP: 'daily_cap',
+  UNAVAILABLE: 'unavailable',
+} as const;
+export type DumeScenario = (typeof DumeScenario)[keyof typeof DumeScenario];
+
 export interface Fixture {
   tool: string;
   match?: Readonly<Record<string, unknown>>;

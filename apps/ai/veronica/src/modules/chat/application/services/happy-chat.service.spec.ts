@@ -54,6 +54,7 @@ const setup = (
     {
       enqueue: async () => undefined,
       scheduleHappyFollowUp: async (followUp, delay) => void scheduled.push({ followUp, delay }),
+      scheduleDumeFollowUp: async () => undefined,
     },
     { repository: 'eurusik/ratingo' },
     { nowMs: () => NOW_MS },
@@ -234,7 +235,7 @@ describe('HappyChatService', () => {
             throw new HappyUnavailableError('HTTP 502');
           },
         },
-        { enqueue: jest.fn(), scheduleHappyFollowUp: jest.fn() },
+        { enqueue: jest.fn(), scheduleHappyFollowUp: jest.fn(), scheduleDumeFollowUp: jest.fn() },
         { repository: 'eurusik/ratingo' },
         { nowMs: () => NOW_MS },
       );

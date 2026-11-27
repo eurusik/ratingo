@@ -31,6 +31,7 @@ class Harness {
   investigationOutcome: ChatOutcome = ChatOutcome.ANSWERED;
   investigationFailure: Error | null = null;
   readonly happyAsked: { chatId: string; target: unknown }[] = [];
+  readonly whyAsked: { chatId: string; updateId: number; question: string }[] = [];
 
   private readonly clock = new FixedClock(NOW_MS);
   readonly exchangeLog = new InMemoryChatExchangeLog();
@@ -52,7 +53,7 @@ class Harness {
   readonly service = new ChatService(
     new ChatCommandHandlers(this.composer, this.exchangeLog),
     {
-      answer: async (chatId: string, question: string) => {
+      answer: async (chatId: string, _updateId: number, question: string) => {
         if (this.investigationFailure !== null) throw this.investigationFailure;
         this.asked.push({ chatId, question });
         return {
@@ -69,6 +70,12 @@ class Harness {
       reply: async (chatId: string, target: unknown) => {
         this.happyAsked.push({ chatId, target });
         return 'Хеппі відповів';
+      },
+    } as never,
+    {
+      reply: async (chatId: string, updateId: number, question: string) => {
+        this.whyAsked.push({ chatId, updateId, question });
+        return question === '' ? 'Напиши питання' : 'DUM-E розбирає';
       },
     } as never,
     new ChatExchangeRecorder(this.exchangeLog, this.clock),
@@ -207,6 +214,19 @@ describe('ChatService', () => {
     expect(chat.happyAsked).toEqual([{ chatId: '10', target: expect.objectContaining({ kind }) }]);
     expect(chat.asked).toEqual([]);
     expect(chat.events).toEqual([{ outcome: 'handled', command: 'free_text', route: 'happy' }]);
+  });
+
+  it.each([
+    ['/why чому sync-show падає?', 'чому sync-show падає?'],
+    ['DUM-E, чому sync-show падає?', 'чому sync-show падає?'],
+    ['/why', ''],
+  ])('sends «%s» to DUM-E without asking a model', async (text, question) => {
+    const chat = new Harness();
+    await chat.say(text);
+    expect(chat.whyAsked).toEqual([{ chatId: '10', updateId: expect.any(Number), question }]);
+    expect(chat.asked).toEqual([]);
+    expect(chat.reply).toBe(question === '' ? 'Напиши питання' : 'DUM-E розбирає');
+    expect(chat.events).toEqual([{ outcome: 'handled', command: 'why', route: 'command' }]);
   });
 
   it('records the investigation outcome with the investigation route and no extra run', async () => {

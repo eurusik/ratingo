@@ -35,6 +35,7 @@ const setup = (lookup: HappyLookup | Error) => {
       enqueue: async () => undefined,
       scheduleHappyFollowUp: async (followUp, delay) =>
         void scheduled.push({ followUp: followUp as { attempt: number }, delay }),
+      scheduleDumeFollowUp: async () => undefined,
     },
     {
       sendMessage: async (_chatId: string, html: string) => void sent.push(html),

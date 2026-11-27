@@ -2,11 +2,17 @@ import type { z } from 'zod';
 
 import type { OpsExecutors } from '@ratingo/ai-ops-tools';
 
-import type { askHappyInput, productStatsInput, recentChangesInput } from './investigation-tools';
+import type {
+  askDumeInput,
+  askHappyInput,
+  productStatsInput,
+  recentChangesInput,
+} from './investigation-tools';
 
 export type ProductStatsInput = z.infer<typeof productStatsInput>;
 export type RecentChangesInput = z.infer<typeof recentChangesInput>;
 export type AskHappyInput = z.infer<typeof askHappyInput>;
+export type AskDumeInput = z.infer<typeof askDumeInput>;
 
 export interface InvestigationExecutors extends OpsExecutors {
   productStats(input: ProductStatsInput): Promise<unknown>;

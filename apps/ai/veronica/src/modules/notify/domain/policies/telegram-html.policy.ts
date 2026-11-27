@@ -13,9 +13,16 @@ const HIGH_SURROGATE_AT_END = /[\uD800-\uDBFF]$/;
 const escapeText = (text: string): string =>
   text.replace(LONE_AMPERSAND, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+const GITHUB_CODE_LINK =
+  /^href="https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/blob\/[0-9a-f]{40}\/[A-Za-z0-9_.@+/-]+#L\d+(?:-L\d+)?"$/;
+
 const isAllowedOpening = (name: string, attributes: string): boolean => {
   const trimmed = attributes.trim();
-  return trimmed === '' || (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE);
+  return (
+    trimmed === '' ||
+    (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE) ||
+    (name === 'a' && GITHUB_CODE_LINK.test(trimmed))
+  );
 };
 
 const openingTag = (name: string, attributes: string): string =>

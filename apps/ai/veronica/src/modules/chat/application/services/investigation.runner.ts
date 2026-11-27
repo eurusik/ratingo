@@ -65,10 +65,12 @@ import {
 import { CHAT_TRANSPORT, NotificationError, type ChatTransportPort } from '../../../notify/public';
 import {
   INVESTIGATION_EXECUTORS,
+  type AskDumeInput,
   type InvestigationExecutors,
 } from '../tools/investigation-executors';
 import { EXTERNAL_TOOLS, type ExternalTools } from '../tools/external-tools';
 import { buildInvestigationTools } from '../tools/investigation-tools';
+import { DumeDelegationService } from './dume-delegation.service';
 import { ToolRecorder, type RecordedCall } from '../tools/tool-recorder';
 
 const FAST_ALIAS = 'fast';
@@ -100,6 +102,11 @@ interface Verdict {
 
 const fenceSafe = (text: string): string => text.replaceAll('<<<', '‹‹‹').replaceAll('>>>', '›››');
 
+interface ConversationRef {
+  chatId: string;
+  updateId: number;
+}
+
 const errorName = (error: unknown): string => (error instanceof Error ? error.name : 'error');
 
 const speakerOf = (turn: ConversationTurn): string => {
@@ -129,9 +136,14 @@ export class InvestigationRunner {
     @Inject(CHAT_TRANSPORT) private readonly transport: ChatTransportPort,
     private readonly digests: DigestComposeService,
     @Inject(EXTERNAL_TOOLS) private readonly externalTools: ExternalTools,
+    private readonly delegation: DumeDelegationService,
   ) {}
 
-  async answer(chatId: string, rawQuestion: string): Promise<InvestigationResult> {
+  async answer(
+    chatId: string,
+    updateId: number,
+    rawQuestion: string,
+  ): Promise<InvestigationResult> {
     const question = clip(rawQuestion.trim(), QUESTION_MAX_CHARS);
     if (question === '') {
       await this.transport.sendMessage(chatId, EMPTY_QUESTION_REPLY);
@@ -149,7 +161,10 @@ export class InvestigationRunner {
     const history = await this.recentHistory(chatId);
     const recorder = new ToolRecorder();
     const run = this.startRun();
-    const verdict = await this.investigate(run, question, history, recorder);
+    const verdict = await this.investigate(run, question, history, recorder, {
+      chatId,
+      updateId,
+    });
     const html = clip(verdict.html, ANSWER_MAX_CHARS * 2);
     await this.deliver(chatId, messageId, html);
     if (verdict.remember !== null) {
@@ -184,9 +199,10 @@ export class InvestigationRunner {
     question: string,
     history: readonly ConversationTurn[],
     recorder: ToolRecorder,
+    conversation: ConversationRef,
   ): Promise<Verdict> {
     try {
-      const result = await this.runLoop(run, question, history, recorder);
+      const result = await this.runLoop(run, question, history, recorder, conversation);
       if (result.run.status !== RunStatus.COMPLETED || result.output.trim() === '') {
         this.logger.warn(
           `Запуск чату ${result.run.id} завершився так: ${result.run.stopReason ?? result.run.status}`,
@@ -211,11 +227,14 @@ export class InvestigationRunner {
     question: string,
     history: readonly ConversationTurn[],
     recorder: ToolRecorder,
+    conversation: ConversationRef,
   ) {
     const { manifest, prompts } = this.folder;
     const nowMs = this.clock.nowMs();
     const external = this.offeredExternalTools();
-    const tools = [...buildInvestigationTools(this.executors), ...external].map((tool) =>
+    const delegate = ({ question: dumeQuestion }: AskDumeInput) =>
+      this.delegation.delegate({ ...conversation, question: dumeQuestion });
+    const tools = [...buildInvestigationTools(this.executors, delegate), ...external].map((tool) =>
       recorder.wrap(tool),
     );
     const expected = this.externalTools.expectedToolNames();

@@ -38,7 +38,11 @@ describe('routeMessage', () => {
     });
     expect(routeMessage('Вероніко, що з чергами')).toMatchObject({ agent: AgentName.VERONICA });
     expect(routeMessage('happy: перевір')).toMatchObject({ kind: IntentKind.HAPPY });
-    expect(routeMessage('DUM-E знайди')).toMatchObject({ agent: AgentName.DUME });
+    expect(routeMessage('DUM-E знайди')).toEqual({
+      kind: IntentKind.COMMAND,
+      command: ChatCommand.WHY,
+      args: 'знайди',
+    });
   });
 
   it('does not mention an agent when the name is only a prefix of a word', () => {

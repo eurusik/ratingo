@@ -96,4 +96,29 @@ describe('sanitizeTelegramHtml', () => {
       }),
     );
   });
+
+  describe('links to code', () => {
+    const SHA = 'a'.repeat(40);
+    const link = `https://github.com/eurusik/ratingo/blob/${SHA}/apps/api/src/a.ts#L10-L14`;
+
+    it('keeps a link to the exact lines of a commit', () => {
+      const html = `<a href="${link}">apps/api/src/a.ts:10-14</a>`;
+
+      expect(sanitizeTelegramHtml(html)).toBe(html);
+    });
+
+    it.each([
+      ['another host', `https://evil.example/eurusik/ratingo/blob/${SHA}/a.ts#L1`],
+      ['a branch instead of a commit', 'https://github.com/eurusik/ratingo/blob/main/a.ts#L1'],
+      ['a link without lines', `https://github.com/eurusik/ratingo/blob/${SHA}/a.ts`],
+      ['a query string', `https://github.com/eurusik/ratingo/blob/${SHA}/a.ts?x=1#L1`],
+      ['http', `http://github.com/eurusik/ratingo/blob/${SHA}/a.ts#L1`],
+    ])('still removes a link with %s but keeps its text', (_name, href) => {
+      expect(sanitizeTelegramHtml(`<a href="${href}">text</a>`)).toBe('text');
+    });
+
+    it('removes any other attribute on a link', () => {
+      expect(sanitizeTelegramHtml(`<a href="${link}" onclick="x()">text</a>`)).toBe('text');
+    });
+  });
 });

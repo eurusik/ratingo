@@ -109,4 +109,21 @@ describe('env schemas', () => {
       false,
     );
   });
+
+  it('reads the DUM-E address and token, and treats empty values as not set', () => {
+    expect(serviceEnvSchema.parse(VALID).DUME_INTERNAL_URL).toBeUndefined();
+    expect(
+      serviceEnvSchema.parse({
+        ...VALID,
+        DUME_INTERNAL_URL: 'http://dume.railway.internal:3006',
+        DUME_SERVICE_TOKEN: 'a-service-token-of-24-chars!',
+      }),
+    ).toMatchObject({
+      DUME_INTERNAL_URL: 'http://dume.railway.internal:3006',
+      DUME_SERVICE_TOKEN: 'a-service-token-of-24-chars!',
+    });
+    expect(
+      serviceEnvSchema.parse({ ...VALID, DUME_INTERNAL_URL: '', DUME_SERVICE_TOKEN: ' ' }),
+    ).toMatchObject({ DUME_INTERNAL_URL: undefined, DUME_SERVICE_TOKEN: undefined });
+  });
 });

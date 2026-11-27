@@ -12,6 +12,7 @@ import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
+import { NO_DELEGATION } from './no-delegation.testing';
 
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 13);
 const NOW_SECONDS = NOW_MS / 1000;
@@ -77,9 +78,12 @@ const metricsTool = async (): Promise<ToolRegistry> => {
     new FixedClock(NOW_MS),
     { warn: () => undefined },
   );
-  const tools = buildInvestigationTools({
-    metricsQuery: (input) => executor.run(input),
-  } as InvestigationExecutors);
+  const tools = buildInvestigationTools(
+    {
+      metricsQuery: (input) => executor.run(input),
+    } as InvestigationExecutors,
+    NO_DELEGATION,
+  );
   return ToolRegistry.create([new NativeToolSource(tools)], [InvestigationTool.METRICS_QUERY]);
 };
 

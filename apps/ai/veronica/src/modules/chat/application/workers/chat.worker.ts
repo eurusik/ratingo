@@ -18,9 +18,11 @@ import {
   REDIS_CONNECTION,
 } from '../../chat.constants';
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
+import type { DumeFollowUp } from '../../domain/entities/dume';
 import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
 import { ChatExchangeRetention } from '../services/chat-exchange-retention.service';
 import { ChatService } from '../services/chat.service';
+import { DumeFollowUpService } from '../services/dume-follow-up.service';
 import { HappyFollowUpService } from '../services/happy-follow-up.service';
 
 const isIncomingMessage = (value: unknown): value is IncomingMessage => {
@@ -45,6 +47,16 @@ const isHappyFollowUp = (value: unknown): value is HappyFollowUp => {
   );
 };
 
+const isDumeFollowUp = (value: unknown): value is DumeFollowUp => {
+  const candidate = value as Partial<DumeFollowUp> | null;
+  return (
+    typeof candidate?.chatId === 'string' &&
+    typeof candidate.requestId === 'string' &&
+    typeof candidate.createdAtMs === 'number' &&
+    typeof candidate.attempt === 'number'
+  );
+};
+
 @Injectable()
 export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(ChatWorker.name);
@@ -53,6 +65,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   constructor(
     private readonly chat: ChatService,
     private readonly followUps: HappyFollowUpService,
+    private readonly dumeFollowUps: DumeFollowUpService,
     private readonly retention: ChatExchangeRetention,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
   ) {}
@@ -80,6 +93,9 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
       }
       if (job.name === CHAT_JOB_TYPES.HAPPY_FOLLOW_UP && isHappyFollowUp(job.data)) {
         return await this.followUps.handle(job.data);
+      }
+      if (job.name === CHAT_JOB_TYPES.DUME_FOLLOW_UP && isDumeFollowUp(job.data)) {
+        return await this.dumeFollowUps.handle(job.data);
       }
       if (job.name === CHAT_JOB_TYPES.EXCHANGE_RETENTION) {
         return `deleted:${await this.retention.purge()}`;
