@@ -2,6 +2,7 @@ export { InvestigationModule } from '../investigation.module';
 export { InvestigationService } from '../application/services/investigation.service';
 export { CODE_READ_TOOL } from '../application/tools/create-code-tools';
 export { ALLOWED_REFS, DEFAULT_REF } from '../domain/constants/snapshot.constants';
+export { MAX_QUESTION_CHARS } from '../investigation.constants';
 export type { CodeSnapshot } from '../domain/entities/code-snapshot';
 export {
   AssumptionOrigin,

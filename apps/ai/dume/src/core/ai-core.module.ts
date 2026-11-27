@@ -108,7 +108,7 @@ const spendLogger = new NestSpendLogger();
       },
     },
   ],
-  exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, OPS_EXECUTORS, AgentRunner],
+  exports: [CLOCK_PORT, AGENT_FOLDER, AI_METER, OPS_EXECUTORS, RUN_REPOSITORY, AgentRunner],
 })
 export class AiCoreModule implements OnModuleDestroy {
   constructor(

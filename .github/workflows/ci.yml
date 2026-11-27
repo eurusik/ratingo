@@ -650,6 +650,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Railway watch paths cover the Dockerfile
+        run: |
+          node --test .github/scripts/check-railway-watch-paths.test.cjs
+          node .github/scripts/check-railway-watch-paths.cjs
+
       - name: Build shared packages
         run: npm run build:packages --workspace=@ratingo/ai-dume
 
@@ -780,14 +785,37 @@ jobs:
         timeout-minutes: 10
         run: docker build -f apps/ai/dume/Dockerfile -t ratingo-dume:ci .
 
-      - name: Start it under tini and see the question check answer
+      - name: The command line still asks for a question
         run: |
           status=0
-          output=$(docker run --rm ratingo-dume:ci 2>&1) || status=$?
+          output=$(docker run --rm --entrypoint node ratingo-dume:ci apps/ai/dume/dist/main.js 2>&1) || status=$?
           echo "$output"
           test "$status" -eq 1
           grep -q "A question is required" <<< "$output"
-          docker run --rm --entrypoint /sbin/tini ratingo-dume:ci -- sh -c 'cat /proc/1/comm' | grep -qx tini
+
+      - name: Start the service under tini and check health and the token wall
+        run: |
+          docker network create ci-net
+          docker run -d --name ci-redis --network ci-net redis:7-alpine
+          docker run -d --name ci-dume --network ci-net -p 3006:3006 \
+            -e NODE_ENV=production -e REDIS_URL=redis://ci-redis:6379 \
+            -e ANTHROPIC_API_KEY=ci-key -e AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 \
+            -e DUME_SERVICE_TOKEN=ci-service-token-of-24-chars \
+            ratingo-dume:ci
+          for attempt in $(seq 1 30); do
+            curl -fsS http://localhost:3006/health && break
+            sleep 1
+          done
+          curl -fsS http://localhost:3006/health | grep -q '"status":"ok"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations \
+            -H 'Authorization: Bearer ci-service-token-of-24-chars' -H 'content-type: application/json' -d '{}')" = 400
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations \
+            -H 'x-forwarded-for: 1.2.3.4' -H 'Authorization: Bearer ci-service-token-of-24-chars')" = 404
+          docker exec ci-dume cat /proc/1/comm | grep -qx tini
+
+      - if: failure()
+        run: docker logs ci-dume || true
 
   ci:
     name: ci
