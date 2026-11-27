@@ -113,4 +113,5 @@ export interface DumeFollowUp {
   requestId: string;
   createdAtMs: number;
   attempt: number;
+  deliveryAttempts?: number;
 }

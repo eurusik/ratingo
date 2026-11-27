@@ -89,6 +89,7 @@ import { RedisConversationStore } from './infrastructure/stores/redis.conversati
 import { RedisDelegationStore } from './infrastructure/stores/redis.delegation-store';
 import { OtelChatMetrics } from './infrastructure/telemetry/otel-chat-metrics';
 import { TelegramWebhookController } from './presentation/telegram-webhook.controller';
+import { withRedisErrorLog } from '../../redis/redis-error-log';
 
 @Module({
   imports: [DigestModule, NotifyModule],
@@ -98,13 +99,16 @@ import { TelegramWebhookController } from './presentation/telegram-webhook.contr
       provide: REDIS_CONNECTION,
       inject: [INFRA_CONFIG],
       useFactory: (config: InfraConfig) =>
-        new IORedis(config.redisUrl, { maxRetriesPerRequest: null }),
+        withRedisErrorLog(new IORedis(config.redisUrl, { maxRetriesPerRequest: null }), 'chat'),
     },
     {
       provide: CHAT_QUEUE_TOKEN,
       inject: [REDIS_CONNECTION],
       useFactory: (connection: IORedis) =>
-        new Queue(CHAT_QUEUE, { connection: connection.duplicate(), prefix: CHAT_QUEUE_PREFIX }),
+        new Queue(CHAT_QUEUE, {
+          connection: withRedisErrorLog(connection.duplicate(), 'chat-queue'),
+          prefix: CHAT_QUEUE_PREFIX,
+        }),
     },
     {
       provide: CHAT_JOB_QUEUE,

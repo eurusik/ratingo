@@ -6,6 +6,7 @@ import { DUME_CONFIG, type DumeConfig } from '../../../../config/config.constant
 import { CHAT_TRANSPORT, NotificationError, type ChatTransportPort } from '../../../notify/public';
 import {
   DUME_FOLLOW_UP_INTERVAL_MS,
+  DUME_MAX_DELIVERY_ATTEMPTS,
   DUME_SENDING_RETRY_DELAY_MS,
   DumeFollowUpAction,
 } from '../../domain/constants/dume.constants';
@@ -13,6 +14,7 @@ import {
   DUME_DELIVERY_FAILED_LINE,
   DUME_GAVE_UP_LINE,
   DUME_NOT_FOUND_LINE,
+  DUME_REST_NOT_DELIVERED_LINE,
 } from '../../domain/constants/dume-replies.constants';
 import { TurnRole } from '../../domain/entities/conversation-turn';
 import {
@@ -50,6 +52,7 @@ export const DumeFollowUpOutcome = {
   WAITING: 'waiting',
   DELIVERED: 'delivered',
   DUPLICATE: 'duplicate',
+  UNDELIVERED: 'undelivered',
 } as const;
 export type DumeFollowUpOutcome = (typeof DumeFollowUpOutcome)[keyof typeof DumeFollowUpOutcome];
 
@@ -142,13 +145,16 @@ export class DumeFollowUpService {
       return DumeFollowUpOutcome.WAITING;
     }
     const request = lookup?.kind === 'found' ? lookup.request : null;
-    const parts = this.messagesFor(action, request);
+    const plan = this.deliveryPlan(claim.partsSent, action, request);
     try {
-      for (let index = claim.partsSent; index < parts.length; index += 1) {
-        await this.sendPart(followUp.chatId, parts[index] ?? '');
+      for (let index = plan.from; index < plan.parts.length; index += 1) {
+        await this.sendPart(followUp.chatId, plan.parts[index] ?? '');
         await this.store.recordPartSent(followUp.requestId, index + 1);
       }
     } catch (error) {
+      if (error instanceof NotificationError && error.deliveryUnknown) {
+        return this.retryAfterUnknownDelivery(followUp);
+      }
       await this.releaseDeliveryUnlessUnknown(followUp.requestId, error);
       throw error;
     }
@@ -163,6 +169,41 @@ export class DumeFollowUpService {
     await this.remember(followUp.chatId, request);
     await this.releaseInFlight(followUp);
     return DumeFollowUpOutcome.DELIVERED;
+  }
+
+  private deliveryPlan(
+    partsSent: number,
+    action: DumeFollowUpAction,
+    request: DumeRequestView | null,
+  ): { parts: string[]; from: number } {
+    const answered = request?.state === DumeState.ANSWERED && request.result !== undefined;
+    if (partsSent > 0 && !answered) {
+      return { parts: [renderDumeNotice(DUME_REST_NOT_DELIVERED_LINE)], from: 0 };
+    }
+    return { parts: this.messagesFor(action, request), from: partsSent };
+  }
+
+  private async retryAfterUnknownDelivery(followUp: DumeFollowUp): Promise<DumeFollowUpOutcome> {
+    const deliveryAttempts = (followUp.deliveryAttempts ?? 0) + 1;
+    if (deliveryAttempts >= DUME_MAX_DELIVERY_ATTEMPTS) {
+      this.logger.error({
+        message: 'dume_follow_up.delivery_unknown_exhausted',
+        requestId: followUp.requestId,
+        deliveryAttempts,
+      });
+      await this.releaseInFlight(followUp);
+      return DumeFollowUpOutcome.UNDELIVERED;
+    }
+    this.logger.warn({
+      message: 'dume_follow_up.delivery_unknown_retry',
+      requestId: followUp.requestId,
+      deliveryAttempts,
+    });
+    await this.queue.scheduleDumeFollowUp(
+      { ...followUp, attempt: followUp.attempt + 1, deliveryAttempts },
+      DUME_SENDING_RETRY_DELAY_MS,
+    );
+    return DumeFollowUpOutcome.WAITING;
   }
 
   private async sendPart(chatId: string, html: string): Promise<void> {

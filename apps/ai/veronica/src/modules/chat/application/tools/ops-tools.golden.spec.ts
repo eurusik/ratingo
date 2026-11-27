@@ -284,6 +284,7 @@ const registryFor = ({ logs, failures, metrics }: Executors): Promise<ToolRegist
   return ToolRegistry.create(
     [new NativeToolSource(tools)],
     tools.map((tool) => tool.name),
+    { allowPaidWorkTools: true },
   );
 };
 

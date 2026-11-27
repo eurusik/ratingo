@@ -52,6 +52,9 @@ export const DUME_FAILURE_LINE: Readonly<Record<DumeFailureReason, string>> = {
 export const DUME_GAVE_UP_LINE =
   'Відповіді від DUM-E немає вже 15 хвилин. Спробуй спитати ще раз пізніше.';
 
+export const DUME_REST_NOT_DELIVERED_LINE =
+  'Решту відповіді DUM-E не вдалося доставити. Спробуй спитати ще раз.';
+
 export const DUME_NOT_FOUND_LINE =
   'DUM-E не має результату цього запиту: його, схоже, втрачено. Спробуй спитати ще раз.';
 

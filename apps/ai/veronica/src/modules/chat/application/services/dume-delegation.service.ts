@@ -67,12 +67,13 @@ export class DumeDelegationService {
     const requestId = delegationRequestId(updateId);
     const claimed = await this.claimChat(chatId, requestId);
     if (claimed !== null) return claimed;
+    let result: Awaited<ReturnType<DumeClientPort['submit']>>;
     try {
-      const result = await this.client.submit({ requestId, question, ref: DUME_DEFAULT_REF });
-      return await this.afterSubmit(chatId, requestId, result);
+      result = await this.client.submit({ requestId, question, ref: DUME_DEFAULT_REF });
     } catch (error) {
       return this.afterSubmitFailure(chatId, requestId, error);
     }
+    return this.afterSubmit(chatId, requestId, result);
   }
 
   private async claimChat(chatId: string, requestId: string): Promise<DelegationOutcome | null> {

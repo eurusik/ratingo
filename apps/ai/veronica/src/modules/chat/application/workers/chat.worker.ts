@@ -24,6 +24,7 @@ import { ChatExchangeRetention } from '../services/chat-exchange-retention.servi
 import { ChatService } from '../services/chat.service';
 import { DumeFollowUpService } from '../services/dume-follow-up.service';
 import { HappyFollowUpService } from '../services/happy-follow-up.service';
+import { withRedisErrorLog } from '../../../../redis/redis-error-log';
 
 const isIncomingMessage = (value: unknown): value is IncomingMessage => {
   const candidate = value as Partial<IncomingMessage> | null;
@@ -53,7 +54,8 @@ const isDumeFollowUp = (value: unknown): value is DumeFollowUp => {
     typeof candidate?.chatId === 'string' &&
     typeof candidate.requestId === 'string' &&
     typeof candidate.createdAtMs === 'number' &&
-    typeof candidate.attempt === 'number'
+    typeof candidate.attempt === 'number' &&
+    (candidate.deliveryAttempts === undefined || typeof candidate.deliveryAttempts === 'number')
   );
 };
 
@@ -72,7 +74,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
 
   onModuleInit(): void {
     this.worker = new Worker(CHAT_QUEUE, (job) => this.process(job), {
-      connection: this.connection.duplicate(),
+      connection: withRedisErrorLog(this.connection.duplicate(), 'chat-worker'),
       prefix: CHAT_QUEUE_PREFIX,
       concurrency: CHAT_WORKER_CONCURRENCY,
     });

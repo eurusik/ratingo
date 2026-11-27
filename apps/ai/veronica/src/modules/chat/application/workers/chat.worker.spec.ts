@@ -117,6 +117,20 @@ describe('ChatWorker', () => {
     expect(dumeFollowUp).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the count of unknown deliveries on a DUM-E follow-up and refuses a wrong one', async () => {
+    const dumeFollowUp = jest.fn().mockResolvedValue('waiting');
+    const worker = workerWith(jest.fn(), jest.fn(), jest.fn(), dumeFollowUp);
+    const data = { chatId: '10', requestId: 'tg1000001', createdAtMs: 1, attempt: 2 };
+
+    await worker.process({ name: 'dume-follow-up', data: { ...data, deliveryAttempts: 1 } });
+    await expect(
+      worker.process({ name: 'dume-follow-up', data: { ...data, deliveryAttempts: 'many' } }),
+    ).resolves.toBe('ignored');
+
+    expect(dumeFollowUp).toHaveBeenCalledWith({ ...data, deliveryAttempts: 1 });
+    expect(dumeFollowUp).toHaveBeenCalledTimes(1);
+  });
+
   describe('when a DUM-E follow-up fails', () => {
     it('tells the owner and frees the chat once it will not be retried again', () => {
       const { abandon, worker } = abandoningWorker();

@@ -39,6 +39,7 @@ import {
   WATCHDOG_QUEUE_PREFIX,
   WATCHDOG_QUEUE_TOKEN,
 } from './watchdog.constants';
+import { withRedisErrorLog } from '../../redis/redis-error-log';
 
 @Module({
   imports: [DigestModule, NotifyModule],
@@ -47,14 +48,14 @@ import {
       provide: REDIS_CONNECTION,
       inject: [INFRA_CONFIG],
       useFactory: (config: InfraConfig) =>
-        new IORedis(config.redisUrl, { maxRetriesPerRequest: null }),
+        withRedisErrorLog(new IORedis(config.redisUrl, { maxRetriesPerRequest: null }), 'watchdog'),
     },
     {
       provide: WATCHDOG_QUEUE_TOKEN,
       inject: [REDIS_CONNECTION],
       useFactory: (connection: IORedis) =>
         new Queue(WATCHDOG_QUEUE, {
-          connection: connection.duplicate(),
+          connection: withRedisErrorLog(connection.duplicate(), 'watchdog-queue'),
           prefix: WATCHDOG_QUEUE_PREFIX,
         }),
     },

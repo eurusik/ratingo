@@ -241,7 +241,7 @@ export class InvestigationRunner {
     const registry = await ToolRegistry.create(
       [new NativeToolSource(tools)],
       [...Object.values(InvestigationTool), ...expected],
-      { optionalTools: expected },
+      { optionalTools: expected, allowPaidWorkTools: true },
     );
     return this.loopFor(registry).run(run, {
       models: resolveModelChain(FAST_ALIAS, this.aliases),

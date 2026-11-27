@@ -203,6 +203,21 @@ describe('DumeDelegationService', () => {
     });
   });
 
+  it('does not report an error after a successful submit as "not started"', async () => {
+    const client = new FakeDumeClient();
+    const store = new FakeDelegationStore();
+    const clock = new FixedClock(NOW_MS);
+    const failure = new Error('clock broke');
+    clock.nowMs = () => {
+      throw failure;
+    };
+    client.submitResult = { kind: DumeSubmitKind.CONFLICT };
+    const service = new DumeDelegationService(client, store, new RecordingQueue(), clock);
+
+    await expect(service.delegate(REQUEST)).rejects.toBe(failure);
+    expect(client.submissions).toHaveLength(1);
+  });
+
   it('treats a broken store as unavailable, never as an exception for the model run', async () => {
     const { service, store, client } = setup();
     store.claimInFlight = async () => {

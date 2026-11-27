@@ -7,6 +7,7 @@ import {
   DUME_FAILURE_LINE,
   DUME_GAVE_UP_LINE,
   DUME_NOT_FOUND_LINE,
+  DUME_REST_NOT_DELIVERED_LINE,
 } from '../../domain/constants/dume-replies.constants';
 import { TurnRole } from '../../domain/entities/conversation-turn';
 import { DumeFailureReason, DumeState } from '../../domain/entities/dume';
@@ -172,15 +173,60 @@ describe('DumeFollowUpService', () => {
       expect(sent).toHaveLength(1);
     });
 
-    it('keeps the claim when Telegram may already have delivered the message', async () => {
-      const { service, client, sending, store } = setup();
+    it('keeps the claim and tries again later, from the same part, when Telegram may already have delivered the message', async () => {
+      const { service, client, sending, store, queue, sent } = setup();
       client.lookups = [ANSWERED];
-      const failure = new NotificationError('timeout', true, true);
-      sending.failures = [failure];
+      sending.failures = [new NotificationError('timeout', true, true)];
 
-      await expect(service.handle(FOLLOW_UP)).rejects.toBe(failure);
+      expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.WAITING);
 
       expect(store.delivery.get(REQUEST_ID)).toBe('sending');
+      expect(store.inFlight.get('10')).toBe(REQUEST_ID);
+      expect(queue.dumeFollowUps).toEqual([
+        { followUp: { ...FOLLOW_UP, attempt: 2, deliveryAttempts: 1 }, delayMs: 125_000 },
+      ]);
+
+      store.expireSending(REQUEST_ID);
+      expect(await service.handle(queue.dumeFollowUps[0]?.followUp as never)).toBe(
+        DumeFollowUpOutcome.DELIVERED,
+      );
+      expect(sent).toHaveLength(1);
+    });
+
+    it('stops retrying after an unknown delivery too many times, logs it and frees the chat', async () => {
+      const { service, client, sending, store, queue } = setup();
+      client.lookups = [ANSWERED];
+      sending.failures = [new NotificationError('timeout', true, true)];
+
+      const outcome = await service.handle({ ...FOLLOW_UP, deliveryAttempts: 2 });
+
+      expect(outcome).toBe(DumeFollowUpOutcome.UNDELIVERED);
+      expect(queue.dumeFollowUps).toEqual([]);
+      expect(store.inFlight.has('10')).toBe(false);
+    });
+
+    it('says the rest could not be delivered, instead of confirming a truncated answer, when the answer is gone after part one', async () => {
+      const { service, client, store, sent } = setup();
+      client.lookups = [{ kind: 'not_found' }];
+      store.parts.set(REQUEST_ID, 1);
+
+      expect(await service.handle(FOLLOW_UP)).toBe(DumeFollowUpOutcome.DELIVERED);
+
+      expect(sent).toHaveLength(1);
+      expect(sent[0]).toContain(DUME_REST_NOT_DELIVERED_LINE);
+      expect(store.delivery.get(REQUEST_ID)).toBe('sent');
+    });
+
+    it('says the rest could not be delivered when the retry gives up after part one', async () => {
+      const { service, client, store, sent } = setup();
+      client.lookups = [{ kind: 'found', request: queuedView({ requestId: REQUEST_ID }) }];
+      store.parts.set(REQUEST_ID, 2);
+
+      await service.handle({ ...FOLLOW_UP, createdAtMs: NOW_MS - DUME_DEADLINE_MS - 1 });
+
+      expect(sent).toHaveLength(1);
+      expect(sent[0]).toContain(DUME_REST_NOT_DELIVERED_LINE);
+      expect(sent[0]).not.toContain(DUME_GAVE_UP_LINE);
     });
 
     it('resumes after the part that was already sent, so a retry never repeats message one', async () => {
