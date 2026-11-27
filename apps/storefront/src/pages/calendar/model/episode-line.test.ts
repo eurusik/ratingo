@@ -14,6 +14,7 @@ const base: CalendarEpisode = {
   episodeNumber: 4,
   title: 'Heavy Is the Crown',
   airDate: '2026-11-12T19:00:00.000Z',
+  airDateDayOnly: false,
   runtime: 52,
   stillPath: null,
   seasonEpisodeCount: null,
@@ -36,6 +37,19 @@ describe('episodeLine', () => {
         'uk',
       ),
     ).toBe('зранку');
+  });
+
+  it('shows no clock time when only the air day is known', () => {
+    expect(
+      episodeLine({ ...base, airDate: '2026-11-12T12:00:00.000Z', airDateDayOnly: true }, uk, 'uk'),
+    ).toBe('«Heavy Is the Crown» · 52 хв');
+  });
+
+  it('lets the day-only flag win over an instant that would read as morning', () => {
+    const overnight = { ...base, airDate: '2026-11-12T03:00:00.000Z', title: 'TBA', runtime: null };
+
+    expect(episodeLine(overnight, uk, 'uk')).toBe('зранку');
+    expect(episodeLine({ ...overnight, airDateDayOnly: true }, uk, 'uk')).toBe('');
   });
 
   it('notes saved premieres', () => {

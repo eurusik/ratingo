@@ -398,7 +398,7 @@ export class TmdbMapper {
     overview: string | null;
     posterPath: string | null;
     airDate: Date | null;
-    episodeCount: number;
+    episodeCount: number | undefined;
     episodes: [];
   }> {
     if (!Array.isArray(seasons) || seasons.length === 0) {
@@ -414,7 +414,7 @@ export class TmdbMapper {
         overview: s.overview || null,
         posterPath: s.poster_path || null,
         airDate: s.air_date ? new Date(s.air_date) : null,
-        episodeCount: s.episode_count || 0,
+        episodeCount: s.episode_count || undefined,
         episodes: [], // Episodes are fetched separately via Trakt
       }));
   }

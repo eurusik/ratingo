@@ -24,7 +24,12 @@ export function calendarEpisodeCode(episode: CalendarEpisode, dict: Dictionary):
   return episodeCode({ seasonNumber: episode.seasonNumber, number: episode.episodeNumber }, dict);
 }
 
-function releaseTime(episode: CalendarEpisode, dict: Dictionary, locale: Locale): string {
+function releaseTime(
+  episode: CalendarEpisode,
+  dict: Dictionary,
+  locale: Locale,
+): string | undefined {
+  if (episode.airDateDayOnly) return undefined;
   return isMorningRelease(episode.airDate)
     ? dict.calendar.morning
     : formatReleaseTime(locale, episode.airDate);

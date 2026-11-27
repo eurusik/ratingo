@@ -65,4 +65,38 @@ describe('CalendarEpisodeItem', () => {
     expect(screen.getByRole('button', { name: 'Почати дивитись: Сьоґун' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Зберегти/ })).not.toBeInTheDocument();
   });
+
+  it('shows the Kyiv time of an episode with a known air time', () => {
+    renderRow(calendarEpisode({ title: null, airDate: '2026-11-12T19:00:00.000Z' }));
+
+    expect(screen.getByText(/^21:00/)).toBeInTheDocument();
+  });
+
+  it('shows the title and runtime but no clock time for a day-only episode', () => {
+    renderRow(
+      calendarEpisode({
+        title: 'Heavy Is the Crown',
+        airDate: '2026-11-12T03:00:00.000Z',
+        airDateDayOnly: true,
+      }),
+    );
+
+    expect(screen.getByText(/^«Heavy Is the Crown» · 45/)).toBeInTheDocument();
+    expect(screen.queryByText(/\d{2}:\d{2}|зранку/)).not.toBeInTheDocument();
+  });
+
+  it('leaves out the detail line when a day-only episode has nothing else to show', () => {
+    renderRow(
+      calendarEpisode({
+        showTitle: 'Аніме',
+        title: null,
+        runtime: null,
+        airDate: '2026-11-12T03:00:00.000Z',
+        airDateDayOnly: true,
+      }),
+    );
+
+    expect(screen.getByRole('link')).toHaveTextContent(/Аніме$/);
+    expect(screen.getByRole('link').querySelector('.text-muted')).toBeNull();
+  });
 });

@@ -26,6 +26,7 @@ const episode = (airDate: string, episodeId = 'e1'): CalendarEpisode => ({
   runtime: null,
   stillPath: null,
   seasonEpisodeCount: null,
+  airDateDayOnly: false,
   showPopularity: 10,
   isTracked: false,
   isSaved: false,

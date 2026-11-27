@@ -40,6 +40,14 @@ export class CalendarEpisodeDto {
   @ApiProperty({ type: Date })
   airDate: Date;
 
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+    description:
+      'The source gave only the air day, so airDate is midday UTC of that day and its clock time is not real.',
+  })
+  airDateDayOnly: boolean;
+
   @ApiProperty({ type: Number, example: 45, required: false, nullable: true })
   runtime: number | null;
 

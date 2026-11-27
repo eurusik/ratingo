@@ -140,6 +140,20 @@ describe('episodeAction', () => {
     expect(episodeAction(episode({ isTracked: true, airDate: FUTURE }), context)).toBe('remind');
   });
 
+  it('treats a day-only episode as out from the start of its Kyiv day', () => {
+    const earlyToday = { ...context, now: Date.parse('2026-11-11T23:30:00.000Z') };
+    const lateYesterday = { ...context, now: Date.parse('2026-11-11T21:30:00.000Z') };
+    const dayOnly = episode({
+      isTracked: true,
+      airDate: '2026-11-12T12:00:00.000Z',
+      airDateDayOnly: true,
+    });
+
+    expect(episodeAction(dayOnly, earlyToday)).toBe('watch');
+    expect(episodeAction(dayOnly, lateYesterday)).toBe('remind');
+    expect(episodeAction({ ...dayOnly, airDateDayOnly: false }, earlyToday)).toBe('remind');
+  });
+
   it('offers to start saved premieres in “Mine” and any show in “All”', () => {
     expect(episodeAction(episode({ isSaved: true }), context)).toBe('start');
     expect(episodeAction(episode(), context)).toBe('none');
