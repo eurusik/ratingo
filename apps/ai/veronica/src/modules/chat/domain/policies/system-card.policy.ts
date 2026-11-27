@@ -1,6 +1,6 @@
 import type { SystemCard } from '../entities/system-card';
 
-import { describeCadence } from './schedule-cadence.policy';
+import { describeCadence } from '@ratingo/ai-ops-tools';
 
 const bullets = (lines: readonly string[]): string => lines.map((line) => `- ${line}`).join('\n');
 

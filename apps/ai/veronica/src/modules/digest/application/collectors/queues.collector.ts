@@ -7,7 +7,7 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { UNKNOWN_LABEL } from '../../domain/constants/digest-text.constants';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
-import { jobsByResult, queueBacklog, queueBacklogPeak } from '../../domain/queries/prom-queries';
+import { jobsByResult, queueBacklog, queueBacklogPeak } from '@ratingo/ai-ops-tools';
 
 import { baselineAt, guarded, valueByLabel } from './collector-helpers';
 

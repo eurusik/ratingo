@@ -1,5 +1,5 @@
 import { SYSTEM_CARD } from '../../src/modules/chat/domain/constants/system-card.constants';
-import { describeCadence } from '../../src/modules/chat/domain/policies/schedule-cadence.policy';
+import { describeCadence } from '@ratingo/ai-ops-tools';
 
 import { jobFailures } from './job-failure-fixtures';
 import { EvalKind, type EvalCase } from './eval-case';

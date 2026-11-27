@@ -1,17 +1,17 @@
 import { FixedClock, NativeToolSource, ToolRegistry } from '@ratingo/ai-core';
-
-import type { MetricSample } from '../../../digest/public';
 import {
-  InvestigationTool,
+  METRIC_TEMPLATES,
   METRICS_OUTPUT_CAP,
   MetricTemplateName,
-} from '../../domain/constants/investigation.constants';
+  MetricsQueryExecutor,
+  type MetricSample,
+} from '@ratingo/ai-ops-tools';
+
+import { InvestigationTool } from '../../domain/constants/investigation.constants';
 import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
-import { METRIC_TEMPLATES } from './metric-templates';
-import { MetricsQueryExecutor } from './metrics-query.executor';
 
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 13);
 const NOW_SECONDS = NOW_MS / 1000;

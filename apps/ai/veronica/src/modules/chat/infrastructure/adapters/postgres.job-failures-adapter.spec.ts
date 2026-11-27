@@ -1,9 +1,8 @@
 import postgres from 'postgres';
 
-import { kyivDateOf } from '../../../digest/public';
+import { JobFailuresUnavailableError, kyivDateOf } from '@ratingo/ai-ops-tools';
 
 import { describeWithDatabase, TEST_DATABASE_URL } from '../../../../testing/test-database.testing';
-import { JobFailuresUnavailableError } from '../../domain/ports/job-failures.port';
 
 import { PostgresJobFailuresAdapter } from './postgres.job-failures-adapter';
 

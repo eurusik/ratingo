@@ -1,25 +1,26 @@
 import { FixedClock, NativeToolSource, ToolRegistry } from '@ratingo/ai-core';
+import {
+  GrafanaLokiLogsAdapter,
+  JobFailuresExecutor,
+  JobFailuresUnavailableError,
+  LogsSearchExecutor,
+  METRIC_TEMPLATES,
+  MetricTemplateName,
+  MetricsQueryExecutor,
+  PrometheusMetricsAdapter,
+  UnconfiguredJobFailuresAdapter,
+  UnconfiguredLogsAdapter,
+  type JobFailureSummary,
+  type LogsFetch,
+  type MetricSample,
+  type RawLogLine,
+} from '@ratingo/ai-ops-tools';
 
-import type { MetricSample } from '../../../digest/public';
-import { MetricTemplateName } from '../../domain/constants/investigation.constants';
 import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
 import { renderSystemCard } from '../../domain/policies/system-card.policy';
-import {
-  JobFailuresUnavailableError,
-  type JobFailureSummary,
-} from '../../domain/ports/job-failures.port';
-import type { LogsFetch, RawLogLine } from '../../domain/ports/logs.port';
-import { GrafanaLokiLogsAdapter } from '../../infrastructure/adapters/grafana-loki.logs-adapter';
-import { UnconfiguredJobFailuresAdapter } from '../../infrastructure/adapters/unconfigured.job-failures-adapter';
-import { UnconfiguredLogsAdapter } from '../../infrastructure/adapters/unconfigured.logs-adapter';
-import { PrometheusMetricsAdapter } from '../../../digest/infrastructure/adapters/prometheus.metrics-adapter';
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';
-import { JobFailuresExecutor } from './job-failures.executor';
-import { LogsSearchExecutor } from './logs-search.executor';
-import { METRIC_TEMPLATES } from './metric-templates';
-import { MetricsQueryExecutor } from './metrics-query.executor';
 
 const NOW_MS = Date.UTC(2026, 10, 26, 12, 0, 0);
 const MINUTE_MS = 60_000;

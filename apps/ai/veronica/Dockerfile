@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/ai/veronica/package.json apps/ai/veronica/package.json
 COPY packages/ai-core/package.json packages/ai-core/package.json
+COPY packages/ai-ops-tools/package.json packages/ai-ops-tools/package.json
 COPY packages/node-telemetry/package.json packages/node-telemetry/package.json
 
 RUN npm ci --include-workspace-root --workspace=@ratingo/ai-veronica --no-audit --no-fund
@@ -30,6 +31,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 COPY apps/ai/veronica/package.json apps/ai/veronica/package.json
 COPY packages/ai-core/package.json packages/ai-core/package.json
+COPY packages/ai-ops-tools/package.json packages/ai-ops-tools/package.json
 COPY packages/node-telemetry/package.json packages/node-telemetry/package.json
 
 RUN npm ci --omit=dev --include-workspace-root --workspace=@ratingo/ai-veronica --no-audit --no-fund
@@ -58,6 +60,7 @@ RUN apk add --no-cache python3
 COPY --from=analytics-mcp $ANALYTICS_MCP_HOME $ANALYTICS_MCP_HOME
 COPY --from=prod-deps /app ./
 COPY --from=build /app/packages/ai-core/dist ./packages/ai-core/dist
+COPY --from=build /app/packages/ai-ops-tools/dist ./packages/ai-ops-tools/dist
 COPY --from=build /app/packages/node-telemetry/dist ./packages/node-telemetry/dist
 COPY --from=build /app/apps/ai/veronica/dist ./apps/ai/veronica/dist
 COPY apps/ai/veronica/agent ./apps/ai/veronica/agent

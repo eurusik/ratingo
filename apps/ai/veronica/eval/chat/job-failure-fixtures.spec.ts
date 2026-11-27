@@ -1,6 +1,6 @@
 import { FixedClock, RowList } from '@ratingo/ai-core';
 
-import { JobFailuresExecutor } from '../../src/modules/chat/application/tools/job-failures.executor';
+import { JobFailuresExecutor } from '@ratingo/ai-ops-tools';
 
 import { EVAL_NOW_MS } from './eval-clock';
 import { jobFailures } from './job-failure-fixtures';

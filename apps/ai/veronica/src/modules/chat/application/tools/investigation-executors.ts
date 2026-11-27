@@ -1,29 +1,18 @@
 import type { z } from 'zod';
 
-import type {
-  metricsQueryInput,
-  askHappyInput,
-  jobFailuresInput,
-  logsSearchInput,
-  productStatsInput,
-  recentChangesInput,
-} from './investigation-tools';
+import type { OpsExecutors } from '@ratingo/ai-ops-tools';
 
-export type MetricsQueryInput = z.infer<typeof metricsQueryInput>;
+import type { askHappyInput, productStatsInput, recentChangesInput } from './investigation-tools';
+
 export type ProductStatsInput = z.infer<typeof productStatsInput>;
 export type RecentChangesInput = z.infer<typeof recentChangesInput>;
 export type AskHappyInput = z.infer<typeof askHappyInput>;
-export type JobFailuresInput = z.infer<typeof jobFailuresInput>;
-export type LogsSearchInput = z.infer<typeof logsSearchInput>;
 
-export interface InvestigationExecutors {
-  metricsQuery(input: MetricsQueryInput): Promise<unknown>;
+export interface InvestigationExecutors extends OpsExecutors {
   productStats(input: ProductStatsInput): Promise<unknown>;
   digestSnapshot(): Promise<unknown>;
   recentChanges(input: RecentChangesInput): Promise<unknown>;
   askHappy(input: AskHappyInput): Promise<unknown>;
-  jobFailures(input: JobFailuresInput): Promise<unknown>;
-  logsSearch(input: LogsSearchInput): Promise<unknown>;
 }
 
 export const INVESTIGATION_EXECUTORS = Symbol('INVESTIGATION_EXECUTORS');

@@ -44,6 +44,15 @@ const webCoreSourceFiles = ['packages/web-core/src/**/*.{ts,tsx}'];
 const uiSourceFiles = ['packages/ui/src/**/*.{ts,tsx}'];
 const nodeTelemetrySourceFiles = ['packages/node-telemetry/src/**/*.ts'];
 const aiCoreSourceFiles = ['packages/ai-core/src/**/*.ts'];
+const aiOpsToolsSourceFiles = ['packages/ai-ops-tools/src/**/*.ts'];
+const aiOpsToolsTestFiles = [
+  'packages/ai-ops-tools/src/**/*.test.ts',
+  'packages/ai-ops-tools/src/testing/*.ts',
+];
+const aiOpsToolsPostgresFiles = [
+  'packages/ai-ops-tools/src/job-failures/postgres.job-failures-adapter.ts',
+  'packages/ai-ops-tools/src/job-failures/reporting-connection.ts',
+];
 const aiCoreAnthropicAdapterFiles = [
   'packages/ai-core/src/model/adapters/anthropic/anthropic.mapper.ts',
   'packages/ai-core/src/model/adapters/anthropic/anthropic.model-adapter.ts',
@@ -1345,6 +1354,124 @@ export default [
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+    },
+  },
+  {
+    files: aiOpsToolsSourceFiles,
+    plugins: { import: importPlugin },
+    languageOptions: { parserOptions: { projectService: true } },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'packages/ai-ops-tools/tsconfig.json') },
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'no-console': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@nestjs/*', 'next', 'next/*', '@/*'],
+              message:
+                'ai-ops-tools is shared by every agent app: no framework imports and no app aliases.',
+            },
+            {
+              group: ['postgres'],
+              message: 'The Postgres driver is imported only by the job failures adapter.',
+            },
+            { group: ['node:*'], message: 'ai-ops-tools needs no Node built-ins.' },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'ai-ops-tools takes its config from the caller instead of reading process.env.',
+        },
+        {
+          selector: "ThrowStatement > NewExpression[callee.name='Error']",
+          message: 'Throw typed errors that extend Error instead of the generic Error.',
+        },
+        {
+          selector: 'ForInStatement',
+          message: 'Use Object.keys/values/entries instead of for-in.',
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Use the injected ClockPort instead of Date.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Inject randomness instead of Math.random().',
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './packages/ai-ops-tools/src/{logs,job-failures,metrics}/**/*',
+              from: './packages/ai-ops-tools/src/{tools,testing}/**/*',
+              message: 'A capability never imports the tool builder or the simulators.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/logs/**/*',
+              from: './packages/ai-ops-tools/src/{job-failures,metrics}/**/*',
+              message: 'Capabilities never import each other; share through shared or time.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/job-failures/**/*',
+              from: './packages/ai-ops-tools/src/{logs,metrics}/**/*',
+              message: 'Capabilities never import each other; share through shared or time.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/metrics/**/*',
+              from: './packages/ai-ops-tools/src/{logs,job-failures}/**/*',
+              message: 'Capabilities never import each other; share through shared or time.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/{shared,time}/**/*',
+              from: './packages/ai-ops-tools/src/{logs,job-failures,metrics,tools,testing}/**/*',
+              message: 'shared and time are the bottom of the package.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/**/*',
+              from: './apps/**/*',
+              message: 'Packages never import apps.',
+            },
+          ],
+        },
+      ],
+      ...typeSafetyRules,
+    },
+  },
+  {
+    files: aiOpsToolsPostgresFiles,
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  {
+    files: aiOpsToolsTestFiles,
+    rules: {
+      'no-restricted-syntax': 'off',
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
+      'no-restricted-imports': 'off',
+      'import/no-restricted-paths': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
   {

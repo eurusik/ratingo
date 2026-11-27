@@ -7,6 +7,7 @@ import {
   type ClockPort,
   type RunRepository,
 } from '@ratingo/ai-core';
+import { kyivDateOf } from '@ratingo/ai-ops-tools';
 
 import { AGENT_FOLDER } from '../../../../core/ai-core.constants';
 import {
@@ -14,7 +15,6 @@ import {
   CHAT_BUDGET_WINDOW_MS,
   CHAT_TASK_NAME,
 } from '../../../chat/public';
-import { kyivDateOf } from '../../../digest/public';
 import { NOTIFIER_PORT, type NotifierPort } from '../../../notify/public';
 import {
   FAILED_RUNS_WINDOW_MS,

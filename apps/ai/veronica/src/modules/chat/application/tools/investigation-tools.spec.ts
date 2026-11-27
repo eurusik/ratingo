@@ -1,7 +1,6 @@
-import {
-  InvestigationTool,
-  MetricTemplateName,
-} from '../../domain/constants/investigation.constants';
+import { MetricTemplateName } from '@ratingo/ai-ops-tools';
+
+import { InvestigationTool } from '../../domain/constants/investigation.constants';
 
 import type { InvestigationExecutors } from './investigation-executors';
 import { buildInvestigationTools } from './investigation-tools';

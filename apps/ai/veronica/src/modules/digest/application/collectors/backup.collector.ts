@@ -8,7 +8,7 @@ import type { SourceReading } from '../../domain/entities/source-reading';
 import { available, unavailable } from '../../domain/entities/source-reading';
 import { METRICS_PORT, type MetricsPort } from '../../domain/ports/metrics.port';
 
-import { BACKUP_LAST_RUNS, BACKUP_SIZE } from '../../domain/queries/prom-queries';
+import { BACKUP_LAST_RUNS, BACKUP_SIZE } from '@ratingo/ai-ops-tools';
 
 import { baselineAt, guarded, hoursSince } from './collector-helpers';
 

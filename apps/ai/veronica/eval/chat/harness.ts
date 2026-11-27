@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+
 import {
   AgentLoop,
   FixedClock,
@@ -12,16 +14,18 @@ import {
   type ClockPort,
   type ModelAliases,
 } from '@ratingo/ai-core';
+import {
+  GrafanaLokiLogsAdapter,
+  JobFailuresExecutor,
+  LogsSearchExecutor,
+} from '@ratingo/ai-ops-tools';
 
 import { MODEL_PRICES } from '../../src/config/models.config';
 import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { InvestigationRunner } from '../../src/modules/chat/application/services/investigation.runner';
 import type { InvestigationExecutors } from '../../src/modules/chat/application/tools/investigation-executors';
-import { JobFailuresExecutor } from '../../src/modules/chat/application/tools/job-failures.executor';
-import { LogsSearchExecutor } from '../../src/modules/chat/application/tools/logs-search.executor';
 import type { ChatOutcome } from '../../src/modules/chat/domain/constants/chat.constants';
 import type { ConversationTurn } from '../../src/modules/chat/domain/entities/conversation-turn';
-import { GrafanaLokiLogsAdapter } from '../../src/modules/chat/infrastructure/adapters/grafana-loki.logs-adapter';
 import { withoutFlaggedNote } from '../../src/modules/chat/domain/policies/flagged-numbers.policy';
 import {
   answerStep,
@@ -81,6 +85,7 @@ const lokiExecutor = (testCase: EvalCase): LogsSearchExecutor => {
       simulatedLokiFetch((scenario as LokiScenario | undefined) ?? NO_LOG_RECORDS),
     ),
     new FixedClock(EVAL_NOW_MS),
+    new Logger(LogsSearchExecutor.name),
   );
 };
 
