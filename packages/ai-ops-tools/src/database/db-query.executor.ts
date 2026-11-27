@@ -31,7 +31,7 @@ const refusalMessage = (refusal: QueryRefusal, detail: string, timeoutMs: number
     case QueryRefusal.INVALID_QUERY:
       return `The database rejected the query (${detail}). Fix the query and try again.`;
     case QueryRefusal.TIMEOUT:
-      return `The query was cancelled after ${timeoutMs / MS_PER_SECOND} seconds and returned no rows, not even partial ones. Nothing was changed. Do not state any number from it. Make it cheaper: filter by date or id, select fewer columns, aggregate instead of listing, or call with explain=true to see the plan.`;
+      return `The database stopped the query at the ${timeoutMs / MS_PER_SECOND}-second time limit and returned no rows, not even partial ones. Nothing was changed. Do not state any number from it. One narrower query (a shorter period, fewer rows, filtered by date or id) may fit in the limit; repeating heavy variants of the same query will not help. If a narrower query does not fit either, tell the owner plainly that the full calculation did not finish because the database stopped it at the time limit. A narrower result may be given only if it is clearly labeled as narrower.`;
     case QueryRefusal.BUSY:
       return `The database is busy (${detail}). Nothing was run. Try again later.`;
     case QueryRefusal.NOT_ALLOWED:

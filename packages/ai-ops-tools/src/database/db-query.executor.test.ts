@@ -130,7 +130,7 @@ describe('DbQueryExecutor', () => {
     [
       QueryRefusal.TIMEOUT,
       'canceling statement due to statement timeout',
-      'cancelled after 5 seconds',
+      'stopped the query at the 5-second time limit',
     ],
     [QueryRefusal.BUSY, 'too many connections for role', 'The database is busy'],
     [
@@ -192,6 +192,9 @@ describe('DbQueryExecutor', () => {
 
     expect(result.message).toContain('returned no rows, not even partial ones');
     expect(result.message).toContain('Do not state any number from it');
+    expect(result.message).toContain('stopped the query at the 5-second time limit');
+    expect(result.message).toContain('One narrower query');
+    expect(result.message).toContain('repeating heavy variants of the same query will not help');
   });
 
   it('reports itself unavailable with the reason when the connection fails, and logs it', async () => {

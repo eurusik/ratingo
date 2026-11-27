@@ -5,8 +5,10 @@ import { defineTool, type Tool } from '@ratingo/ai-core';
 import {
   DB_QUERY_OUTPUT_CAP,
   DB_QUERY_ROW_LIMIT,
+  DB_QUERY_TIMEOUTS_PER_RUN,
   DB_SCHEMA_OUTPUT_CAP,
   DB_STATEMENT_TIMEOUT_MS,
+  QueryRefusal,
 } from '../database/database.constants';
 import { dbQueryInput, type DbQueryInput } from '../database/db-query.input';
 import { dbSchemaInput, type DbSchemaInput } from '../database/db-schema.input';
@@ -70,12 +72,28 @@ const DB_QUERY_DESCRIPTION = `Runs one read-only SQL statement (SELECT or WITH, 
 
 const DB_UNTRUSTED_LABEL = 'database rows';
 
+const isTimeoutAnswer = (output: unknown): boolean =>
+  typeof output === 'object' &&
+  output !== null &&
+  (output as { status?: unknown }).status === QueryRefusal.TIMEOUT;
+
 export const createOpsTools = (
   executors: OpsExecutors,
   { decorate }: OpsToolsOptions = {},
 ): OpsTools => {
   const decorated = async (tool: OpsTool, output: Promise<unknown>): Promise<unknown> =>
     decorate === undefined ? output : decorate(tool, await output);
+  let timeouts = 0;
+  let lastTimeoutAnswer: unknown = null;
+  const dbQuery = async (input: DbQueryInput): Promise<unknown> => {
+    if (timeouts >= DB_QUERY_TIMEOUTS_PER_RUN) return lastTimeoutAnswer;
+    const output = await executors.dbQuery(input);
+    if (isTimeoutAnswer(output)) {
+      timeouts += 1;
+      lastTimeoutAnswer = output;
+    }
+    return output;
+  };
   return {
     metricsQuery: defineTool({
       name: OpsTool.METRICS_QUERY,
@@ -117,7 +135,7 @@ export const createOpsTools = (
       readOnly: true,
       maxOutputChars: DB_QUERY_OUTPUT_CAP,
       untrustedLabel: DB_UNTRUSTED_LABEL,
-      handler: (input) => decorated(OpsTool.DB_QUERY, executors.dbQuery(input)),
+      handler: (input) => decorated(OpsTool.DB_QUERY, dbQuery(input)),
     }),
   };
 };
