@@ -122,11 +122,13 @@ export { AgentFolderError, loadAgentFolder } from './manifest/agent-folder.loade
 export { AI_METRIC_ATTRIBUTES, AI_METRIC_NAMES, AI_TOKEN_KINDS } from './telemetry/ai-metric-names';
 export type { AgentBudget } from './telemetry/agent-budget-gauge';
 export { registerAgentBudgetGauge } from './telemetry/agent-budget-gauge';
-export type { RecordedPoint, RecordingMeter } from './telemetry/recording-meter';
-export { createRecordingMeter } from './telemetry/recording-meter';
 
 export type { InternalAccessRequest } from './http/internal-access';
-export { INTERNAL_PROXY_HEADERS, InternalAccess, decideInternalAccess } from './http/internal-access';
+export {
+  INTERNAL_PROXY_HEADERS,
+  InternalAccess,
+  decideInternalAccess,
+} from './http/internal-access';
 
 export type {
   LandingPageConfig,

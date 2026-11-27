@@ -94,6 +94,10 @@ export class ToolRegistry {
     );
   }
 
+  has(name: string): boolean {
+    return this.allowed.has(name);
+  }
+
   unavailableTools(): readonly string[] {
     return this.absent;
   }

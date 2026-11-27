@@ -61,7 +61,6 @@ const aiCoreTelemetryRepositoryFiles = [
   'packages/ai-core/src/runs/telemetry.run-repository.ts',
   'packages/ai-core/src/runs/create-run-repository.ts',
   'packages/ai-core/src/telemetry/agent-budget-gauge.ts',
-  'packages/ai-core/src/telemetry/recording-meter.ts',
   'packages/ai-core/src/mcp/adapters/otel/*.ts',
 ];
 const aiCoreMcpStdioAdapterFiles = ['packages/ai-core/src/mcp/adapters/stdio/*.ts'];

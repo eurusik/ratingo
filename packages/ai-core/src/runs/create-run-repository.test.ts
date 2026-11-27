@@ -1,7 +1,7 @@
 import { FixedClock } from '../clock/fixed.clock';
 import { EMPTY_USAGE } from '../model/model.types';
 import { AI_METRIC_ATTRIBUTES, AI_METRIC_NAMES } from '../telemetry/ai-metric-names';
-import { createRecordingMeter } from '../telemetry/recording-meter';
+import { createRecordingMeter } from '../testing/recording-meter';
 import { createRunRepository } from './create-run-repository';
 import { InMemoryRunRepository } from './in-memory.run-repository';
 import { Run, RunStopReason, RunTrigger } from './run';
@@ -88,6 +88,8 @@ describe('createRunRepository', () => {
     const { repository } = build('none');
     await repository.save(finishedRun('veronica', 0.02));
 
-    expect(await repository.spentUsd({ agent: 'veronica', sinceMs: NOON - 1000 })).toBeCloseTo(0.02);
+    expect(await repository.spentUsd({ agent: 'veronica', sinceMs: NOON - 1000 })).toBeCloseTo(
+      0.02,
+    );
   });
 });

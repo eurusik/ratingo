@@ -1,6 +1,6 @@
 import { AI_METRIC_ATTRIBUTES, AI_METRIC_NAMES } from './ai-metric-names';
 import { registerAgentBudgetGauge } from './agent-budget-gauge';
-import { createRecordingMeter } from './recording-meter';
+import { createRecordingMeter } from '../testing/recording-meter';
 
 describe('registerAgentBudgetGauge', () => {
   it('reports the manifest budget under the agent label', () => {

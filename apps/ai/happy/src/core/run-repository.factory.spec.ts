@@ -8,10 +8,10 @@ import {
   Run,
   RunStopReason,
   RunTrigger,
-  createRecordingMeter,
   type RedisSpendClient,
 } from '@ratingo/ai-core';
 
+import { createMetricProbe } from './metric-probe.testing';
 import { PROCESS_LOCAL_BUDGET_WARNING, createRunRepository } from './run-repository.factory';
 
 const NOON = Date.UTC(2026, 10, 22, 12, 0, 0);
@@ -82,7 +82,7 @@ describe('createRunRepository', () => {
   });
 
   it('records every finished run as app.ai.runs, the way every agent must', async () => {
-    const probe = createRecordingMeter();
+    const probe = createMetricProbe();
     const repository = createRunRepository({
       meter: probe.meter,
       clock: new FixedClock(NOON),
@@ -93,7 +93,7 @@ describe('createRunRepository', () => {
 
     await repository.save(finishedRun(0.1));
 
-    expect(probe.recorded(AI_METRIC_NAMES.RUNS)).toEqual([
+    expect(await probe.points(AI_METRIC_NAMES.RUNS)).toEqual([
       {
         value: 1,
         attributes: expect.objectContaining({ [AI_METRIC_ATTRIBUTES.AGENT]: 'happy' }),
