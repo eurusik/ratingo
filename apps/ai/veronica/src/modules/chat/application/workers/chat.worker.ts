@@ -98,14 +98,25 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   }
 
   async onApplicationShutdown(): Promise<void> {
+    const failures: Error[] = [];
+    await this.closeStep('worker', failures, async () => this.worker?.close());
+    await this.closeStep('explorer', failures, async () => this.explorer.close?.());
+    await this.closeStep('redis', failures, async () => this.connection.disconnect());
+    const [first] = failures;
+    if (first !== undefined) throw first;
+  }
+
+  private async closeStep(
+    step: string,
+    failures: Error[],
+    close: () => Promise<unknown>,
+  ): Promise<void> {
     try {
-      await this.worker?.close();
-    } finally {
-      try {
-        await this.explorer.close?.();
-      } finally {
-        this.connection.disconnect();
-      }
+      await close();
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Не вдалося закрити ${step} під час зупинки: ${failure.message}`);
+      failures.push(failure);
     }
   }
 

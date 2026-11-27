@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 
 import { NotificationError } from '../../../notify/public';
@@ -220,6 +221,27 @@ describe('ChatWorker', () => {
     await expect(worker.onApplicationShutdown()).rejects.toThrow('stuck');
 
     expect(order).toEqual(['explorer', 'redis']);
+  });
+
+  it('reports every failed close and rethrows the first one', async () => {
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => undefined } as never,
+      { close: async () => Promise.reject(new Error('explorer broken')) } as never,
+    );
+    Object.assign(worker, { worker: { close: async () => Promise.reject(new Error('stuck')) } });
+    const logged = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('stuck');
+
+    expect(logged.mock.calls.map(([message]) => String(message))).toEqual([
+      expect.stringContaining('worker'),
+      expect.stringContaining('explorer'),
+    ]);
+    logged.mockRestore();
   });
 
   it('still disconnects redis when the explorer connection fails to close', async () => {

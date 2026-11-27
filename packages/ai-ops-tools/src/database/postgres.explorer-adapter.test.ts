@@ -171,24 +171,16 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
       expect([refusal, after.rows]).toEqual([QueryRefusal.TIMEOUT, [{ ok: 1 }]]);
     });
 
-    it('does not let one call change the limits of the next one', async () => {
-      await quick.query({
-        sql: "SELECT set_config('statement_timeout', '0', false)",
-        explain: false,
-        rowLimit: 100,
-      });
-
-      const refusal = await refusalOf(() =>
-        quick.query({ sql: 'SELECT pg_sleep(2)', explain: false, rowLimit: 100 }),
-      );
-
-      expect(refusal).toBe(QueryRefusal.TIMEOUT);
-    });
-
     it.each([
       ['ending a session', 'SELECT pg_terminate_backend(pg_backend_pid())'],
       ['cancelling a query', 'SELECT pg_cancel_backend(pg_backend_pid())'],
       ['taking an advisory lock', 'SELECT pg_advisory_lock(4242)'],
+      ['changing a setting', "SELECT set_config('statement_timeout', '0', false)"],
+      ['writing a message to the log stream', "SELECT pg_logical_emit_message(true, 'p', 'm')"],
+      ['sending a notification', "SELECT pg_notify('channel', 'payload')"],
+      ['creating a large object', 'SELECT lo_creat(-1)'],
+      ['running a query from text', "SELECT query_to_xml('select 1', true, true, '')"],
+      ['running a statistics query from text', "SELECT * FROM ts_stat('select 1')"],
     ])(
       'is not allowed to run a function for %s, and says so instead of calling it private',
       async (_label, sql) => {

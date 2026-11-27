@@ -10,6 +10,7 @@ export const DB_LOCK_TIMEOUT_MS = 2000;
 export const DB_IDLE_IN_TRANSACTION_TIMEOUT_MS = 10_000;
 export const DB_CONNECT_TIMEOUT_SECONDS = 10;
 export const DB_CLIENT_DEADLINE_SLACK_MS = 2000;
+export const DB_MAX_PENDING_CALLS = 4;
 export const DB_TABLE_FILTER_MAX_CHARS = 63;
 
 export const QueryRefusal = {

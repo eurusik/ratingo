@@ -184,6 +184,26 @@ describe('readOnlyStatement', () => {
       "select pg_logical_emit_message(true, 'p', 'm')",
       'pg_logical_emit_message is not allowed: this tool only reads data',
     ],
+    [
+      'ts_stat',
+      'select * from ts_stat($q$select to_tsvector(1)$q$)',
+      'ts_stat is not allowed: this tool only reads data',
+    ],
+    [
+      'ts_rewrite',
+      "select ts_rewrite('a'::tsquery, 'select 1, 2')",
+      'ts_rewrite is not allowed: this tool only reads data',
+    ],
+    [
+      'set_config hidden behind a non-ASCII dollar tag',
+      "select $é$ ' $é$ as x, set_config('work_mem', '1GB', true) as w, $é$ ' $é$ as y",
+      'set_config is not allowed: this tool only reads data',
+    ],
+    [
+      'a dollar followed by a non-ASCII letter that is not a tag',
+      'select $é as x',
+      'a $ followed by a non-ASCII letter is not supported: write the text without dollar quotes',
+    ],
   ])('refuses %s', (_label, sql, message) => {
     expect(messageOf(sql)).toBe(message);
   });
@@ -239,6 +259,27 @@ describe('readOnlyStatement', () => {
           (head, tail) => {
             fc.pre(tail.trim() !== '');
             expect(messageOf(`${head}; ${tail}`)).not.toBe('accepted');
+          },
+        ),
+      );
+    });
+
+    it('never lets a call hide behind a dollar-quoted string with a non-ASCII tag', () => {
+      fc.assert(
+        fc.property(
+          fc.stringMatching(/^[À-ɏЀ-ӿ]{1,3}$/),
+          fc.constantFrom(
+            "set_config('work_mem', '1GB', true)",
+            "ts_stat('select 1')",
+            'pg_advisory_lock(1)',
+            "query_to_xml('select 1', true, true, '')",
+          ),
+          (tag, call) => {
+            const quoted = `$${tag}$ ' $${tag}$`;
+
+            expect(messageOf(`select ${quoted} as x, ${call} as w, ${quoted} as y`)).toMatch(
+              /is not allowed/,
+            );
           },
         ),
       );

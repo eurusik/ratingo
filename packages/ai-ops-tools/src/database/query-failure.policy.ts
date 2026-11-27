@@ -72,8 +72,11 @@ export const failureOfQuery = (
     : new ExplorerQueryRefusedError(refusal, detailOf(error));
 };
 
-export const failureOfSchema = (error: unknown): ExplorerFailureError =>
-  new ExplorerFailureError(unavailableReason(error));
+export const failureOfSchema = (error: unknown): ExplorerFailureError => {
+  if (error instanceof ExplorerFailureError) return error;
+  if (error instanceof ExplorerQueryRefusedError) return new ExplorerFailureError(error.refusal);
+  return new ExplorerFailureError(unavailableReason(error));
+};
 
 export const isConnectionLoss = (error: unknown): boolean =>
   error instanceof ExplorerFailureError && ['network', 'connection_lost'].includes(error.reason);

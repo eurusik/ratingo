@@ -79,8 +79,11 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
       dbQuery: (input) => dbQuery.run(input),
     },
     close: async () => {
-      await failures.close?.();
-      await explorer.close?.();
+      const results = await Promise.allSettled([failures.close?.(), explorer.close?.()]);
+      const firstFailure = results.find(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+      if (firstFailure !== undefined) throw firstFailure.reason as Error;
     },
   };
 };

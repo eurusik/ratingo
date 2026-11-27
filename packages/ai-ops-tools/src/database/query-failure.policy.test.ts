@@ -1,6 +1,6 @@
 import { QueryRefusal } from './database.constants';
 import { ExplorerFailureError, ExplorerQueryRefusedError } from './database.port';
-import { failureOfQuery } from './query-failure.policy';
+import { failureOfQuery, failureOfSchema } from './query-failure.policy';
 
 const errorWith = (code: string, message = 'text'): Error =>
   Object.assign(new Error(message), { code });
@@ -50,5 +50,23 @@ describe('failureOfQuery', () => {
 
     expect((failure as ExplorerQueryRefusedError).message.length).toBeLessThanOrEqual(300);
     expect((failure as ExplorerQueryRefusedError).message).not.toContain('\n');
+  });
+});
+
+describe('failureOfSchema', () => {
+  it('names the refusal when the call was turned away instead of calling it a failed query', () => {
+    const failure = failureOfSchema(new ExplorerQueryRefusedError(QueryRefusal.BUSY, 'queue full'));
+
+    expect(failure.reason).toBe(QueryRefusal.BUSY);
+  });
+
+  it('keeps a failure that already has a reason', () => {
+    const original = new ExplorerFailureError('network');
+
+    expect(failureOfSchema(original)).toBe(original);
+  });
+
+  it('names the error class for an unknown failure', () => {
+    expect(failureOfSchema(new TypeError('secret detail')).reason).toBe('query failed (TypeError)');
   });
 });

@@ -36,6 +36,15 @@ export class ExplorerSession {
     this.connection.release();
   }
 
+  async reset(): Promise<void> {
+    try {
+      await this.control('ROLLBACK');
+      await this.control('DISCARD ALL');
+    } catch {
+      this.broken = true;
+    }
+  }
+
   async control(statement: string): Promise<void> {
     await this.guarded(this.connection.unsafe(statement, [], SIMPLE_PROTOCOL));
   }

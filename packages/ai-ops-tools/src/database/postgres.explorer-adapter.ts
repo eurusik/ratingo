@@ -7,9 +7,12 @@ import {
   DB_CONNECT_TIMEOUT_SECONDS,
   DB_IDLE_IN_TRANSACTION_TIMEOUT_MS,
   DB_LOCK_TIMEOUT_MS,
+  DB_MAX_PENDING_CALLS,
   DB_STATEMENT_TIMEOUT_MS,
+  QueryRefusal,
 } from './database.constants';
 import {
+  ExplorerQueryRefusedError,
   type ExplorerPort,
   type QueryRequest,
   type QueryRows,
@@ -18,13 +21,10 @@ import {
 import { ExplorerSession } from './explorer-session';
 import { failureOfQuery, failureOfSchema } from './query-failure.policy';
 import { SCHEMA_SQL, toSchemaListing, type SchemaRow } from './schema-listing.mapper';
+import { TypeOid } from './type-oid';
 
 const SHUTDOWN_GRACE_SECONDS = 5;
 const IDLE_CONNECTION_SECONDS = 30;
-const DATE_OID = 1082;
-const TIMESTAMP_OID = 1114;
-const TIMESTAMPTZ_OID = 1184;
-const FORCE_EXTENDED_PROTOCOL = { simple: false } as unknown as postgres.UnsafeQueryOptions;
 
 export interface ExplorerConnectionOptions {
   statementTimeoutMs?: number;
@@ -33,7 +33,11 @@ export interface ExplorerConnectionOptions {
 const rawText = { serialize: (value: unknown) => String(value), parse: (value: string) => value };
 
 const connectionTypes = {
-  date: { to: TIMESTAMPTZ_OID, from: [DATE_OID, TIMESTAMP_OID, TIMESTAMPTZ_OID], ...rawText },
+  date: {
+    to: TypeOid.TIMESTAMPTZ,
+    from: [TypeOid.DATE, TypeOid.TIMESTAMP, TypeOid.TIMESTAMPTZ],
+    ...rawText,
+  },
 };
 
 export class PostgresExplorerAdapter implements ExplorerPort {
@@ -59,6 +63,8 @@ export class PostgresExplorerAdapter implements ExplorerPort {
 
   private sql: postgres.Sql;
   private queue: Promise<unknown> = Promise.resolve();
+  private pendingCalls = 0;
+  private closed = false;
 
   constructor(
     private readonly createSql: () => postgres.Sql,
@@ -98,6 +104,8 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   }
 
   async close(): Promise<void> {
+    this.closed = true;
+    await this.queue;
     await this.sql.end({ timeout: SHUTDOWN_GRACE_SECONDS });
   }
 
@@ -108,12 +116,32 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   }
 
   private inRolledBackTransaction<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
+    if (this.closed) {
+      throw new ExplorerQueryRefusedError(
+        QueryRefusal.BUSY,
+        'the database explorer is shutting down',
+      );
+    }
+    if (this.pendingCalls >= DB_MAX_PENDING_CALLS) {
+      throw new ExplorerQueryRefusedError(
+        QueryRefusal.BUSY,
+        'the database explorer is busy with other queries: try again in a moment',
+      );
+    }
+    this.pendingCalls += 1;
     const turn = this.queue.then(
       () => this.withSession(work),
       () => this.withSession(work),
     );
-    this.queue = turn.catch(() => undefined);
+    this.queue = turn.then(
+      () => this.leaveQueue(),
+      () => this.leaveQueue(),
+    );
     return turn;
+  }
+
+  private leaveQueue(): void {
+    this.pendingCalls -= 1;
   }
 
   private async withSession<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
@@ -131,10 +159,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   }
 
   private async finish(session: ExplorerSession): Promise<void> {
-    if (session.reusable) {
-      await session.control('ROLLBACK').catch(() => undefined);
-      await session.control('DISCARD ALL').catch(() => undefined);
-    }
+    if (session.reusable) await session.reset();
     if (session.reusable) session.release();
     else await this.replaceConnection();
   }

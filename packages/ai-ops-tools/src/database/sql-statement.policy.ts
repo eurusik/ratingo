@@ -41,6 +41,8 @@ const FORBIDDEN_FUNCTIONS = new Set([
   'pg_reload_conf',
   'pg_rotate_logfile',
   'pg_logical_emit_message',
+  'ts_stat',
+  'ts_rewrite',
   'lo_import',
   'lo_export',
 ]);
@@ -66,6 +68,8 @@ interface Scanned {
 const isWordStart = (char: string): boolean => /[A-Za-z_\u0080-\uffff]/.test(char);
 const isWordPart = (char: string): boolean => /[A-Za-z0-9_$\u0080-\uffff]/.test(char);
 
+const DOLLAR_TAG = /^\$([A-Za-z_\u0080-￿][A-Za-z0-9_\u0080-￿]*)?\$/;
+const NON_ASCII_LETTER = /[\u0080-￿]/;
 const UNICODE_ESCAPE = /^[Uu]&["']/;
 
 const refusal = (message: string): InvalidOpsInputError => new InvalidOpsInputError(message);
@@ -108,7 +112,7 @@ const skipQuoted = (sql: string, start: number, quote: string, backslash: boolea
 };
 
 const dollarTagAt = (sql: string, start: number): string | null => {
-  const match = /^\$([A-Za-z_][A-Za-z0-9_]*)?\$/.exec(sql.slice(start));
+  const match = DOLLAR_TAG.exec(sql.slice(start));
   return match === null ? null : match[0];
 };
 
@@ -160,6 +164,11 @@ const scan = (sql: string): Scanned => {
         );
       }
       const tag = dollarTagAt(sql, index);
+      if (tag === null && NON_ASCII_LETTER.test(sql.charAt(index + 1))) {
+        throw refusal(
+          'a $ followed by a non-ASCII letter is not supported: write the text without dollar quotes',
+        );
+      }
       if (tag !== null) {
         next = skipDollarQuoted(sql, index, tag);
         kept = sql.slice(index, next);

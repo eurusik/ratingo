@@ -1,30 +1,11 @@
 import { DB_QUERY_CELL_MAX_CHARS, QueryRefusal } from './database.constants';
 import { ExplorerQueryRefusedError } from './database.port';
+import { TypeOid } from './type-oid';
 
 export interface OutputColumn {
   name: string;
   type: number;
 }
-
-const TypeOid = {
-  BOOL: 16,
-  BYTEA: 17,
-  INT8: 20,
-  INT2: 21,
-  INT4: 23,
-  OID: 26,
-  FLOAT4: 700,
-  FLOAT8: 701,
-  MONEY: 790,
-  DATE: 1082,
-  TIME: 1083,
-  TIMESTAMP: 1114,
-  TIMESTAMPTZ: 1184,
-  INTERVAL: 1186,
-  TIMETZ: 1266,
-  NUMERIC: 1700,
-  UUID: 2950,
-} as const;
 
 const FIXED_SIZE_TYPES: ReadonlySet<number> = new Set([
   TypeOid.BOOL,
@@ -32,8 +13,6 @@ const FIXED_SIZE_TYPES: ReadonlySet<number> = new Set([
   TypeOid.INT2,
   TypeOid.INT4,
   TypeOid.OID,
-  TypeOid.FLOAT4,
-  TypeOid.FLOAT8,
   TypeOid.MONEY,
   TypeOid.DATE,
   TypeOid.TIME,
@@ -65,6 +44,7 @@ const boundedText = (name: string): string => {
 const expressionOf = ({ name, type }: OutputColumn): string => {
   if (FIXED_SIZE_TYPES.has(type)) return quoted(name);
   if (type === TypeOid.NUMERIC) return boundedText(name);
+  if (type === TypeOid.FLOAT4 || type === TypeOid.FLOAT8) return `to_jsonb(${quoted(name)})`;
   if (type === TypeOid.BYTEA) return `'[binary, ' || octet_length(${quoted(name)}) || ' bytes]'`;
   return boundedExpression(name);
 };

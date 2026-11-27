@@ -158,11 +158,14 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
     expect(await outcomeOf('select 1 as ok')).toBe('rows');
   });
 
-  it('does not keep a session setting from one call in the next one', async () => {
-    await run("select set_config('work_mem', '2GB', false) as changed");
+  it('cannot change a setting at all, so the limits of one call cannot leak into the next', async () => {
+    const refusal = await run("select set_config('work_mem', '2GB', false) as changed").catch(
+      (error: unknown) => error,
+    );
 
     const state = await run("select current_setting('work_mem') as work_mem");
 
+    expect(refusal).toMatchObject({ refusal: QueryRefusal.NOT_ALLOWED });
     expect(state.rows).toEqual([{ work_mem: '16MB' }]);
   });
 
@@ -251,6 +254,43 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
 
     expect(JSON.stringify(result.rows).length).toBeLessThan(100 * 40 * 1100);
     expect(result.hasMoreRows).toBe(true);
+  });
+
+  it('returns NaN and infinity as text instead of null', async () => {
+    const result = await run(
+      `select 'NaN'::float8 as not_a_number, 'Infinity'::float4 as up, '-Infinity'::float8 as down, 1.5::float8 as plain`,
+    );
+
+    expect(result.rows).toEqual([
+      { not_a_number: 'NaN', up: 'Infinity', down: '-Infinity', plain: 1.5 },
+    ]);
+  });
+
+  it('answers busy to calls beyond the queue instead of piling them up', async () => {
+    const outcomes = await Promise.all(
+      Array.from({ length: 7 }, () => outcomeOf('select pg_sleep(0.3) as slept')),
+    );
+
+    expect(outcomes.filter((outcome) => outcome === 'rows')).toHaveLength(4);
+    expect(outcomes.filter((outcome) => outcome === QueryRefusal.BUSY)).toHaveLength(3);
+    expect(await outcomeOf('select 1 as ok')).toBe('rows');
+  });
+
+  it('finishes the calls in flight on close and refuses new ones', async () => {
+    const closing = PostgresExplorerAdapter.connect(database.explorerUrl);
+    const inFlight = closing
+      .query({ sql: 'select pg_sleep(0.3) as slept', explain: false, rowLimit: 10 })
+      .then(() => 'rows')
+      .catch(() => 'failed');
+
+    const closed = closing.close();
+    const late = await closing
+      .query({ sql: 'select 1 as late', explain: false, rowLimit: 10 })
+      .catch((error: unknown) => error);
+    await closed;
+
+    expect(await inFlight).toBe('rows');
+    expect(late).toMatchObject({ refusal: QueryRefusal.BUSY });
   });
 
   it('does not fail a waiting call when another call loses its connection', async () => {
