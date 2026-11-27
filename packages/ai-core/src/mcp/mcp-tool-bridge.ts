@@ -43,6 +43,7 @@ function unavailableReason(error: unknown): string {
 export class BridgedMcpTool implements Tool {
   readonly name: string;
   readonly readOnly = true;
+  readonly startsPaidWork = false;
   readonly maxOutputChars: number;
   readonly definition: ToolDefinition;
   private readonly label: string;

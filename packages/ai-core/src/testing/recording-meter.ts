@@ -1,6 +1,6 @@
 import { createNoopMeter, type Attributes, type Meter } from '@opentelemetry/api';
 
-export interface RecordedPoint {
+interface RecordedPoint {
   value: number;
   attributes: Attributes;
 }
