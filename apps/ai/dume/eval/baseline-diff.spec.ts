@@ -1,16 +1,5 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import * as os from 'node:os';
-import * as path from 'node:path';
-
 import { aggregateCase, type CaseOutcome } from './aggregate';
-import {
-  RegressionReason,
-  buildBaseline,
-  diffBaseline,
-  readBaselineFile,
-  writeBaselineFile,
-  type Baseline,
-} from './baseline';
+import { RegressionReason, buildBaseline, diffBaseline, type Baseline } from './baseline-diff';
 import { CaseKind } from './eval-case';
 import type { RunVerdict } from './scorer';
 
@@ -89,36 +78,5 @@ describe('diffBaseline', () => {
     expect(diffBaseline(baseline, [outcome('a', 3, 3)], { fullRun: false }).removedCases).toEqual(
       [],
     );
-  });
-});
-
-describe('baseline file', () => {
-  let directory: string;
-
-  beforeEach(async () => {
-    directory = await mkdtemp(path.join(os.tmpdir(), 'dume-baseline-'));
-  });
-
-  afterEach(() => rm(directory, { recursive: true, force: true }));
-
-  it('round-trips and reports a missing file as null', async () => {
-    const file = path.join(directory, 'nested', 'baseline.json');
-    expect(await readBaselineFile(file)).toBeNull();
-
-    await writeBaselineFile(file, baselineOf(outcome('a', 2, 3)));
-
-    expect((await readBaselineFile(file))?.cases.a).toEqual({
-      passes: 2,
-      runs: 3,
-      passed: true,
-      flaky: true,
-    });
-  });
-
-  it('refuses a file with an unknown version', async () => {
-    const file = path.join(directory, 'old.json');
-    await writeFile(file, JSON.stringify({ version: 99, cases: {} }));
-
-    await expect(readBaselineFile(file)).rejects.toThrow('Unsupported baseline version');
   });
 });

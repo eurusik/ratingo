@@ -1,5 +1,5 @@
 import { asPercent, type CaseOutcome, type EvalSummary } from './aggregate';
-import type { BaselineDiff, CaseChange } from './baseline';
+import type { BaselineDiff, CaseChange } from './baseline-diff';
 
 const COST_DECIMALS = 4;
 const AVERAGE_DECIMALS = 1;
