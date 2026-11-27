@@ -5,6 +5,9 @@ describe('pickUkrainianEpisodeTitle', () => {
     ['Зима близько', 'Зима близько'],
     ['  Рейніра Жорстока ', 'Рейніра Жорстока'],
     ['Серце УЧЗ', 'Серце УЧЗ'],
+    ['Їжак у тумані', 'Їжак у тумані'],
+    ['Ґудзик', 'Ґудзик'],
+    ['Подвір’я', 'Подвір’я'],
     ['Серія з сюрпризом', 'Серія з сюрпризом'],
   ])('keeps a real translation %p', (title, expected) => {
     expect(pickUkrainianEpisodeTitle(title)).toBe(expected);
@@ -40,6 +43,10 @@ describe('pickUkrainianText', () => {
     ['   '],
     ['Jon Snow heads to the Wall.'],
     ['The crew meets Ведмідь, a Ukrainian pilot, on the night flight.'],
+    ['Закрытая школа'],
+    ['Как уходили кумиры'],
+    ['Её выбор'],
+    ['Подъезд'],
     [null],
     [undefined],
   ])('rejects empty or English text %p', (text) => {
