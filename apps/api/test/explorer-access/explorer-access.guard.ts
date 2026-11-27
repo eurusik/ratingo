@@ -26,6 +26,7 @@ export interface PgType {
   baseOid: number;
   elementOid: number;
   category: string;
+  system: boolean;
 }
 
 export interface TableGrant {
@@ -37,7 +38,7 @@ export interface ExecutableFunction {
   schema: string;
   signature: string;
   securityDefiner: boolean;
-  systemFunction: boolean;
+  dangerous: boolean;
 }
 
 export interface ExplorerGrants {
@@ -46,6 +47,7 @@ export interface ExplorerGrants {
   tableGrants?: readonly TableGrant[];
   functions?: readonly ExecutableFunction[];
   types?: readonly PgType[];
+  memberships?: readonly string[];
 }
 
 export const ViolationKind = {
@@ -58,6 +60,7 @@ export const ViolationKind = {
   MATERIALIZED_VIEW_READABLE: 'materialized_view_readable',
   SECURITY_DEFINER_FUNCTION_EXECUTABLE: 'security_definer_function_executable',
   DANGEROUS_FUNCTION_EXECUTABLE: 'dangerous_function_executable',
+  ROLE_MEMBERSHIP: 'role_membership',
   READABLE_WITHOUT_DIRECT_GRANT: 'readable_without_direct_grant',
   TABLE_GRANT_ON_PROTECTED_TABLE: 'table_grant_on_protected_table',
   STALE_ALLOW_LIST_ENTRY: 'stale_allow_list_entry',
@@ -71,7 +74,7 @@ export interface Violation {
 }
 
 const USER_LINK_COLUMN =
-  /^(user_id|reporter_id|author_id|moderator_id|created_by|account_id|profile_id|owner_id|viewer_id|follower_id|.+_user_id)$/;
+  /^(user_id|uid|creator_id|reporter_id|moderator_id|.+_user_id|.+_by|(owner|author|sender|recipient|assignee|account|profile|viewer|follower|member|customer|reviewer)(_id)?)$/;
 const SAFE_TYPE_NAMES = new Set([
   'uuid',
   'int2',
@@ -100,7 +103,7 @@ const MAX_TYPE_DEPTH = 8;
 
 const qualified = (item: ReadableColumn): string => `${item.schema}.${item.table}.${item.column}`;
 
-const tableKey = (item: { schema: string; table: string }): string =>
+export const tableKey = (item: { schema: string; table: string }): string =>
   `${item.schema}.${item.table}`;
 
 const sameColumn = (left: ReadableColumn, right: ReadableColumn): boolean =>
@@ -122,7 +125,7 @@ const isSafeType = (
   if (type.kind === ENUM_KIND) return true;
   if (type.kind === DOMAIN_KIND) return isSafeType(type.baseOid, types, depth + 1);
   if (type.category === ARRAY_CATEGORY) return isSafeType(type.elementOid, types, depth + 1);
-  return SAFE_TYPE_NAMES.has(type.name);
+  return type.system && SAFE_TYPE_NAMES.has(type.name);
 };
 
 const typeNameOf = (item: ReadableColumn, types: ReadonlyMap<number, PgType>): string =>
@@ -191,7 +194,8 @@ const sensitiveColumnViolations = (readable: readonly ReadableColumn[]): Violati
 const linksToUsers = (readable: readonly ReadableColumn[], table: string): boolean =>
   readable.some(
     (item) =>
-      tableNamed(item, table) && (item.linksToUsers === true || USER_LINK_COLUMN.test(item.column)),
+      tableNamed(item, table) &&
+      (item.linksToUsers === true || USER_LINK_COLUMN.test(item.column.toLowerCase())),
   );
 
 const freeFormViolations = (
@@ -252,11 +256,12 @@ const viewViolations = (readable: readonly ReadableColumn[]): Violation[] => {
 
 const functionViolations = (functions: readonly ExecutableFunction[]): Violation[] =>
   functions.map((item) =>
-    item.systemFunction
+    item.dangerous
       ? {
           kind: ViolationKind.DANGEROUS_FUNCTION_EXECUTABLE,
           target: item.signature,
-          detail: 'ai_explorer must not be able to run this function; revoke it from PUBLIC',
+          detail:
+            'ai_explorer must not be able to run this function (it ends sessions, holds locks, runs SQL text or changes settings); revoke it from PUBLIC',
         }
       : {
           kind: ViolationKind.SECURITY_DEFINER_FUNCTION_EXECUTABLE,
@@ -264,6 +269,13 @@ const functionViolations = (functions: readonly ExecutableFunction[]): Violation
           detail: 'a SECURITY DEFINER function runs with its owner rights and bypasses the grants',
         },
   );
+
+const membershipViolations = (memberships: readonly string[]): Violation[] =>
+  memberships.map((role) => ({
+    kind: ViolationKind.ROLE_MEMBERSHIP,
+    target: role,
+    detail: 'ai_explorer must not be a member of any role: membership hands out its privileges',
+  }));
 
 const withoutDirectGrantViolations = (grants: ExplorerGrants): Violation[] =>
   grants.readable
@@ -324,6 +336,7 @@ export const findViolations = (grants: ExplorerGrants): Violation[] => [
   ...freeFormViolations(grants.readable, typeIndex(grants.types)),
   ...viewViolations(grants.readable),
   ...functionViolations(grants.functions ?? []),
+  ...membershipViolations(grants.memberships ?? []),
   ...withoutDirectGrantViolations(grants),
   ...tableGrantViolations(grants),
   ...staleAllowListViolations(grants.readable),

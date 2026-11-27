@@ -29,6 +29,7 @@ interface TypeRow {
   base_type_oid: number;
   element_type_oid: number;
   type_category: string;
+  is_system: boolean;
 }
 
 interface TableGrantRow {
@@ -40,7 +41,7 @@ interface FunctionRow {
   schema_name: string;
   signature: string;
   security_definer: boolean;
-  system_function: boolean;
+  dangerous_function: boolean;
 }
 
 const toColumn = (row: ColumnRow): ReadableColumn => ({
@@ -60,13 +61,14 @@ const toType = (row: TypeRow): PgType => ({
   baseOid: row.base_type_oid,
   elementOid: row.element_type_oid,
   category: row.type_category,
+  system: row.is_system,
 });
 
 const toFunction = (row: FunctionRow): ExecutableFunction => ({
   schema: row.schema_name,
   signature: row.signature,
   securityDefiner: row.security_definer,
-  systemFunction: row.system_function,
+  dangerous: row.dangerous_function,
 });
 
 export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerGrants> => {
@@ -75,6 +77,7 @@ export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerG
   const tableGrants = await admin.file(join(SQL_DIR, 'table-grants.sql'));
   const functions = await admin.file(join(SQL_DIR, 'executable-functions.sql'));
   const types = await admin.file(join(SQL_DIR, 'type-catalog.sql'));
+  const memberships = await admin.file(join(SQL_DIR, 'memberships.sql'));
   return {
     readable: readable.map((row) => toColumn(row as unknown as ColumnRow)),
     direct: direct.map((row) => toColumn(row as unknown as ColumnRow)),
@@ -84,6 +87,7 @@ export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerG
     })),
     functions: functions.map((row) => toFunction(row as unknown as FunctionRow)),
     types: types.map((row) => toType(row as unknown as TypeRow)),
+    memberships: memberships.map((row) => (row as unknown as { role_name: string }).role_name),
   };
 };
 

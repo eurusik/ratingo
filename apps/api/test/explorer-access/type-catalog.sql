@@ -4,5 +4,6 @@ SELECT
   typtype::text AS type_kind,
   typbasetype::int AS base_type_oid,
   typelem::int AS element_type_oid,
-  typcategory::text AS type_category
+  typcategory::text AS type_category,
+  typnamespace = 'pg_catalog'::regnamespace AS is_system
 FROM pg_type;

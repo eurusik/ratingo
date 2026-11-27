@@ -83,6 +83,12 @@ export const ALLOWED_FREE_FORM_COLUMNS: readonly AllowedFreeFormColumns[] = [
     reason: 'event payload built by the application: season, episode, dates',
   },
   {
+    table: 'public.import_pending_items',
+    columns: ['imdb_id', 'media_type', 'state'],
+    reason:
+      'ids and enumerated labels written by the importer; the free text (title, failure_reason) is closed',
+  },
+  {
     table: 'public.import_batches',
     columns: ['source'],
     reason: 'import source name chosen from a fixed list',
@@ -137,4 +143,5 @@ export const CLOSED_COLUMNS: readonly { table: string; columns: readonly string[
   { table: 'public.job_failure_days', columns: ['last_message'] },
   { table: 'public.key_health_checks', columns: ['detail'] },
   { table: 'public.catalog_evaluation_runs', columns: ['promoted_by', 'error_sample'] },
+  { table: 'public.import_pending_items', columns: ['title', 'failure_reason'] },
 ];

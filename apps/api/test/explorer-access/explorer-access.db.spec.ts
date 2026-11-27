@@ -2,7 +2,12 @@ import { randomBytes } from 'node:crypto';
 
 import * as postgres from 'postgres';
 
-import { describeViolations, findViolations, ViolationKind } from './explorer-access.guard';
+import {
+  describeViolations,
+  findViolations,
+  tableKey,
+  ViolationKind,
+} from './explorer-access.guard';
 import { readExplorerGrants, readSqlFixture } from './explorer-access.grants';
 import { CLOSED_COLUMNS, PRIVATE_TABLES } from './explorer-access.rules';
 
@@ -51,6 +56,22 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
     await admin?.end({ timeout: 2 });
   });
 
+  const catches = async (fixture: string, cleanup: string, expected: string[]) => {
+    try {
+      await admin.unsafe(readSqlFixture(fixture));
+      const violations = findViolations(await readExplorerGrants(admin));
+      const targets = violations.map((item) => item.target);
+      for (const wanted of expected) {
+        expect(targets.some((target) => target.includes(wanted))).toBe(true);
+      }
+      expect(violations.every((item) => item.kind !== ViolationKind.STALE_ALLOW_LIST_ENTRY)).toBe(
+        true,
+      );
+    } finally {
+      await admin.unsafe(readSqlFixture(cleanup));
+    }
+  };
+
   describe('the grants the migrations leave behind', () => {
     it('open nothing sensitive and nothing private', async () => {
       const grants = await readExplorerGrants(admin);
@@ -60,14 +81,42 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
     it('make every private table and every closed column unreadable', async () => {
       const { readable } = await readExplorerGrants(admin);
       const privateTables = PRIVATE_TABLES.filter((table) =>
-        readable.some((item) => item.table === table),
+        readable.some((item) => tableKey(item) === table),
       );
       const closed = CLOSED_COLUMNS.flatMap(({ table, columns }) =>
         columns.filter((column) =>
-          readable.some((item) => item.table === table && item.column === column),
+          readable.some((item) => tableKey(item) === table && item.column === column),
         ),
       );
       expect([privateTables, closed]).toEqual([[], []]);
+    });
+
+    it('notices a private table that becomes readable, which proves the rule keys match the database', async () => {
+      try {
+        await admin.unsafe('GRANT SELECT ON public.refresh_tokens TO ai_explorer');
+
+        const violations = findViolations(await readExplorerGrants(admin));
+
+        expect(violations.map((item) => item.kind)).toContain(ViolationKind.PRIVATE_TABLE_READABLE);
+      } finally {
+        await admin.unsafe('REVOKE ALL ON public.refresh_tokens FROM ai_explorer');
+      }
+    });
+
+    it('notices a closed column that becomes readable', async () => {
+      try {
+        await admin.unsafe('GRANT SELECT (email) ON public.users TO ai_explorer');
+
+        const violations = findViolations(await readExplorerGrants(admin));
+
+        expect(violations.map((item) => item.kind)).toContain(ViolationKind.CLOSED_COLUMN_READABLE);
+      } finally {
+        await admin.unsafe('REVOKE SELECT (email) ON public.users FROM ai_explorer');
+      }
+    });
+
+    it('notices a membership in another role', async () => {
+      await catches('granted-role.sql', 'granted-role.cleanup.sql', ['pg_read_all_stats']);
     });
 
     it('still make the application tables readable', async () => {
@@ -80,19 +129,6 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
   });
 
   describe('a new table or column that would be exposed automatically', () => {
-    const catches = async (fixture: string, cleanup: string, expected: string[]) => {
-      await admin.unsafe(readSqlFixture(fixture));
-      try {
-        const violations = findViolations(await readExplorerGrants(admin));
-        expect(violations.map((item) => item.target)).toEqual(expect.arrayContaining(expected));
-        expect(violations.every((item) => item.kind !== ViolationKind.STALE_ALLOW_LIST_ENTRY)).toBe(
-          true,
-        );
-      } finally {
-        await admin.unsafe(readSqlFixture(cleanup));
-      }
-    };
-
     it('is caught when a new table has sensitive columns', async () => {
       await catches('leaky-table.sql', 'leaky-table.cleanup.sql', [
         'public.leaky_probe.contact_email',
@@ -124,15 +160,11 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
     });
 
     it('is caught when a function that can end or lock sessions becomes executable', async () => {
-      await catches('dangerous-function.sql', 'dangerous-function.cleanup.sql', [
-        'pg_catalog.pg_advisory_lock(bigint)',
-      ]);
+      await catches('dangerous-function.sql', 'dangerous-function.cleanup.sql', ['set_config']);
     });
 
     it('is caught when a function that writes to the replication log becomes executable', async () => {
-      await catches('emit-message.sql', 'emit-message.cleanup.sql', [
-        'pg_catalog.pg_logical_emit_message(boolean, text, text)',
-      ]);
+      await catches('emit-message.sql', 'emit-message.cleanup.sql', ['pg_logical_emit_message']);
     });
 
     it('is caught when the link to users is a created_by foreign key', async () => {
@@ -150,6 +182,10 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
         'public.domain_tickets.topic',
         'public.domain_tickets.search',
       ]);
+    });
+
+    it('is caught when the link to users goes through two foreign keys', async () => {
+      await catches('two-hop-link.sql', 'two-hop-link.cleanup.sql', ['public.batch_notes.topic']);
     });
 
     it('is caught when a table linked to users has message and contact columns', async () => {
@@ -235,6 +271,33 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
 
     it('refuses writes by default, because the role starts read-only', async () => {
       expect(await sqlStateOf(() => explorer.unsafe('DELETE FROM genres'))).toBe('25006');
+    });
+
+    it('still reads the catalog view through the security_invoker rights', async () => {
+      const [row] = await explorer`SELECT count(*)::int AS total FROM public_media_items`;
+
+      expect(row?.total).toBe(0);
+    });
+
+    it('cannot write to the replication log, run SQL text or change a setting from a function', async () => {
+      const results = await Promise.all(
+        [
+          "select pg_logical_emit_message(true, 'a', 'b')",
+          "select set_config('work_mem', '1GB', true)",
+          "select * from ts_stat('select 1')",
+          "select query_to_xml('select 1', true, true, '')",
+          "select pg_notify('a', 'b')",
+        ].map((statement) => sqlStateOf(() => explorer.unsafe(statement))),
+      );
+
+      expect(results).toEqual(Array(5).fill(PERMISSION_DENIED));
+    });
+
+    it('has a temporary-file limit that a session cannot raise', async () => {
+      const [limit] = await explorer`SELECT current_setting('temp_file_limit') AS value`;
+      const raised = await sqlStateOf(() => explorer.unsafe("SET temp_file_limit = '10GB'"));
+
+      expect([limit?.value, raised]).toEqual(['256MB', PERMISSION_DENIED]);
     });
 
     it('cannot run the functions that end or lock sessions', async () => {

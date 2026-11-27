@@ -1,5 +1,6 @@
 import {
   findViolations,
+  tableKey,
   ViolationKind,
   type ExplorerGrants,
   type PgType,
@@ -11,6 +12,8 @@ import {
   ALLOWED_MATERIALIZED_VIEWS,
   ALLOWED_SENSITIVE_COLUMNS,
   ALLOWED_SENSITIVE_TABLE_NAMES,
+  CLOSED_COLUMNS,
+  PRIVATE_TABLES,
 } from './explorer-access.rules';
 
 const Oid = {
@@ -23,32 +26,36 @@ const Oid = {
   STATUS: 7,
   SHORT_TEXT: 8,
   TSVECTOR: 9,
+  FAKE_INTERVAL: 10,
 };
 
+const type = (oid: number, name: string, extra: Partial<PgType> = {}): PgType => ({
+  oid,
+  name,
+  kind: 'b',
+  baseOid: 0,
+  elementOid: 0,
+  category: 'U',
+  system: true,
+  ...extra,
+});
+
 const TYPES: PgType[] = [
-  { oid: Oid.UUID, name: 'uuid', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
-  { oid: Oid.TEXT, name: 'text', kind: 'b', baseOid: 0, elementOid: 0, category: 'S' },
-  { oid: Oid.VARCHAR, name: 'varchar', kind: 'b', baseOid: 0, elementOid: 0, category: 'S' },
-  { oid: Oid.JSONB, name: 'jsonb', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
-  { oid: Oid.INT4, name: 'int4', kind: 'b', baseOid: 0, elementOid: 0, category: 'N' },
-  {
-    oid: Oid.TEXT_ARRAY,
-    name: '_text',
-    kind: 'b',
-    baseOid: 0,
-    elementOid: Oid.TEXT,
-    category: 'A',
-  },
-  { oid: Oid.STATUS, name: 'status', kind: 'e', baseOid: 0, elementOid: 0, category: 'E' },
-  {
-    oid: Oid.SHORT_TEXT,
-    name: 'short_text',
+  type(Oid.UUID, 'uuid'),
+  type(Oid.TEXT, 'text', { category: 'S' }),
+  type(Oid.VARCHAR, 'varchar', { category: 'S' }),
+  type(Oid.JSONB, 'jsonb'),
+  type(Oid.INT4, 'int4', { category: 'N' }),
+  type(Oid.TEXT_ARRAY, '_text', { category: 'A', elementOid: Oid.TEXT }),
+  type(Oid.STATUS, 'status', { kind: 'e', category: 'E', system: false }),
+  type(Oid.SHORT_TEXT, 'short_text', {
     kind: 'd',
-    baseOid: Oid.TEXT,
-    elementOid: 0,
     category: 'S',
-  },
-  { oid: Oid.TSVECTOR, name: 'tsvector', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
+    baseOid: Oid.TEXT,
+    system: false,
+  }),
+  type(Oid.FAKE_INTERVAL, 'interval', { category: 'T', system: false }),
+  type(Oid.TSVECTOR, 'tsvector'),
 ];
 
 const column = (
@@ -158,6 +165,28 @@ describe('findViolations', () => {
       expect(kindsOf(unreviewed(type))).toEqual([]);
     });
 
+    it('does not trust a user type that borrows the name of a system type', () => {
+      expect(kindsOf(unreviewed(Oid.FAKE_INTERVAL))).toEqual([
+        ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
+      ]);
+    });
+
+    it.each([
+      'uid',
+      'creator_id',
+      'submitted_by',
+      'approved_by',
+      'sender',
+      'recipient_id',
+      'assignee',
+      'customer_id',
+      'Reviewer_Id',
+    ])('finds the user link by the wider name %s', (link) => {
+      expect(kindsOf([column('opaque', link), textColumn('opaque', 'topic')])).toContain(
+        ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
+      );
+    });
+
     it('flags a type the catalog does not know, because it needs a review', () => {
       expect(kindsOf(unreviewed(9999))).toEqual([ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE]);
     });
@@ -220,7 +249,7 @@ describe('findViolations', () => {
             schema: 'public',
             signature: 'public.leaky_function()',
             securityDefiner: true,
-            systemFunction: false,
+            dangerous: false,
           },
         ],
       });
@@ -235,7 +264,7 @@ describe('findViolations', () => {
             schema: 'pg_catalog',
             signature: 'pg_logical_emit_message(boolean,text,text)',
             securityDefiner: false,
-            systemFunction: true,
+            dangerous: true,
           },
         ],
       });
@@ -253,13 +282,34 @@ describe('findViolations', () => {
             schema: 'ps',
             signature: 'ps.f()',
             securityDefiner: true,
-            systemFunction: false,
+            dangerous: false,
           },
         ],
       });
 
       expect(violation?.target).toBe('ps.f()');
     });
+  });
+
+  it('flags a membership of the role in any other role', () => {
+    expect(kindsOf([], { memberships: ['pg_read_all_stats'] })).toEqual([
+      ViolationKind.ROLE_MEMBERSHIP,
+    ]);
+  });
+
+  it('keys every rule by schema and table, so a table of another schema is never confused with it', () => {
+    const keys = [
+      ...PRIVATE_TABLES,
+      ...CLOSED_COLUMNS.map((entry) => entry.table),
+      ...ALLOWED_SENSITIVE_TABLE_NAMES.map((entry) => entry.table),
+      ...ALLOWED_SENSITIVE_COLUMNS.map((entry) => entry.table),
+      ...ALLOWED_FREE_FORM_COLUMNS.map((entry) => entry.table),
+      ...ALLOWED_DEFINER_VIEWS.map((entry) => entry.table),
+      ...ALLOWED_MATERIALIZED_VIEWS.map((entry) => entry.table),
+    ];
+
+    expect(keys.filter((key) => !/^[a-z_]+\.[a-z0-9_]+$/.test(key))).toEqual([]);
+    expect(tableKey({ schema: 'public', table: 'users' })).toBe('public.users');
   });
 
   it('flags access that does not come from a grant to the role itself', () => {
