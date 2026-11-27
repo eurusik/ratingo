@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { EVAL_NOW_MS } from './eval-clock';
 
 const MS_PER_MINUTE = 60_000;
@@ -104,17 +106,34 @@ export const STORM_RECORDS_READ = 300;
 const STORM_NEWEST_MINUTES_AGO = 5;
 export const STORM_OLDEST_READ_MINUTES_AGO = STORM_NEWEST_MINUTES_AGO + STORM_RECORDS_READ - 1;
 
+const STORM_SHOWS_PER_BATCH = 20;
+const ISO_HOUR_WINDOW_LENGTH = 13;
+const BATCH_HASH_LENGTH = 8;
+
+const trackedBatchJobId = (index: number): string => {
+  const batch = Math.floor(index / STORM_SHOWS_PER_BATCH);
+  const batchStartedAtMs = minutesAgoMs(STORM_NEWEST_MINUTES_AGO + batch * STORM_SHOWS_PER_BATCH);
+  const window = new Date(batchStartedAtMs)
+    .toISOString()
+    .slice(0, ISO_HOUR_WINDOW_LENGTH)
+    .replace(/[-T]/gu, '');
+  const hash = createHash('sha1')
+    .update(`batch-${batch}`)
+    .digest('hex')
+    .slice(0, BATCH_HASH_LENGTH);
+  return `tracked_batch_${window}_${hash}`;
+};
+
 const stormRecords = (): SimulatedLogRecord[] =>
-  Array.from({ length: STORM_RECORDS }, (_, index) =>
-    logRecord(SERVICE_WORKER, STORM_NEWEST_MINUTES_AGO + index, 'error', {
-      context: 'SyncShowProcessor',
-      message: `Sync of show ${5000 + index} failed after 3 attempts`,
-      error_name: 'TimeoutError',
-      error_message: TMDB_TIMEOUT_MESSAGE,
-      job_id: `sync-show:${6000 + index}`,
+  Array.from({ length: STORM_RECORDS }, (_, index) => {
+    const minutesAgo = STORM_NEWEST_MINUTES_AGO + index;
+    return logRecord(SERVICE_WORKER, minutesAgo, 'error', {
+      context: 'TrackedShowsPipeline',
+      message: `Failed to sync tracked show ${5000 + index}: ${TMDB_TIMEOUT_MESSAGE}`,
+      job_id: trackedBatchJobId(index),
       queue: 'ingestion',
-    }),
-  );
+    });
+  });
 
 export const TRENDING_STALE_LOGS: LokiScenario = {
   records: [

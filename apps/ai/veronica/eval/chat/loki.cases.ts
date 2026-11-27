@@ -61,7 +61,7 @@ export const LOKI_EVAL_CASES: readonly EvalCase[] = [
     },
     forbiddenText: [String(STORM_RECORDS)],
     reference: {
-      calls: [{ tool: LOGS, input: { service: SERVICE_WORKER, text: 'sync of show' } }],
+      calls: [{ tool: LOGS, input: { service: SERVICE_WORKER, text: 'tracked show' } }],
       answer: `Щонайменше ${STORM_RECORDS_READ} разів: стільки записів я прочитала, найстаріший із них ${OLDEST_READ_IN_STORM}. Загальну кількість за добу з логів назвати не можу, їх більше, ніж я читаю за один запит.`,
     },
   },

@@ -36,6 +36,9 @@ const toRow = (summary: JobFailureSummary) => ({
   lastMessage: summary.lastMessage,
 });
 
+export const NOTHING_RECORDED_NOTE =
+  'No failed job attempt was recorded on those days. Errors that a job catches, logs and continues past, such as one show failing inside a batch, are never recorded here; they appear only in logs_search.';
+
 const hintFor = (input: JobFailuresInput): string =>
   input.job === undefined && input.queue === undefined
     ? 'pass job=<part of a job name> or queue=<queue name> or a shorter window'
@@ -77,6 +80,7 @@ export class JobFailuresExecutor {
       ...(input.job !== undefined ? { job: input.job } : {}),
       ...(input.queue !== undefined ? { queue: input.queue } : {}),
       failures: kept,
+      ...(rows.length === 0 ? { note: NOTHING_RECORDED_NOTE } : {}),
       ...omission,
     }));
   }

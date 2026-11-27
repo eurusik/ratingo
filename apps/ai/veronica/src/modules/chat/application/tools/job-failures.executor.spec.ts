@@ -81,14 +81,21 @@ describe('JobFailuresExecutor', () => {
     });
   });
 
-  it('returns an empty list when nothing failed in the window', async () => {
+  it('returns an empty list with a note that handled errors are only in the logs', async () => {
     const result = materialized(await executorReturning([]).run({}));
 
     expect(result).toEqual({
       window: '24h',
       countedKyivDays: { from: '2026-11-21', to: '2026-11-22' },
       failures: [],
+      note: expect.stringContaining('only in logs_search'),
     });
+  });
+
+  it('adds no note when failures were recorded', async () => {
+    const result = materialized(await executorReturning([summary()]).run({}));
+
+    expect(result).not.toHaveProperty('note');
   });
 
   it('counts whole Kyiv days for a window of a few hours', async () => {
