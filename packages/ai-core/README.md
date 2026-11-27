@@ -9,6 +9,13 @@ npm run typecheck --workspace=@ratingo/ai-core
 npm run lint:dead-code --workspace=@ratingo/ai-core
 ```
 
+## Shared building blocks for agents
+
+- `createRunRepository({ base, meter, runLogger, durableSpend? })` is the one way an agent builds its run repository: the base store (in memory or Postgres), optional Redis spend that survives restarts, and the telemetry that records `app.ai.runs`, `app.ai.run.cost`, tokens and duration. Each agent has a test that its repository records `app.ai.runs`; a repository built any other way never reaches Grafana.
+- `registerAgentBudgetGauge(meter, { agent, perDayUsd })` publishes the daily budget from the manifest as `app.ai.agent.budget.day`, which the watchdog divides spend by.
+- `decideInternalAccess({ expectedToken, headers })` is the check behind every internal endpoint: no configured token or a public proxy header is `hidden` (404), a wrong token is `denied` (401), the right bearer token is `allowed`.
+- `createRecordingMeter()` is a meter for tests that records what an agent writes, next to `FixedClock` and the stub model.
+
 ## MCP gateway
 
 The gateway lets an agent use tools from an MCP server as ordinary ai-core tools, under rules the code enforces:

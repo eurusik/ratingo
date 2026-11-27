@@ -130,7 +130,9 @@ A BullMQ scheduler runs a check every 5 minutes and sends a Telegram alert to th
 | Digest missing | no sent digest for today's Kyiv date at 09:30 Europe/Kyiv or later                                    |
 | Budget         | the day's spend of the agent or of the chat task is at least 80% of its budget                        |
 | Failed runs    | at least 3 `failed` runs in the last hour                                                             |
+| Happy, DUM-E budget | the 24 hour spend of the agent, from Prometheus, is at least 80% of the budget the agent publishes (`app_ai_agent_budget_day_USD`) |
+| Happy, DUM-E failed runs | at least 3 runs with outcome `model_error` or `unexpected_error` in the last hour, from Prometheus |
 
 Heartbeat: the gauge `app.ai.watchdog.last_tick_timestamp_seconds` (Prometheus `app_ai_watchdog_last_tick_timestamp_seconds`) holds the Unix time of the last finished tick. Alert on its absence or age to catch Veronica herself being down.
 
-Happy's own spend is not checked: Happy keeps it in its own Redis keys, which Veronica does not read.
+Happy's and DUM-E's spend and failed runs come from Prometheus (`app_ai_run_cost_USD_sum`, `app_ai_runs_total`), which every agent exports at the end of each run, so a run killed before it ends is missing there. Veronica's own checks read her Postgres table.
