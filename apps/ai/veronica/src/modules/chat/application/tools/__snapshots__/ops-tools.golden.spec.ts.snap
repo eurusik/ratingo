@@ -39,7 +39,7 @@ exports[`Veronica ops tools, golden outputs db_query answers a private refusal f
 exports[`Veronica ops tools, golden outputs db_query answers a timeout refusal from the database with its status 1`] = `
 {
   "content": "<untrusted label="database rows">
-{"status":"timeout","message":"The query was cancelled after 5 seconds and returned no rows, not even partial ones. Nothing was changed. Do not state any number from it. Make it cheaper: filter by date or id, select fewer columns, aggregate instead of listing, or call with explain=true to see the plan."}
+{"status":"timeout","message":"The database stopped the query at the 5-second time limit and returned no rows, not even partial ones. Nothing was changed. Do not state any number from it. One narrower query (a shorter period, fewer rows, filtered by date or id) may fit in the limit; repeating heavy variants of the same query will not help. If a narrower query does not fit either, tell the owner plainly that the full calculation did not finish because the database stopped it at the time limit. A narrower result may be given only if it is clearly labeled as narrower."}
 </untrusted>",
   "isError": false,
 }

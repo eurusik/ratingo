@@ -70,7 +70,7 @@ describe('chat eval cases', () => {
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
       expect(testCase.expectations.conveys.join(' ')).toMatch(
-        /unavailable|no data|does not know/iu,
+        /unavailable|no data|does not know|did not finish/iu,
       );
     }
   });
