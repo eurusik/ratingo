@@ -929,6 +929,16 @@ describe('TmdbAdapter', () => {
       ]);
     });
 
+    it('asks for the requested language once', async () => {
+      mockFetch.mockResolvedValue(okJson({ id: 1, 'season/3': seasonPayload(3) }));
+
+      await adapter.getSeasonsEpisodes(387, [3], 'en-US');
+
+      expect(new URL(mockFetch.mock.calls[0][0]).searchParams.getAll('language')).toEqual([
+        'en-US',
+      ]);
+    });
+
     it('leaves out seasons TMDB does not return', async () => {
       mockFetch.mockResolvedValue(okJson({ id: 1, 'season/1': seasonPayload(1) }));
 

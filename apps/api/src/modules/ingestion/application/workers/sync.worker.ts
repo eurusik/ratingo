@@ -15,7 +15,7 @@ import {
 
 import { AnticipatedShowsPipeline } from '../pipelines/anticipated-shows.pipeline';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
-import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
+import { BackfillEpisodeDetailsPipeline } from '../pipelines/backfill-episode-details.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { BackfillMdblistRatingsPipeline } from '../pipelines/backfill-mdblist-ratings.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
@@ -58,7 +58,7 @@ export class SyncWorker extends WorkerHost {
     private readonly anticipatedShowsPipeline: AnticipatedShowsPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
-    private readonly backfillEpisodeTextsPipeline: BackfillEpisodeTextsPipeline,
+    private readonly backfillEpisodeDetailsPipeline: BackfillEpisodeDetailsPipeline,
     private readonly backfillMdblistRatingsPipeline: BackfillMdblistRatingsPipeline,
     private readonly mediaPageCache: MediaPageCacheService,
   ) {
@@ -189,8 +189,8 @@ export class SyncWorker extends WorkerHost {
           await this.backfillAltTitlesPipeline.dispatch();
           break;
 
-        case IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER:
-          await this.backfillEpisodeTextsPipeline.dispatch();
+        case IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER:
+          await this.backfillEpisodeDetailsPipeline.dispatch();
           break;
 
         // MDBList RT ratings backfill dispatcher (item jobs run on RatingsBackfillWorker)

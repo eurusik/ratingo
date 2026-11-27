@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
-import { EpisodeLocalizationService } from './episode-localization.service';
+import { EpisodeMergeService } from './episode-merge.service';
+import { TmdbEpisodeSourcesService } from './tmdb-episode-sources.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
@@ -114,7 +115,8 @@ describe('SyncMediaService', () => {
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: AGGREGATED_RATINGS_PORT, useValue: mockAggregatedRatings },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
-        EpisodeLocalizationService,
+        EpisodeMergeService,
+        TmdbEpisodeSourcesService,
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
@@ -750,7 +752,7 @@ describe('SyncMediaService', () => {
     });
   });
 
-  describe('Ukrainian episode texts', () => {
+  describe('TMDB episode details on TVMaze seasons', () => {
     const tvMazeShow = (seasons: unknown[]) => ({
       ...mockMedia,
       type: MediaType.SHOW,
@@ -789,10 +791,48 @@ describe('SyncMediaService', () => {
       await service.syncShow(1399);
 
       expect(tmdbAdapter.getSeasonsEpisodes).toHaveBeenCalledWith(550, [1]);
+      const fromTvMazeOnly = { runtime: null, stillPath: null, rating: null };
       expect(persistedSeasons()[0].episodes).toEqual([
-        { number: 1, title: 'Зима близько', overview: 'Український опис', airDate },
-        { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate },
+        {
+          number: 1,
+          title: 'Зима близько',
+          overview: 'Український опис',
+          airDate,
+          ...fromTvMazeOnly,
+        },
+        { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate, ...fromTvMazeOnly },
       ]);
+    });
+
+    it('fills a missing still, runtime and rating from TMDB and dates the season', async () => {
+      const airDate = new Date('2002-01-21T00:00:00Z');
+      const show = tvMazeShow([
+        {
+          number: 3,
+          episodeCount: 1,
+          episodes: [{ number: 1, title: 'The Algae', airDate, stillPath: null, runtime: null }],
+        },
+      ]);
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockResolvedValue({
+        episodesBySeason: new Map([
+          [3, [{ number: 1, title: 'Серія 1', stillPath: '/still.jpg', runtime: 11, rating: 7 }]],
+        ]),
+        failedSeasons: [],
+      });
+
+      await service.syncShow(387);
+
+      const [season] = persistedSeasons();
+      expect(season.airDate).toBe(airDate);
+      expect(season.episodes[0]).toMatchObject({
+        title: 'The Algae',
+        airDate,
+        stillPath: '/still.jpg',
+        runtime: 11,
+        rating: 7,
+      });
     });
 
     it('skips specials and seasons already filled from TMDB', async () => {

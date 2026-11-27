@@ -9,7 +9,7 @@ import { ResolveImportItemPipeline } from '@/modules/user-media/application/pipe
 import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
-import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
+import { BackfillEpisodeDetailsPipeline } from '../pipelines/backfill-episode-details.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 
 import { BackfillWorker } from './backfill.worker';
@@ -21,7 +21,7 @@ afterAll(() => {
 describe('BackfillWorker', () => {
   let worker: BackfillWorker;
   let backfillAltTitlesPipeline: any;
-  let backfillEpisodeTextsPipeline: any;
+  let backfillEpisodeDetailsPipeline: any;
   let backfillImdbPipeline: any;
   let resolveImportDispatcherPipeline: any;
   let resolveImportItemPipeline: any;
@@ -32,7 +32,7 @@ describe('BackfillWorker', () => {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
-    backfillEpisodeTextsPipeline = {
+    backfillEpisodeDetailsPipeline = {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -56,7 +56,7 @@ describe('BackfillWorker', () => {
       providers: [
         BackfillWorker,
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
-        { provide: BackfillEpisodeTextsPipeline, useValue: backfillEpisodeTextsPipeline },
+        { provide: BackfillEpisodeDetailsPipeline, useValue: backfillEpisodeDetailsPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         {
           provide: ResolveImportDispatcherPipeline,
@@ -99,17 +99,17 @@ describe('BackfillWorker', () => {
     });
   });
 
-  describe('process - BACKFILL_EPISODE_TEXTS_ITEM', () => {
-    it('should route to backfillEpisodeTextsPipeline.processItem()', async () => {
+  describe('process - BACKFILL_EPISODE_DETAILS_ITEM', () => {
+    it('should route to backfillEpisodeDetailsPipeline.processItem()', async () => {
       const job = {
-        name: IngestionJob.BACKFILL_EPISODE_TEXTS_ITEM,
+        name: IngestionJob.BACKFILL_EPISODE_DETAILS_ITEM,
         data: { showId: 'show-1', tmdbId: 1399 },
-        id: 'episode-texts-1',
+        id: 'episode-details-1',
       } as Job;
 
       await worker.process(job);
 
-      expect(backfillEpisodeTextsPipeline.processItem).toHaveBeenCalledWith({
+      expect(backfillEpisodeDetailsPipeline.processItem).toHaveBeenCalledWith({
         showId: 'show-1',
         tmdbId: 1399,
       });

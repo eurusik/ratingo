@@ -1,5 +1,6 @@
 export const DEFAULT_REGION = 'UA';
 export const DEFAULT_LANGUAGE = 'uk-UA';
+export const ENGLISH_LANGUAGE = 'en-US';
 
 // Time constants (milliseconds)
 export const MS_PER_SECOND = 1000;

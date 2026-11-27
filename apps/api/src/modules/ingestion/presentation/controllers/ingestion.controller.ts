@@ -502,13 +502,15 @@ export class IngestionController {
     };
   }
 
-  @Post('backfill/episode-texts')
+  @Post('backfill/episode-details')
   @ApiOperation({
-    summary: 'Backfill Ukrainian episode titles and overviews from TMDB',
+    summary: 'Backfill episode details from TMDB',
     description:
-      'Finds shows with episodes that have no Ukrainian title and fetches Ukrainian titles and ' +
-      'overviews from TMDB, one request per 20 seasons. No Trakt, OMDb or TVMaze calls. ' +
-      'Future syncs keep the texts Ukrainian on their own.',
+      'Finds shows with episodes that lack a Ukrainian title or overview, an air date, a runtime, ' +
+      'a still or a rating, and fills them from TMDB, one request per 20 seasons, plus one for ' +
+      'English titles when TMDB numbers a season differently. Ukrainian TMDB texts replace ' +
+      'English ones; the other fields are filled only where empty. Also dates undated seasons ' +
+      'by their first episode. No Trakt, OMDb or TVMaze calls.',
   })
   @ApiQuery({
     name: 'force',
@@ -518,19 +520,19 @@ export class IngestionController {
   })
   @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)
-  async backfillEpisodeTexts(@Query('force') force?: string) {
+  async backfillEpisodeDetails(@Query('force') force?: string) {
     const isForce = force === 'true';
     const window = isForce ? Date.now().toString() : formatUtcDayId();
     const job = await this.ingestionQueue.add(
-      IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+      IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER,
       {},
-      { jobId: `backfill_episode_texts_${window}` },
+      { jobId: `backfill_episode_details_${window}` },
     );
 
     return {
       status: 'queued',
       jobId: job.id,
-      jobType: IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+      jobType: IngestionJob.BACKFILL_EPISODE_DETAILS_DISPATCHER,
       force: isForce,
     };
   }

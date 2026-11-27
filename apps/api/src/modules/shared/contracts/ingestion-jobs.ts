@@ -41,8 +41,8 @@ export enum IngestionJob {
   /** Item job: fetches alternative titles from TMDB for a single item. @queue backfill */
   BACKFILL_ALT_TITLES_ITEM = 'backfill-alt-titles-item',
 
-  BACKFILL_EPISODE_TEXTS_DISPATCHER = 'backfill-episode-texts-dispatcher',
-  BACKFILL_EPISODE_TEXTS_ITEM = 'backfill-episode-texts-item',
+  BACKFILL_EPISODE_DETAILS_DISPATCHER = 'backfill-episode-details-dispatcher',
+  BACKFILL_EPISODE_DETAILS_ITEM = 'backfill-episode-details-item',
 
   /** Dispatcher job: loads pending import items for a batch and queues per-item jobs. @queue backfill */
   RESOLVE_IMPORT_DISPATCHER = 'resolve-import-dispatcher',
@@ -69,7 +69,7 @@ export interface SyncMediaJobData {
   userRequested?: boolean;
 }
 
-export interface BackfillEpisodeTextsJobData {
+export interface BackfillEpisodeDetailsJobData {
   showId: string;
   tmdbId: number;
 }
