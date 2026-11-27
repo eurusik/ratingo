@@ -106,7 +106,7 @@ export class InvestigationService {
     const ledger = new EvidenceLedger();
     const runtime = new RuntimeEvidenceLedger();
     const evidence = createRuntimeEvidenceRecorder(runtime);
-    const { metricsQuery, jobFailures, logsSearch } = createOpsTools(this.ops, {
+    const { metricsQuery, jobFailures, logsSearch, dbSchema, dbQuery } = createOpsTools(this.ops, {
       decorate: evidence.decorate,
     });
     const result = await this.runner.run({
@@ -120,6 +120,8 @@ export class InvestigationService {
         evidence.observe(metricsQuery),
         evidence.observe(jobFailures),
         evidence.observe(logsSearch),
+        evidence.observe(dbSchema),
+        evidence.observe(dbQuery),
       ],
       ...(request.budgetUsd === undefined ? {} : { budgetUsd: request.budgetUsd }),
       ...(request.ignoreDailyBudget === undefined

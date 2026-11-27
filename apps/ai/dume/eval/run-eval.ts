@@ -22,6 +22,12 @@ import { runEval, type EvalRun } from './eval-runner';
 import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness';
 import { ModelJudge, ReferenceJudge, type JudgePort } from './judge';
 import { parseEvalOptions, type EvalOptions } from './options';
+import {
+  EXPLORER_EVAL_DATABASE_VARIABLE,
+  needsExplorerDatabase,
+  startExplorerEvalDatabase,
+  stopExplorerEvalDatabase,
+} from './explorer-eval-database';
 import { renderCase, renderDiff, renderSummary } from './report';
 
 Logger.overrideLogger(['error']);
@@ -58,21 +64,42 @@ const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): Judg
   return new ModelJudge(port, ref.model, priceFor(MODEL_PRICES, options.judgeModel));
 };
 
-const execute = (
+interface ExecutedCases {
+  run: EvalRun;
+  skippedCases: readonly string[];
+}
+
+const execute = async (
   environment: EvalEnvironment,
   options: EvalOptions,
   judge: JudgePort,
-): Promise<EvalRun> =>
-  runEval(
-    selectCases(options.only),
-    { runAgent: (testCase) => runCase(testCase, environment), judge },
-    {
-      repeat: { runs: options.runs, passAt: options.passAt },
-      concurrency: options.concurrency,
-      maxCostUsd: options.maxCostUsd,
-      onCaseFinished: (outcome: CaseOutcome) => write(renderCase(outcome)),
-    },
-  );
+): Promise<ExecutedCases> => {
+  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE] ?? '';
+  const selected = selectCases(options.only);
+  const skippedCases =
+    adminUrl === '' ? selected.filter(needsExplorerDatabase).map((testCase) => testCase.id) : [];
+  if (skippedCases.length > 0) {
+    write(
+      `skipped ${skippedCases.length} cases that need the throwaway database (${EXPLORER_EVAL_DATABASE_VARIABLE} is not set): ${skippedCases.join(', ')}`,
+    );
+  }
+  if (adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
+  try {
+    const run = await runEval(
+      selected.filter((testCase) => !skippedCases.includes(testCase.id)),
+      { runAgent: (testCase) => runCase(testCase, environment), judge },
+      {
+        repeat: { runs: options.runs, passAt: options.passAt },
+        concurrency: options.concurrency,
+        maxCostUsd: options.maxCostUsd,
+        onCaseFinished: (outcome: CaseOutcome) => write(renderCase(outcome)),
+      },
+    );
+    return { run, skippedCases };
+  } finally {
+    await stopExplorerEvalDatabase();
+  }
+};
 
 const printSummary = (
   environment: EvalEnvironment,
@@ -98,13 +125,15 @@ const printSummary = (
 const exitCodeAgainstBaseline = (
   options: EvalOptions,
   baseline: Baseline | null,
-  run: EvalRun,
+  { run, skippedCases }: ExecutedCases,
 ): number => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
     return 0;
   }
-  const diff = diffBaseline(baseline, run.outcomes, { fullRun: options.only === null });
+  const diff = diffBaseline(baseline, run.outcomes, {
+    fullRun: options.only === null && skippedCases.length === 0,
+  });
   write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
   return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
 };
@@ -139,7 +168,8 @@ async function main(): Promise<number> {
   const options = parseEvalOptions(process.argv.slice(2), environment.structureOnly);
   const judge = environment.structureOnly ? new ReferenceJudge() : buildModelJudge(options, apiKey);
   const baseline = environment.structureOnly ? null : await loadBaseline(options);
-  const run = await execute(environment, options, judge);
+  const executed = await execute(environment, options, judge);
+  const { run } = executed;
   const summary = summarize(run.outcomes);
   printSummary(environment, options, run, summary);
   if (options.dumpPath !== null) {
@@ -157,7 +187,11 @@ async function main(): Promise<number> {
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(options, baseline, run);
+  const exitCode = exitCodeAgainstBaseline(options, baseline, executed);
+  if (options.saveBaseline && executed.skippedCases.length > 0) {
+    write(`baseline not saved: ${executed.skippedCases.length} cases were skipped`);
+    return Math.max(exitCode, EXIT_INCOMPLETE);
+  }
   if (options.saveBaseline) {
     await writeBaselineFile(
       options.baselinePath,

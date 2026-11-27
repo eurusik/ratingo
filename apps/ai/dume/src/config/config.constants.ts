@@ -17,6 +17,7 @@ export interface OpsConfig {
   loki: { baseUrl?: string; user?: string; token?: string };
   prometheus: { baseUrl?: string; token?: string };
   readerDatabaseUrl?: string;
+  explorerDatabaseUrl?: string;
 }
 
 export type SnapshotConfig =

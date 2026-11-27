@@ -24,6 +24,12 @@ import { CALIBRATION_ITEMS } from './calibration.set';
 import { EVAL_CASES } from './cases';
 import type { EvalCase } from './eval-case';
 import { parseEvalOptions, type EvalOptions } from './eval-options';
+import {
+  EXPLORER_EVAL_DATABASE_VARIABLE,
+  needsExplorerDatabase,
+  startExplorerEvalDatabase,
+  stopExplorerEvalDatabase,
+} from './explorer-eval-database';
 import { runEval, type EvalRun } from './eval-runner';
 import { isStubModel, runCase } from './harness';
 import type { JudgePort } from './judge';
@@ -48,6 +54,12 @@ interface RunContext {
   identity: RunIdentity;
   options: EvalOptions;
   baseline: Baseline | null;
+  skippedCases: readonly string[];
+}
+
+interface ExecutedCases {
+  run: EvalRun;
+  skippedCases: readonly string[];
 }
 
 const write = (text: string): void => {
@@ -78,27 +90,55 @@ const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): Judg
 
 const printCase = (outcome: CaseOutcome): void => write(renderCase(outcome));
 
+const withoutUnavailableDatabase = (
+  cases: readonly EvalCase[],
+  databaseAvailable: boolean,
+): { runnable: readonly EvalCase[]; skippedCases: readonly string[] } => {
+  if (databaseAvailable) return { runnable: cases, skippedCases: [] };
+  const skipped = cases.filter(needsExplorerDatabase).map((testCase) => testCase.id);
+  if (skipped.length > 0) {
+    write(
+      `skipped ${skipped.length} cases that need the throwaway database (${EXPLORER_EVAL_DATABASE_VARIABLE} is not set): ${skipped.join(', ')}`,
+    );
+  }
+  return {
+    runnable: cases.filter((testCase) => !needsExplorerDatabase(testCase)),
+    skippedCases: skipped,
+  };
+};
+
 const executeCases = async (
   identity: RunIdentity,
   options: EvalOptions,
   judge: JudgePort,
-): Promise<EvalRun> => {
+): Promise<ExecutedCases> => {
   const folder = await loadVeronicaAgentFolder();
   const setup = {
     modelRef: identity.modelRef,
     anthropicApiKey: identity.apiKey,
     anthropicMaxRetries: ANTHROPIC_MAX_RETRIES,
   };
-  return runEval(
+  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
+  if (adminUrl !== undefined && adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
+  const { runnable, skippedCases } = withoutUnavailableDatabase(
     selectCases(options.only),
-    { runAgent: (testCase) => runCase(testCase, setup, folder), judge },
-    {
-      repeat: { runs: options.runs, passAt: options.passAt },
-      concurrency: options.concurrency,
-      maxCostUsd: options.maxCostUsd,
-      onCaseFinished: printCase,
-    },
+    adminUrl !== undefined && adminUrl !== '',
   );
+  try {
+    const run = await runEval(
+      runnable,
+      { runAgent: (testCase) => runCase(testCase, setup, folder), judge },
+      {
+        repeat: { runs: options.runs, passAt: options.passAt },
+        concurrency: options.concurrency,
+        maxCostUsd: options.maxCostUsd,
+        onCaseFinished: printCase,
+      },
+    );
+    return { run, skippedCases };
+  } finally {
+    await stopExplorerEvalDatabase();
+  }
 };
 
 const printSummary = (
@@ -137,12 +177,17 @@ const saveBaseline = async ({ identity, options }: RunContext, run: EvalRun): Pr
   write(`baseline saved to ${options.baselinePath}`);
 };
 
-const exitCodeAgainstBaseline = ({ options, baseline }: RunContext, run: EvalRun): number => {
+const exitCodeAgainstBaseline = (
+  { options, baseline, skippedCases }: RunContext,
+  run: EvalRun,
+): number => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
     return 0;
   }
-  const diff = diffBaseline(baseline, run.outcomes, { fullRun: options.only === null });
+  const diff = diffBaseline(baseline, run.outcomes, {
+    fullRun: options.only === null && skippedCases.length === 0,
+  });
   write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
   return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
 };
@@ -158,6 +203,10 @@ const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => 
     return EXIT_INCOMPLETE;
   }
   const exitCode = exitCodeAgainstBaseline(context, run);
+  if (options.saveBaseline && context.skippedCases.length > 0) {
+    write(`baseline not saved: ${context.skippedCases.length} cases were skipped`);
+    return Math.max(exitCode, EXIT_INCOMPLETE);
+  }
   if (options.saveBaseline) await saveBaseline(context, run);
   return exitCode;
 };
@@ -200,9 +249,10 @@ async function main(): Promise<number> {
       : await readBaselineFile(options.baselinePath);
   let exitCode = 0;
   if (!options.calibrateOnly) {
+    const executed = await executeCases(identity, options, judge);
     exitCode = await reportRun(
-      { identity, options, baseline },
-      await executeCases(identity, options, judge),
+      { identity, options, baseline, skippedCases: executed.skippedCases },
+      executed.run,
     );
   }
   if (options.calibrate && !(await calibrate(options, judge)).trustworthy) {

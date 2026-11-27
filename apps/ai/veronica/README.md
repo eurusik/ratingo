@@ -70,6 +70,16 @@ Creating the token (Grafana Cloud, as a stack admin):
 4. In the Cloud portal open the stack, then Details, and in the Loki block copy the URL and the User.
 5. In Railway, on the Veronica service, set `GRAFANA_LOKI_URL`, `GRAFANA_LOKI_USER` and `GRAFANA_LOKI_TOKEN`, then redeploy. Ask Veronica for the errors of a service to check it; `access_denied` in her answer means the scope or the user is wrong.
 
+## Reading the database
+
+`db_schema` and `db_query` let Veronica read the application database without a code change per question. They connect as the `ai_explorer` role, which the API migration creates without a password; private data (emails, usernames, password hashes, tokens, sessions, OAuth accounts, user notes) is closed by the database itself. Design and limits: [`apps/ai/ARCHITECTURE.md`](../ARCHITECTURE.md) (Database explorer).
+
+1. After the API migration `0044` is deployed, set the password of the role in `psql` as an admin (`\password ai_explorer`, then `ALTER ROLE ai_explorer LOGIN`).
+2. In Railway, on the Veronica service, set `AI_EXPLORER_DATABASE_URL` to the same host, port and database as `AI_READER_DATABASE_URL` with the user `ai_explorer` and that password, then redeploy. Without it both tools answer that they are not configured.
+3. Ask for the number of users and for user emails: the first answers with a number, the second must say the data is private.
+
+The eval cases that need the database (`db-*`) run against a throwaway database created from the API migrations when `EXPLORER_EVAL_DATABASE_URL` is an admin URL of a Postgres (for example `postgres://ratingo:ratingo_dev_password@localhost:5434/postgres` with `docker-compose up postgres-v2`). Without it they are listed as skipped, the baseline is not saved and the run is not compared as a full run.
+
 ## Answer log
 
 Every finished exchange is stored in `ai.chat_exchanges` for 30 days: the question, the final checked answer, the outcome (`answered`, `flagged`, `fallback`, `failed`; older rows may say `redacted`), the numbers the guard flagged, the tool names and each call's arguments (`tool_calls`, redacted and capped), so a live answer can be audited. Tool results are never stored. A failed write is logged and never affects the reply.

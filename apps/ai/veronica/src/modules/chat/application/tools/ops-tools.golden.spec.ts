@@ -1,5 +1,10 @@
 import { FixedClock, NativeToolSource, ToolRegistry } from '@ratingo/ai-core';
 import {
+  DbQueryExecutor,
+  DbSchemaExecutor,
+  ExplorerFailureError,
+  ExplorerNotConfiguredError,
+  ExplorerQueryRefusedError,
   GrafanaLokiLogsAdapter,
   JobFailuresExecutor,
   JobFailuresUnavailableError,
@@ -8,12 +13,16 @@ import {
   MetricTemplateName,
   MetricsQueryExecutor,
   PrometheusMetricsAdapter,
+  QueryRefusal,
   UnconfiguredJobFailuresAdapter,
   UnconfiguredLogsAdapter,
+  type ExplorerPort,
   type JobFailureSummary,
   type LogsFetch,
   type MetricSample,
+  type QueryRows,
   type RawLogLine,
+  type SchemaListing,
 } from '@ratingo/ai-ops-tools';
 
 import { SYSTEM_CARD, SYSTEM_CARD_MAX_CHARS } from '../../domain/constants/system-card.constants';
@@ -268,17 +277,86 @@ const metricsFor = (answer: 'full' | 'none' | Error) => {
   );
 };
 
+const SCHEMA_LISTING: SchemaListing = {
+  tables: [
+    {
+      name: 'users',
+      kind: 'table',
+      rowEstimate: 1234,
+      columns: [
+        { name: 'id', type: 'uuid' },
+        { name: 'role', type: 'user_role', enumValues: ['user', 'admin'] },
+        { name: 'created_at', type: 'timestamp without time zone' },
+      ],
+      privateColumnCount: 7,
+    },
+    {
+      name: 'user_saved_items',
+      kind: 'table',
+      rowEstimate: 4321,
+      columns: [
+        { name: 'user_id', type: 'uuid' },
+        { name: 'media_item_id', type: 'uuid' },
+        { name: 'list', type: 'saved_item_list', enumValues: ['for_later', 'considering'] },
+      ],
+      privateColumnCount: 0,
+    },
+    {
+      name: 'public_media_items',
+      kind: 'view',
+      rowEstimate: null,
+      columns: [{ name: 'title', type: 'text' }],
+      privateColumnCount: 0,
+    },
+  ],
+  privateTables: ['oauth_accounts', 'refresh_tokens'],
+};
+
+const QUERY_ROWS: QueryRows = {
+  columns: ['title', 'saves'],
+  rows: [
+    { title: 'Alpha Show', saves: 3 },
+    { title: 'Zeta Movie', saves: 2 },
+  ],
+  hasMoreRows: false,
+};
+
+const MANY_QUERY_ROWS: QueryRows = {
+  columns: ['n', 'text'],
+  rows: Array.from({ length: 100 }, (_unused, index) => ({ n: index, text: 'z'.repeat(60) })),
+  hasMoreRows: true,
+};
+
+const explorerAnswering = (answer: QueryRows | Error): ExplorerPort => ({
+  schema: async () => {
+    if (answer instanceof Error) throw answer;
+    return SCHEMA_LISTING;
+  },
+  query: async () => {
+    if (answer instanceof Error) throw answer;
+    return answer;
+  },
+});
+
+const explorerExecutorsFor = (answer: QueryRows | Error) => ({
+  schema: new DbSchemaExecutor(explorerAnswering(answer), QUIET),
+  query: new DbQueryExecutor(explorerAnswering(answer), QUIET),
+});
+
 interface Executors {
   logs: LogsSearchExecutor;
   failures: JobFailuresExecutor;
   metrics: MetricsQueryExecutor;
+  database: ReturnType<typeof explorerExecutorsFor>;
 }
 
-const registryFor = ({ logs, failures, metrics }: Executors): Promise<ToolRegistry> => {
+const registryFor = ({ logs, failures, metrics, database }: Executors): Promise<ToolRegistry> => {
   const executors = {
     metricsQuery: (input) => metrics.run(input),
     jobFailures: (input) => failures.run(input),
     logsSearch: (input) => logs.run(input),
+    dbSchema: (input) => database.schema.run(input),
+    dbQuery: (input) => database.query.run(input),
   } as InvestigationExecutors;
   const tools = buildInvestigationTools(executors, NO_DELEGATION);
   return ToolRegistry.create(
@@ -292,6 +370,7 @@ const healthy = (): Executors => ({
   logs: logsFor({ lines: REPEATED_LINES, limitReached: false }),
   failures: failuresFor(FAILURE_ROWS),
   metrics: metricsFor('full'),
+  database: explorerExecutorsFor(QUERY_ROWS),
 });
 
 const call = async (executors: Executors, name: string, input: unknown) => {
@@ -310,7 +389,7 @@ const lokiAdapterAnswering = (status: number): GrafanaLokiLogsAdapter =>
   );
 
 describe('Veronica ops tools, golden outputs', () => {
-  it('offers the eight tools in this order with these exact definitions', async () => {
+  it('offers the ten tools in this order with these exact definitions', async () => {
     const registry = await registryFor(healthy());
 
     expect(registry.definitions()).toMatchSnapshot();
@@ -446,6 +525,120 @@ describe('Veronica ops tools, golden outputs', () => {
       };
 
       expect(await call(executors, 'job_failures', {})).toMatchSnapshot();
+    });
+  });
+
+  describe('db_schema', () => {
+    it.each([
+      ['lists every readable table compactly', {}],
+      ['lists the tables that match a name with column types', { table: 'saved' }],
+      ['says that a name matched nothing', { table: 'payments' }],
+    ])('%s', async (_name, input) => {
+      expect(await call(healthy(), 'db_schema', input)).toMatchSnapshot();
+    });
+
+    it('refuses a bad table filter with the exact words', async () => {
+      expect(await call(healthy(), 'db_schema', { table: 'users; drop' })).toMatchSnapshot();
+    });
+
+    it('reports itself unavailable, with the reason, when it is not configured', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor(new ExplorerNotConfiguredError()),
+      };
+
+      expect(await call(executors, 'db_schema', {})).toMatchSnapshot();
+    });
+
+    it('reports the failure of the connection as unavailable', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor(new ExplorerFailureError('network')),
+      };
+
+      expect(await call(executors, 'db_schema', {})).toMatchSnapshot();
+    });
+  });
+
+  describe('db_query', () => {
+    it('returns rows inside an untrusted block', async () => {
+      expect(
+        await call(healthy(), 'db_query', { sql: 'SELECT title, saves FROM top_saved' }),
+      ).toMatchSnapshot();
+    });
+
+    it('returns the plan without running the query', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor({
+          columns: ['QUERY PLAN'],
+          rows: [{ 'QUERY PLAN': 'Seq Scan on users  (cost=0.00..1.06 rows=6 width=16)' }],
+          hasMoreRows: false,
+        }),
+      };
+
+      expect(
+        await call(executors, 'db_query', { sql: 'SELECT * FROM users', explain: true }),
+      ).toMatchSnapshot();
+    });
+
+    it('says what an empty answer does and does not cover', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor({ columns: ['n'], rows: [], hasMoreRows: false }),
+      };
+
+      expect(
+        await call(executors, 'db_query', { sql: 'SELECT 1 AS n WHERE false' }),
+      ).toMatchSnapshot();
+    });
+
+    it('says that more rows exist, as a lower bound, when the row limit is reached', async () => {
+      const executors = { ...healthy(), database: explorerExecutorsFor(MANY_QUERY_ROWS) };
+
+      expect(await call(executors, 'db_query', { sql: 'SELECT n, text FROM t' })).toMatchSnapshot();
+    });
+
+    it.each([
+      [QueryRefusal.PRIVATE, 'permission denied for table users'],
+      [QueryRefusal.NOT_FOUND, 'relation "payments" does not exist'],
+      [QueryRefusal.INVALID_QUERY, 'syntax error at or near "FORM"'],
+      [QueryRefusal.TIMEOUT, 'canceling statement due to statement timeout'],
+      [QueryRefusal.BUSY, 'too many connections for role "ai_explorer"'],
+    ])('answers a %s refusal from the database with its status', async (refusal, detail) => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor(new ExplorerQueryRefusedError(refusal, detail)),
+      };
+
+      expect(await call(executors, 'db_query', { sql: 'SELECT 1' })).toMatchSnapshot();
+    });
+
+    it('reports itself unavailable, with the reason, when it is not configured', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor(new ExplorerNotConfiguredError()),
+      };
+
+      expect(await call(executors, 'db_query', { sql: 'SELECT 1' })).toMatchSnapshot();
+    });
+
+    it('reports the failure of the connection as unavailable', async () => {
+      const executors = {
+        ...healthy(),
+        database: explorerExecutorsFor(new ExplorerFailureError('network')),
+      };
+
+      expect(await call(executors, 'db_query', { sql: 'SELECT 1' })).toMatchSnapshot();
+    });
+
+    it.each([
+      ['a second statement', 'SELECT 1; SELECT 2'],
+      ['a write', 'DELETE FROM users'],
+      ['a data-changing cte', 'WITH x AS (DELETE FROM genres RETURNING 1) SELECT * FROM x'],
+      ['an empty statement', '  '],
+    ])('refuses %s with the exact words', async (_name, sql) => {
+      expect(await call(healthy(), 'db_query', { sql })).toMatchSnapshot();
     });
   });
 

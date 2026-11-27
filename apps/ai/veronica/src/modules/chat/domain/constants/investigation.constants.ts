@@ -31,6 +31,8 @@ export const InvestigationTool = {
   ASK_HAPPY: 'ask_happy',
   JOB_FAILURES: OpsTool.JOB_FAILURES,
   LOGS_SEARCH: OpsTool.LOGS_SEARCH,
+  DB_SCHEMA: OpsTool.DB_SCHEMA,
+  DB_QUERY: OpsTool.DB_QUERY,
   ASK_DUME: 'ask_dume',
 } as const;
 export type InvestigationTool = (typeof InvestigationTool)[keyof typeof InvestigationTool];

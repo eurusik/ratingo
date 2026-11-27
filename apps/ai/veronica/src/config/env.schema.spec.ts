@@ -34,6 +34,17 @@ describe('env schemas', () => {
     );
   });
 
+  it('treats the explorer database as optional and an empty value as not set', () => {
+    expect(serviceEnvSchema.parse(VALID).AI_EXPLORER_DATABASE_URL).toBeUndefined();
+    expect(
+      serviceEnvSchema.parse({ ...VALID, AI_EXPLORER_DATABASE_URL: '' }).AI_EXPLORER_DATABASE_URL,
+    ).toBeUndefined();
+    expect(
+      serviceEnvSchema.parse({ ...VALID, AI_EXPLORER_DATABASE_URL: 'postgres://e:p@h/db' })
+        .AI_EXPLORER_DATABASE_URL,
+    ).toBe('postgres://e:p@h/db');
+  });
+
   it('treats the Anthropic key as optional and rejects an empty value', () => {
     expect(serviceEnvSchema.parse(VALID).ANTHROPIC_API_KEY).toBeUndefined();
     expect(serviceEnvSchema.parse({ ...VALID, ANTHROPIC_API_KEY: 'k' }).ANTHROPIC_API_KEY).toBe(

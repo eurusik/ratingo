@@ -1,14 +1,19 @@
 import { Logger } from '@nestjs/common';
 import type { ClockPort } from '@ratingo/ai-core';
 import {
+  DbQueryExecutor,
+  DbSchemaExecutor,
   GrafanaLokiLogsAdapter,
   JobFailuresExecutor,
   LogsSearchExecutor,
   MetricsQueryExecutor,
+  PostgresExplorerAdapter,
   PostgresJobFailuresAdapter,
   PrometheusMetricsAdapter,
+  UnconfiguredExplorerAdapter,
   UnconfiguredJobFailuresAdapter,
   UnconfiguredLogsAdapter,
+  type ExplorerPort,
   type JobFailuresPort,
   type LogsPort,
   type OpsExecutors,
@@ -48,6 +53,12 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
     config.readerDatabaseUrl === undefined
       ? new UnconfiguredJobFailuresAdapter()
       : PostgresJobFailuresAdapter.connect(config.readerDatabaseUrl);
+  const explorer: ExplorerPort & { close?(): Promise<void> } =
+    config.explorerDatabaseUrl === undefined
+      ? new UnconfiguredExplorerAdapter()
+      : PostgresExplorerAdapter.connect(config.explorerDatabaseUrl);
+  const dbSchema = new DbSchemaExecutor(explorer, new Logger(DbSchemaExecutor.name));
+  const dbQuery = new DbQueryExecutor(explorer, new Logger(DbQueryExecutor.name));
   const logs = new LogsSearchExecutor(
     logsPortFor(config.loki, logger),
     clock,
@@ -68,9 +79,12 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
       logsSearch: (input) => logs.run(input),
       jobFailures: (input) => jobFailures.run(input),
       metricsQuery: (input) => metrics.run(input),
+      dbSchema: (input) => dbSchema.run(input),
+      dbQuery: (input) => dbQuery.run(input),
     },
     close: async () => {
       await failures.close?.();
+      await explorer.close?.();
     },
   };
 };

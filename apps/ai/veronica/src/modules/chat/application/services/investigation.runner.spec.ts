@@ -103,6 +103,8 @@ class Harness {
     askHappy: async () => ({ found: false }),
     jobFailures: async () => ({ window: '24h', failures: [] }),
     logsSearch: async () => ({ service: 'ratingo-worker', groups: [] }),
+    dbSchema: async () => ({ tables: [] }),
+    dbQuery: async () => ({ columns: [], rows: [] }),
   };
 
   readonly delegated: unknown[] = [];
@@ -399,12 +401,14 @@ describe('InvestigationRunner', () => {
     expect(chat.scripted.requests).toEqual([]);
   });
 
-  it('only exposes the eight tools', async () => {
+  it('only exposes the ten tools', async () => {
     const chat = new Harness().script(answerStep('Усе гаразд.'));
     await chat.ask('як справи?');
     expect(chat.scripted.requests[0].tools.map((tool) => tool.name).sort()).toEqual([
       'ask_dume',
       'ask_happy',
+      'db_query',
+      'db_schema',
       'digest_snapshot',
       'job_failures',
       'logs_search',

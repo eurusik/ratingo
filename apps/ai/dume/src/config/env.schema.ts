@@ -31,6 +31,7 @@ const baseEnvShape = {
   GRAFANA_PROM_URL: optionalUrl,
   GRAFANA_PROM_TOKEN: optionalText,
   AI_READER_DATABASE_URL: optionalText,
+  AI_EXPLORER_DATABASE_URL: optionalText,
 };
 
 export const envSchema = z.object(baseEnvShape);

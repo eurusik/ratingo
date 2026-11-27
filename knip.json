@@ -11,7 +11,7 @@
       ],
       "project": ["src/**/*.ts", "test/**/*.ts", "*.{js,ts}"],
       "jest": {
-        "config": ["jest.config.js", "jest.e2e.config.js"]
+        "config": ["jest.config.js", "jest.e2e.config.js", "jest.explorer-access.config.js"]
       },
       "drizzle": {
         "config": ["drizzle.config.{ts,js}"]

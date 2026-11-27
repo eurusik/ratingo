@@ -42,6 +42,35 @@ export { UnconfiguredJobFailuresAdapter } from './job-failures/unconfigured.job-
 export { connectReportingDatabase } from './job-failures/reporting-connection';
 
 export {
+  DB_QUERY_OUTPUT_CAP,
+  DB_QUERY_ROW_LIMIT,
+  DB_SCHEMA_OUTPUT_CAP,
+  DB_STATEMENT_TIMEOUT_MS,
+  QueryRefusal,
+} from './database/database.constants';
+export {
+  ExplorerFailureError,
+  ExplorerNotConfiguredError,
+  ExplorerQueryRefusedError,
+  ExplorerUnavailableError,
+  type ExplorerPort,
+  type QueryRequest,
+  type QueryRows,
+  type SchemaColumn,
+  type SchemaListing,
+  type SchemaTable,
+} from './database/database.port';
+export { DbQueryExecutor, type DbQueryOptions } from './database/db-query.executor';
+export { DbSchemaExecutor } from './database/db-schema.executor';
+export {
+  PostgresExplorerAdapter,
+  type ExplorerConnectionOptions,
+} from './database/postgres.explorer-adapter';
+export { UnconfiguredExplorerAdapter } from './database/unconfigured.explorer-adapter';
+export { dbQueryInput, type DbQueryInput } from './database/db-query.input';
+export { dbSchemaInput, type DbSchemaInput } from './database/db-schema.input';
+
+export {
   METRICS_OUTPUT_CAP,
   METRIC_DEFAULT_WINDOW,
   METRIC_OFFSET_MAX_DAYS,
@@ -89,3 +118,20 @@ export {
   type SimulatedJobFailureDay,
 } from './testing/job-failures.simulator';
 export { createPrometheusSimulator, type PrometheusSeries } from './testing/prometheus.simulator';
+export {
+  createExplorerTestDatabase,
+  type ExplorerTestDatabase,
+  type ExplorerTestDatabaseOptions,
+} from './testing/explorer-database';
+export {
+  EXPLORER_EVAL_QUERIES,
+  EXPLORER_FIXTURE,
+  seedExplorerFixture,
+} from './testing/explorer-fixture';
+export {
+  ExplorerEvalRuntime,
+  missingExplorerDatabaseExecutors,
+  unconfiguredExplorerExecutors,
+  type ExplorerExecutorOptions,
+  type ExplorerExecutors,
+} from './testing/explorer-eval-runtime';

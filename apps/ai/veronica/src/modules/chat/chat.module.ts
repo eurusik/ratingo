@@ -5,12 +5,17 @@ import IORedis from 'ioredis';
 
 import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
 import {
+  DbQueryExecutor,
+  DbSchemaExecutor,
   GrafanaLokiLogsAdapter,
   JobFailuresExecutor,
   LogsSearchExecutor,
   MetricsQueryExecutor,
+  PostgresExplorerAdapter,
+  UnconfiguredExplorerAdapter,
   UnconfiguredJobFailuresAdapter,
   UnconfiguredLogsAdapter,
+  type ExplorerPort,
   type JobFailuresPort,
   type LogsPort,
   type MetricsPort,
@@ -22,6 +27,7 @@ import type { Database } from '../../database/database.module';
 import {
   CHANGES_CONFIG,
   DUME_CONFIG,
+  EXPLORER_CONFIG,
   HAPPY_CONFIG,
   INFRA_CONFIG,
   LOKI_CONFIG,
@@ -29,6 +35,7 @@ import {
   TELEGRAM_CONFIG,
   type ChangesConfig,
   type DumeConfig,
+  type ExplorerConfig,
   type HappyConfig,
   type InfraConfig,
   type LokiConfig,
@@ -73,6 +80,7 @@ import { CHAT_METRICS_PORT } from './domain/ports/chat-metrics.port';
 import { CONVERSATION_STORE } from './domain/ports/conversation-store.port';
 import { DELEGATION_STORE } from './domain/ports/delegation-store.port';
 import { DUME_CLIENT } from './domain/ports/dume-client.port';
+import { EXPLORER_PORT } from './domain/ports/explorer.port';
 import { HAPPY_CLIENT } from './domain/ports/happy-client.port';
 import { JOB_FAILURES_PORT } from './domain/ports/job-failures.port';
 import { LOGS_PORT } from './domain/ports/logs.port';
@@ -155,6 +163,14 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
           : PostgresJobFailuresAdapter.connect(config.readerDatabaseUrl),
     },
     {
+      provide: EXPLORER_PORT,
+      inject: [EXPLORER_CONFIG],
+      useFactory: (config: ExplorerConfig) =>
+        config.databaseUrl === undefined
+          ? new UnconfiguredExplorerAdapter()
+          : PostgresExplorerAdapter.connect(config.databaseUrl),
+    },
+    {
       provide: LOGS_PORT,
       inject: [LOKI_CONFIG],
       useFactory: ({ baseUrl, user, token }: LokiConfig) => {
@@ -191,6 +207,7 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
         METRICS_PORT,
         JOB_FAILURES_PORT,
         LOGS_PORT,
+        EXPLORER_PORT,
         CLOCK_PORT,
         ProductStatsExecutor,
         DigestSnapshotExecutor,
@@ -201,6 +218,7 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
         metricsPort: MetricsPort,
         failuresPort: JobFailuresPort,
         logsPort: LogsPort,
+        explorerPort: ExplorerPort,
         clock: ClockPort,
         product: ProductStatsExecutor,
         snapshot: DigestSnapshotExecutor,
@@ -218,6 +236,8 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
           new Logger(JobFailuresExecutor.name),
         );
         const logs = new LogsSearchExecutor(logsPort, clock, new Logger(LogsSearchExecutor.name));
+        const dbSchema = new DbSchemaExecutor(explorerPort, new Logger(DbSchemaExecutor.name));
+        const dbQuery = new DbQueryExecutor(explorerPort, new Logger(DbQueryExecutor.name));
         return {
           metricsQuery: (input) => metrics.run(input),
           productStats: (input) => product.run(input),
@@ -226,6 +246,8 @@ import { withRedisErrorLog } from '../../redis/redis-error-log';
           askHappy: (input) => happy.run(input),
           jobFailures: (input) => failures.run(input),
           logsSearch: (input) => logs.run(input),
+          dbSchema: (input) => dbSchema.run(input),
+          dbQuery: (input) => dbQuery.run(input),
         };
       },
     },

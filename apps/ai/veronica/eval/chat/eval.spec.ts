@@ -7,11 +7,21 @@ import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
 import { runEval } from './eval-runner';
 import { findForbiddenContent } from './forbidden-content';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import {
+  EXPLORER_EVAL_DATABASE_VARIABLE,
+  needsExplorerDatabase,
+  startExplorerEvalDatabase,
+  stopExplorerEvalDatabase,
+} from './explorer-eval-database';
 import { fixtureExecutors, runCase } from './harness';
 import { LOKI_EVAL_CASES } from './loki.cases';
 import { ReferenceJudge } from './reference-judge';
 
 const STUB = { modelRef: 'stub:digest' };
+const EXPLORER_ADMIN_URL = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
+const describeWithExplorerDatabase = EXPLORER_ADMIN_URL ? describe : describe.skip;
+const CASES_WITHOUT_DATABASE = EVAL_CASES.filter((testCase) => !needsExplorerDatabase(testCase));
+const CASES_WITH_DATABASE = EVAL_CASES.filter(needsExplorerDatabase);
 const STUB_EVAL_TIMEOUT_MS = 60_000;
 const KYIV_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 const KYIV_DATE_TIME = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/u;
@@ -78,6 +88,8 @@ describe('chat eval cases', () => {
     expect([...tools].sort()).toEqual([
       'ask_dume',
       'ask_happy',
+      'db_query',
+      'db_schema',
       'digest_snapshot',
       'google-analytics__run_funnel_report',
       'google-analytics__run_realtime_report',
@@ -200,16 +212,16 @@ describe('chat eval cases', () => {
 
 describe('chat eval on the stub model', () => {
   it(
-    'passes every case when the model replays the reference answer and the judge compares with it',
+    'passes every case that needs no database when the model replays the reference answer and the judge compares with it',
     async () => {
       const run = await runEval(
-        EVAL_CASES,
+        CASES_WITHOUT_DATABASE,
         { runAgent: (testCase) => runCase(testCase, STUB), judge: new ReferenceJudge() },
         { repeat: { runs: 1, passAt: 1 }, concurrency: 4, maxCostUsd: 1 },
       );
       expect(summarize(run.outcomes)).toMatchObject({
-        cases: EVAL_CASES.length,
-        passedCases: EVAL_CASES.length,
+        cases: CASES_WITHOUT_DATABASE.length,
+        passedCases: CASES_WITHOUT_DATABASE.length,
         toolSelectionRate: 1,
         factRate: 1,
         answersWithFlags: 0,
@@ -264,6 +276,38 @@ describe('chat eval on the stub model', () => {
         toolsOk: false,
         factsOk: true,
         passed: false,
+      });
+    },
+    STUB_EVAL_TIMEOUT_MS,
+  );
+});
+
+describeWithExplorerDatabase('chat eval of the database tools on the stub model', () => {
+  beforeAll(async () => {
+    await startExplorerEvalDatabase(EXPLORER_ADMIN_URL as string);
+  }, STUB_EVAL_TIMEOUT_MS);
+
+  afterAll(async () => {
+    await stopExplorerEvalDatabase();
+  });
+
+  it(
+    'passes every case whose tools run against the migrated database, with every number taken from the real rows',
+    async () => {
+      const run = await runEval(
+        CASES_WITH_DATABASE,
+        { runAgent: (testCase) => runCase(testCase, STUB), judge: new ReferenceJudge() },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 2, maxCostUsd: 1 },
+      );
+      expect(summarize(run.outcomes)).toMatchObject({
+        cases: CASES_WITH_DATABASE.length,
+        passedCases: CASES_WITH_DATABASE.length,
+        answersWithFlags: 0,
+        wrongNumbers: 0,
+        fallbacks: 0,
+        unscorableRuns: 0,
+        failedCases: [],
+        flakyCases: [],
       });
     },
     STUB_EVAL_TIMEOUT_MS,

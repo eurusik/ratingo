@@ -5,6 +5,7 @@ import {
   ANTHROPIC_CONFIG,
   CHANGES_CONFIG,
   CHAT_CONFIG,
+  EXPLORER_CONFIG,
   GRAFANA_CONFIG,
   DUME_CONFIG,
   HAPPY_CONFIG,
@@ -18,6 +19,7 @@ import {
   type ChangesConfig,
   type GrafanaConfig,
   type DumeConfig,
+  type ExplorerConfig,
   type HappyConfig,
   type InfraConfig,
   type LokiConfig,
@@ -68,9 +70,11 @@ export class ConfigModule {
       user: env.GRAFANA_LOKI_USER,
       token: env.GRAFANA_LOKI_TOKEN,
     };
+    const explorer: ExplorerConfig = { databaseUrl: env.AI_EXPLORER_DATABASE_URL };
     const providers = [
       { provide: ANTHROPIC_CONFIG, useValue: anthropic },
       { provide: GRAFANA_CONFIG, useValue: grafana },
+      { provide: EXPLORER_CONFIG, useValue: explorer },
       { provide: LOKI_CONFIG, useValue: loki },
       { provide: PRODUCT_STATS_CONFIG, useValue: productStats },
       { provide: ANALYTICS_MCP_CONFIG, useValue: analytics },

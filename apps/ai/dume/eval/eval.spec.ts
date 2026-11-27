@@ -8,13 +8,24 @@ import { RUNTIME_CASES } from './cases/runtime.cases';
 import { UNKNOWN_CASES } from './cases/unknown.cases';
 import { CaseKind, type EvalCase, type RuntimeSource } from './eval-case';
 import { runEval } from './eval-runner';
+import {
+  EXPLORER_EVAL_DATABASE_VARIABLE,
+  needsExplorerDatabase,
+  startExplorerEvalDatabase,
+  stopExplorerEvalDatabase,
+} from './explorer-eval-database';
 import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness';
 import { ReferenceJudge } from './judge';
 import { StaleCaseError } from './reference-script';
 
 const MIN_CASES = 15;
-const MAX_CASES = 30;
+const MAX_CASES = 40;
 const MIN_UNKNOWN_CASES = 3;
+
+const EXPLORER_ADMIN_URL = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
+const describeWithExplorerDatabase = EXPLORER_ADMIN_URL ? describe : describe.skip;
+const CASES_WITHOUT_DATABASE = EVAL_CASES.filter((testCase) => !needsExplorerDatabase(testCase));
+const CASES_WITH_DATABASE = EVAL_CASES.filter(needsExplorerDatabase);
 
 describe('the investigation eval on the stub model', () => {
   let environment: EvalEnvironment;
@@ -24,7 +35,7 @@ describe('the investigation eval on the stub model', () => {
     environment = await createEvalEnvironment('stub:review', undefined);
   });
 
-  it('keeps between 15 and 30 cases with unique ids, unknown questions and an injection case', () => {
+  it('keeps between 15 and 40 cases with unique ids, unknown questions and an injection case', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(MIN_CASES);
     expect(EVAL_CASES.length).toBeLessThanOrEqual(MAX_CASES);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
@@ -61,9 +72,9 @@ describe('the investigation eval on the stub model', () => {
     }
   });
 
-  it('passes every case when the reference is replayed against this checkout, so every anchor still exists', async () => {
+  it('passes every case that needs no database when the reference is replayed against this checkout, so every anchor still exists', async () => {
     const run = await runEval(
-      EVAL_CASES,
+      CASES_WITHOUT_DATABASE,
       { runAgent: (testCase) => runCase(testCase, environment), judge: new ReferenceJudge() },
       { repeat: { runs: 1, passAt: 1 }, concurrency: 4, maxCostUsd: 1 },
     );
@@ -75,7 +86,7 @@ describe('the investigation eval on the stub model', () => {
         .map((outcome) => outcome.runs.flatMap((entry) => entry.failures)),
     ).toEqual([]);
     expect(summary).toMatchObject({
-      passedCases: EVAL_CASES.length,
+      passedCases: CASES_WITHOUT_DATABASE.length,
       fabricatedCitations: 0,
       unscorableRuns: 0,
       honestUnknownRate: 1,
@@ -150,3 +161,39 @@ describe('the investigation eval on the stub model', () => {
     await expect(runCase(stale, environment)).rejects.toBeInstanceOf(StaleCaseError);
   });
 });
+
+describeWithExplorerDatabase(
+  'the investigation eval of the database tools on the stub model',
+  () => {
+    let environment: EvalEnvironment;
+
+    beforeAll(async () => {
+      Logger.overrideLogger(false);
+      environment = await createEvalEnvironment('stub:review', undefined);
+      await startExplorerEvalDatabase(EXPLORER_ADMIN_URL as string);
+    }, 60_000);
+
+    afterAll(async () => {
+      await stopExplorerEvalDatabase();
+    });
+
+    it('passes every case whose tools run against the migrated database, with refs to the real rows', async () => {
+      const run = await runEval(
+        CASES_WITH_DATABASE,
+        { runAgent: (testCase) => runCase(testCase, environment), judge: new ReferenceJudge() },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 2, maxCostUsd: 1 },
+      );
+
+      expect(
+        run.outcomes
+          .filter((outcome) => !outcome.passed)
+          .map((outcome) => outcome.runs.flatMap((entry) => entry.failures)),
+      ).toEqual([]);
+      expect(summarize(run.outcomes)).toMatchObject({
+        passedCases: CASES_WITH_DATABASE.length,
+        fabricatedCitations: 0,
+        unscorableRuns: 0,
+      });
+    }, 60_000);
+  },
+);

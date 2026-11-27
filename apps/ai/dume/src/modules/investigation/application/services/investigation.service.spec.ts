@@ -479,6 +479,8 @@ describe('InvestigationService', () => {
       'metrics_query',
       'job_failures',
       'logs_search',
+      'db_schema',
+      'db_query',
     ]);
     expect(JSON.stringify(request.messages)).toContain(TEST_SHA);
     expect(request.system).toContain('<untrusted>');

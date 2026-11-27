@@ -35,6 +35,7 @@ export interface RuntimeFixture {
   failures?: readonly SimulatedJobFailureDay[];
   metrics?: readonly PrometheusSeries[];
   unavailable?: readonly OpsTool[];
+  database?: { statementTimeoutMs?: number };
 }
 
 interface Reference {

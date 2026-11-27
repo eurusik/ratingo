@@ -26,10 +26,23 @@ const run = async (
 ): Promise<{ result: ToolResult; ledger: RuntimeEvidenceLedger }> => {
   const recorder = createRuntimeEvidenceRecorder(ledger);
   const tools = createOpsTools(
-    { metricsQuery: NOT_USED, jobFailures: NOT_USED, logsSearch: NOT_USED, ...executors },
+    {
+      metricsQuery: NOT_USED,
+      jobFailures: NOT_USED,
+      logsSearch: NOT_USED,
+      dbSchema: NOT_USED,
+      dbQuery: NOT_USED,
+      ...executors,
+    },
     { decorate: recorder.decorate },
   );
-  const observed = [tools.metricsQuery, tools.jobFailures, tools.logsSearch].map(recorder.observe);
+  const observed = [
+    tools.metricsQuery,
+    tools.jobFailures,
+    tools.logsSearch,
+    tools.dbSchema,
+    tools.dbQuery,
+  ].map(recorder.observe);
   const registry = await ToolRegistry.create(
     [new NativeToolSource(observed)],
     observed.map((entry) => entry.name),
@@ -58,6 +71,19 @@ describe('createRuntimeEvidenceRecorder', () => {
       summary: '{"message":"second"}',
     });
     expect(ledger.find('logs_search#1')).toBeUndefined();
+  });
+
+  it('gives every row of a database query a ref the model can cite, and records what it was shown', async () => {
+    const rows = [{ title: 'Alpha Show', saves: 3 }];
+
+    const { result, ledger } = await run(
+      { dbQuery: async () => listOf(rows, { columns: ['title', 'saves'] }) },
+      OpsTool.DB_QUERY,
+      { sql: 'SELECT title, saves FROM top_saved' },
+    );
+
+    expect(result.content).toContain('{"ref":"db_query#1.1","title":"Alpha Show","saves":3}');
+    expect(ledger.find('db_query#1.1')).toMatchObject({ tool: 'db_query' });
   });
 
   it('numbers the calls of each tool on its own', async () => {
