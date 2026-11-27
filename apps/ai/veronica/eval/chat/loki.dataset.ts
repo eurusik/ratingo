@@ -108,7 +108,7 @@ export const STORM_OLDEST_READ_MINUTES_AGO = STORM_NEWEST_MINUTES_AGO + STORM_RE
 
 const STORM_SHOWS_PER_BATCH = 20;
 const ISO_HOUR_WINDOW_LENGTH = 13;
-const BATCH_HASH_LENGTH = 8;
+const BATCH_HASH_LENGTH = 12;
 
 const trackedBatchJobId = (index: number): string => {
   const batch = Math.floor(index / STORM_SHOWS_PER_BATCH);

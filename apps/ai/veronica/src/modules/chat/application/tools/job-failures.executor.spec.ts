@@ -92,6 +92,17 @@ describe('JobFailuresExecutor', () => {
     });
   });
 
+  it('says the note applies to the filter when job or queue is set', async () => {
+    const byJob = materialized(await executorReturning([]).run({ job: 'trending' }));
+    const byQueue = materialized(await executorReturning([]).run({ queue: 'ingestion' }));
+
+    expect(byJob).toMatchObject({ note: expect.stringContaining('matching this filter') });
+    expect(byQueue).toMatchObject({ note: expect.stringContaining('matching this filter') });
+    expect(materialized(await executorReturning([]).run({}))).not.toMatchObject({
+      note: expect.stringContaining('matching this filter'),
+    });
+  });
+
   it('adds no note when failures were recorded', async () => {
     const result = materialized(await executorReturning([summary()]).run({}));
 

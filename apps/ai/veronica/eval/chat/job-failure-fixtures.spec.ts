@@ -15,6 +15,15 @@ describe('jobFailures fixture helper', () => {
     expect(jobFailures([])).toEqual(real.withAllRows());
   });
 
+  it.each([
+    [{ job: 'trending' }, { job: 'trending', window: '24h' }],
+    [{ queue: 'ingestion' }, { queue: 'ingestion', window: '24h' }],
+  ])('matches the executor for an empty list filtered by %j', async (filter, extra) => {
+    const real = (await emptyExecutor().run(filter)) as RowList;
+
+    expect(jobFailures([], extra)).toEqual(real.withAllRows());
+  });
+
   it('adds no note when the fixture lists failures', () => {
     expect(jobFailures([{ job: 'sync-show' }])).not.toHaveProperty('note');
   });
