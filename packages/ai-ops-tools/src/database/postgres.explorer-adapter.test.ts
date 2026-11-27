@@ -8,6 +8,11 @@ import {
 } from '../testing/explorer-database';
 import { EXPLORER_FIXTURE, seedExplorerFixture } from '../testing/explorer-fixture';
 import { recordingLogger } from '../testing/recording-logger';
+import {
+  DATABASE_SETUP_TIMEOUT_MS,
+  DATABASE_TEARDOWN_TIMEOUT_MS,
+  DATABASE_TEST_TIMEOUT_MS,
+} from '../testing/explorer-test-timeouts';
 
 import { DB_SCHEMA_OUTPUT_CAP, QueryRefusal } from './database.constants';
 import { ExplorerQueryRefusedError } from './database.port';
@@ -17,6 +22,8 @@ import { PostgresExplorerAdapter } from './postgres.explorer-adapter';
 
 const ADMIN_URL = process.env.EXPLORER_TEST_DATABASE_URL;
 const describeWithDatabase = ADMIN_URL ? describe : describe.skip;
+
+jest.setTimeout(DATABASE_TEST_TIMEOUT_MS);
 const MIGRATIONS = join(__dirname, '../../../../apps/api/drizzle_v2');
 const SHORT_TIMEOUT_MS = 200;
 
@@ -46,13 +53,13 @@ describeWithDatabase('PostgresExplorerAdapter against the migrated database as a
     quick = PostgresExplorerAdapter.connect(database.explorerUrl, {
       statementTimeoutMs: SHORT_TIMEOUT_MS,
     });
-  });
+  }, DATABASE_SETUP_TIMEOUT_MS);
 
   afterAll(async () => {
-    await adapter.close();
-    await quick.close();
-    await database.close();
-  });
+    await adapter?.close();
+    await quick?.close();
+    await database?.close();
+  }, DATABASE_TEARDOWN_TIMEOUT_MS);
 
   describe('schema', () => {
     it('lists only readable columns, counts the hidden ones and names the closed tables', async () => {

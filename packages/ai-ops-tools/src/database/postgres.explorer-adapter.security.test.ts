@@ -7,6 +7,11 @@ import {
   type ExplorerTestDatabase,
 } from '../testing/explorer-database';
 import { seedExplorerFixture } from '../testing/explorer-fixture';
+import {
+  DATABASE_SETUP_TIMEOUT_MS,
+  DATABASE_TEARDOWN_TIMEOUT_MS,
+  DATABASE_TEST_TIMEOUT_MS,
+} from '../testing/explorer-test-timeouts';
 
 import { QueryRefusal } from './database.constants';
 import { ExplorerFailureError, ExplorerQueryRefusedError } from './database.port';
@@ -15,6 +20,8 @@ import { readOnlyStatement } from './sql-statement.policy';
 
 const ADMIN_URL = process.env.EXPLORER_TEST_DATABASE_URL;
 const describeWithDatabase = ADMIN_URL ? describe : describe.skip;
+
+jest.setTimeout(DATABASE_TEST_TIMEOUT_MS);
 const MIGRATIONS = join(__dirname, '../../../../apps/api/drizzle_v2');
 const SETTLE_MS = 400;
 const PROPERTY_RUNS = 60;
@@ -78,13 +85,13 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
     });
     await seedExplorerFixture(database.admin);
     adapter = PostgresExplorerAdapter.connect(database.explorerUrl);
-  });
+  }, DATABASE_SETUP_TIMEOUT_MS);
 
   afterAll(async () => {
     process.off('uncaughtException', remember);
     await adapter?.close();
     await database?.close();
-  });
+  }, DATABASE_TEARDOWN_TIMEOUT_MS);
 
   it('refuses a second statement hidden behind a non-ASCII name and a dollar quote', async () => {
     expect(await outcomeOf(BYPASS)).toBe(QueryRefusal.INVALID_QUERY);
