@@ -36,3 +36,4 @@ export type {
   WatchProvider,
   WatchProvidersMap,
 } from './normalized-media';
+export { SAME_AIRING_MAX_GAP_DAYS } from './episode-airing';

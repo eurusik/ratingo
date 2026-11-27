@@ -6,6 +6,7 @@ export const EXTERNAL_API_PROVIDER = {
   TRAKT: 'trakt',
   MDBLIST: 'mdblist',
   OMDB: 'omdb',
+  TVMAZE: 'tvmaze',
 } as const;
 
 export type ExternalApiProvider =

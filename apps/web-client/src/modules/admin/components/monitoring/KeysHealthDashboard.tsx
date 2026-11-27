@@ -24,6 +24,7 @@ const PROVIDER_LABEL: Record<string, string> = {
   trakt: 'Trakt',
   mdblist: 'MDBList',
   omdb: 'OMDb',
+  tvmaze: 'TVMaze',
   s3: 'S3 / R2',
 };
 

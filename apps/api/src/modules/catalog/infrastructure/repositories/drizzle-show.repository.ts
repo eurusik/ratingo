@@ -23,7 +23,7 @@ import {
 } from '@/modules/catalog/domain/repositories/show.repository.interface';
 import type { TrendingQueryResult } from '@/modules/catalog/domain/types/query.types';
 import { type DatabaseTransaction } from '@/modules/catalog/domain/types/transaction.type';
-import type { NormalizedSeason } from '@/modules/shared/contracts';
+import { type NormalizedSeason, SAME_AIRING_MAX_GAP_DAYS } from '@/modules/shared/contracts';
 import { type DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
 
 import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
@@ -35,6 +35,8 @@ import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { toDrizzleTx, type DrizzleTransaction } from '../utils/drizzle-transaction';
+
+const SAME_AIRING_MAX_GAP = sql.raw(`interval '${SAME_AIRING_MAX_GAP_DAYS} days'`);
 
 /**
  * Show details payload for upsert operation.
@@ -250,6 +252,12 @@ export class DrizzleShowRepository implements IShowRepository {
     const values = episodes.map((ep) =>
       SeasonEpisodePersistenceMapper.toEpisodeInsert(seasonId, showId, ep),
     );
+    const keepsStoredAirInstant = sql`(
+      excluded.air_date_day_only
+      AND ${schema.episodes.airDateDayOnly} = false
+      AND excluded.air_date BETWEEN ${schema.episodes.airDate} - ${SAME_AIRING_MAX_GAP}
+        AND ${schema.episodes.airDate} + ${SAME_AIRING_MAX_GAP}
+    )`;
 
     await drizzleTx
       .insert(schema.episodes)
@@ -272,7 +280,16 @@ export class DrizzleShowRepository implements IShowRepository {
             THEN ${schema.episodes.overview}
             ELSE COALESCE(excluded.overview, ${schema.episodes.overview})
           END`,
-          airDate: sql`COALESCE(excluded.air_date, ${schema.episodes.airDate})`,
+          airDate: sql`CASE
+            WHEN ${keepsStoredAirInstant}
+            THEN ${schema.episodes.airDate}
+            ELSE COALESCE(excluded.air_date, ${schema.episodes.airDate})
+          END`,
+          airDateDayOnly: sql`CASE
+            WHEN ${keepsStoredAirInstant} OR excluded.air_date IS NULL
+            THEN ${schema.episodes.airDateDayOnly}
+            ELSE excluded.air_date_day_only
+          END`,
           runtime: sql`COALESCE(excluded.runtime, ${schema.episodes.runtime})`,
           stillPath: sql`COALESCE(excluded.still_path, ${schema.episodes.stillPath})`,
           voteAverage: sql`COALESCE(excluded.vote_average, ${schema.episodes.voteAverage})`,

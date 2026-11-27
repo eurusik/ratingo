@@ -34,7 +34,7 @@ import { TmdbAdapter } from '@/modules/tmdb/public';
 import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '@/modules/trakt/public';
 
 import { EpisodeMergeService } from './episode-merge.service';
-import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
+import { TvMazeScheduleService } from './tvmaze-schedule.service';
 
 // Score display multiplier (0-1 to 0-100)
 const SCORE_PERCENT_MULTIPLIER = 100;
@@ -85,7 +85,7 @@ export class SyncMediaService {
     private readonly traktRatingsAdapter: TraktRatingsPort,
     @Inject(AGGREGATED_RATINGS_PORT)
     private readonly aggregatedRatings: AggregatedRatingsPort,
-    private readonly tvMazeEnrichment: TvMazeEnrichmentService,
+    private readonly tvMazeSchedule: TvMazeScheduleService,
     private readonly episodeMerge: EpisodeMergeService,
     private readonly scoreCalculator: ScoreCalculatorService,
     private readonly normalizationService: NormalizationService,
@@ -169,7 +169,7 @@ export class SyncMediaService {
       if (!baseMedia) return;
 
       // Step 2: Enrich with TVMaze (shows only)
-      let enrichedMedia = await this.enrichWithTvMaze(baseMedia, type, logPrefix);
+      let enrichedMedia = await this.enrichWithTvMaze(baseMedia, type);
 
       // Step 2b: TMDB episode fallback (when TVMaze has no data)
       enrichedMedia = await this.enrichWithTmdbEpisodes(enrichedMedia, type, logPrefix);
@@ -264,16 +264,8 @@ export class SyncMediaService {
   private async enrichWithTvMaze(
     media: NormalizedMedia,
     type: MediaType,
-    logPrefix: string,
   ): Promise<NormalizedMedia> {
-    if (type !== MediaType.SHOW) return media;
-
-    try {
-      return await this.tvMazeEnrichment.enrich(media);
-    } catch (err) {
-      this.logger.warn(`${logPrefix} TVMaze enrichment failed: ${errorMessage(err)}`);
-      return media;
-    }
+    return type === MediaType.SHOW ? this.tvMazeSchedule.enrich(media) : media;
   }
 
   /** Fetches episodes from TMDB for seasons left empty after TVMaze enrichment. */
@@ -421,7 +413,8 @@ export class SyncMediaService {
       media.ratingImdb == null ||
       media.voteCountImdb == null ||
       media.ratingMetacritic == null ||
-      media.ratingRottenTomatoes == null;
+      media.ratingRottenTomatoes == null ||
+      this.lacksLastAirDate(media, type);
     if (!hasGap) return media;
 
     try {
@@ -445,6 +438,7 @@ export class SyncMediaService {
         ...fill('ratingRottenTomatoes', stored.ratingRottenTomatoes),
         ...fill('watchersCount', stored.watchersCount),
         ...fill('totalWatchers', stored.totalWatchers),
+        ...this.withStoredLastAirDate(media, type, stored.lastAirDate),
       };
     } catch (error) {
       this.logger.warn(
@@ -452,6 +446,19 @@ export class SyncMediaService {
       );
       return media;
     }
+  }
+
+  private lacksLastAirDate(media: NormalizedMedia, type: MediaType): boolean {
+    return type === MediaType.SHOW && !!media.details && media.details.lastAirDate === undefined;
+  }
+
+  private withStoredLastAirDate(
+    media: NormalizedMedia,
+    type: MediaType,
+    storedLastAirDate: Date | null,
+  ): Partial<NormalizedMedia> {
+    if (!this.lacksLastAirDate(media, type) || !storedLastAirDate) return {};
+    return { details: { ...media.details, lastAirDate: storedLastAirDate } };
   }
 
   /** Applies trending score and rank if provided. */

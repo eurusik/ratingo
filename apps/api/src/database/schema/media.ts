@@ -323,6 +323,7 @@ export const episodes = pgTable(
     title: text('title'),
     overview: text('overview'),
     airDate: timestamp('air_date'),
+    airDateDayOnly: boolean('air_date_day_only'),
     runtime: integer('runtime'),
     stillPath: text('still_path'),
     voteAverage: doublePrecision('vote_average'),

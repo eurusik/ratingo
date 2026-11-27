@@ -1,13 +1,20 @@
-import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { TvMazeApiException } from '@/common/exceptions/external-api.exception';
+import { MS_PER_SECOND } from '@/common/constants';
+import {
+  EXTERNAL_API_PROVIDER,
+  emitExternalApiFailure,
+} from '@/common/events/external-api-failure.event';
 import {
   HttpError,
   ResilientHttpClient,
   type RetryConfig,
 } from '@/common/http/resilient-http.client';
+import { SlidingWindowRateLimiter } from '@/common/http/sliding-window-rate-limiter';
 import tvmazeConfig from '@/config/tvmaze.config';
+import { EpisodeScheduleUnavailableError } from '@/modules/ingestion/domain/errors/episode-schedule-unavailable.error';
 import {
   type EpisodeSchedulePort,
   type ScheduledEpisode,
@@ -20,17 +27,15 @@ const TVMAZE_RETRY_CONFIG: Partial<RetryConfig> = {
   timeoutMs: 10_000,
 };
 
-/**
- * TVMaze API response for show lookup.
- */
+const TVMAZE_MAX_REQUESTS_PER_WINDOW = 18;
+const TVMAZE_RATE_WINDOW_SECONDS = 10;
+const TVMAZE_RATE_WINDOW_MS = TVMAZE_RATE_WINDOW_SECONDS * MS_PER_SECOND;
+
 interface TvMazeShow {
   id: number;
   name?: string;
 }
 
-/**
- * TVMaze API response for episode.
- */
 interface TvMazeEpisodeResponse {
   id: number;
   season: number;
@@ -43,60 +48,39 @@ interface TvMazeEpisodeResponse {
   rating: { average: number | null } | null;
 }
 
-/**
- * TVMaze adapter for fetching episodes schedule by IMDb ID.
- */
 @Injectable()
 export class TvMazeAdapter implements EpisodeSchedulePort {
-  private readonly logger = new Logger(TvMazeAdapter.name);
   private readonly httpClient = new ResilientHttpClient(TVMAZE_RETRY_CONFIG);
+  private readonly rateLimiter = new SlidingWindowRateLimiter(
+    TVMAZE_MAX_REQUESTS_PER_WINDOW,
+    TVMAZE_RATE_WINDOW_MS,
+  );
 
   constructor(
     @Inject(tvmazeConfig.KEY)
     private readonly config: ConfigType<typeof tvmazeConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  /**
-   * Fetches episode schedule from TVMaze using IMDb ID.
-   * Returns flat list of all episodes with normalized data and season number.
-   *
-   * @param {string} imdbId - IMDb ID (e.g. 'tt0944947')
-   * @returns {Promise<ScheduledEpisode[]>} Episodes list
-   */
   async getEpisodesByImdbId(imdbId: string): Promise<ScheduledEpisode[]> {
-    try {
-      // Lookup Show ID via IMDb ID (Follows redirects)
-      const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
-
-      if (!show.id) {
-        return [];
-      }
-
-      // Fetch all episodes
-      const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
-
-      if (!Array.isArray(episodes)) return [];
-
-      return episodes.map((ep) => this.mapEpisode(ep));
-    } catch (error) {
-      // 404 is common for new shows or shows not in TVMaze
-      if (
-        error instanceof TvMazeApiException &&
-        error.details?.statusCode === HttpStatus.NOT_FOUND
-      ) {
-        return [];
-      }
-      this.logger.warn(
-        `Failed to sync episodes from TVMaze for ${imdbId}: ${(error as Error).message}`,
-      );
-      return [];
-    }
+    const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
+    return this.episodesOf(show);
   }
 
-  /**
-   * Maps TVMaze episode response to normalized episode model.
-   * Strips HTML tags from summary and normalizes fields.
-   */
+  async getEpisodesByShowName(showName: string): Promise<ScheduledEpisode[]> {
+    const show = await this.fetch<TvMazeShow>(
+      `/singlesearch/shows?q=${encodeURIComponent(showName)}`,
+    );
+    return this.episodesOf(show);
+  }
+
+  private async episodesOf(show: TvMazeShow | null): Promise<ScheduledEpisode[]> {
+    if (!show?.id) return [];
+
+    const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
+    return Array.isArray(episodes) ? episodes.map((ep) => this.mapEpisode(ep)) : [];
+  }
+
   private mapEpisode(ep: TvMazeEpisodeResponse): ScheduledEpisode {
     return {
       seasonNumber: ep.season,
@@ -104,66 +88,27 @@ export class TvMazeAdapter implements EpisodeSchedulePort {
       title: ep.name,
       overview: ep.summary ? ep.summary.replace(/<[^>]*>/g, '').trim() : null,
       airDate: ep.airstamp ? new Date(ep.airstamp) : null,
+      airDateDayOnly: false,
       runtime: ep.runtime,
       stillPath: ep.image?.original || null,
       rating: ep.rating?.average ?? null,
     };
   }
 
-  /**
-   * Fetches episodes from TVMaze using show name search.
-   * Uses single search endpoint for best match, then fetches episodes.
-   * Intended as fallback when IMDb lookup is unavailable.
-   *
-   * @param {string} showName - Show name to search for
-   * @returns {Promise<ScheduledEpisode[]>} Episodes list
-   */
-  async getEpisodesByShowName(showName: string): Promise<ScheduledEpisode[]> {
-    try {
-      const show = await this.fetch<TvMazeShow>(
-        `/singlesearch/shows?q=${encodeURIComponent(showName)}`,
-      );
-
-      if (!show.id) return [];
-
-      const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
-
-      if (!Array.isArray(episodes)) return [];
-
-      return episodes.map((ep) => this.mapEpisode(ep));
-    } catch (error) {
-      if (
-        error instanceof TvMazeApiException &&
-        error.details?.statusCode === HttpStatus.NOT_FOUND
-      ) {
-        return [];
-      }
-      this.logger.warn(
-        `Failed to search TVMaze by name "${showName}": ${(error as Error).message}`,
-      );
-      return [];
-    }
-  }
-
-  /**
-   * Fetches TVMaze JSON endpoint with retry/backoff via ResilientHttpClient.
-   *
-   * @param {string} endpoint - Relative endpoint starting with slash
-   * @returns {Promise<T>} Parsed JSON response
-   */
-  private async fetch<T>(endpoint: string): Promise<T> {
+  private async fetch<T>(endpoint: string): Promise<T | null> {
+    await this.rateLimiter.acquire();
     const result = await this.httpClient.get<T>(`${this.config.apiUrl}${endpoint}`);
 
-    if (!result.success) {
-      const { error } = result;
-      const status = error instanceof HttpError ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
-      throw new TvMazeApiException(error?.message ?? 'Request failed', status);
+    if (result.success) {
+      if (result.data !== null) return result.data;
+      throw new EpisodeScheduleUnavailableError(HttpStatus.BAD_GATEWAY, 'empty response');
     }
 
-    if (result.data === null) {
-      throw new TvMazeApiException('Request failed', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const status =
+      result.error instanceof HttpError ? result.error.status : HttpStatus.SERVICE_UNAVAILABLE;
+    if (status === HttpStatus.NOT_FOUND) return null;
 
-    return result.data;
+    emitExternalApiFailure(this.eventEmitter, EXTERNAL_API_PROVIDER.TVMAZE, status);
+    throw new EpisodeScheduleUnavailableError(status, result.error?.message ?? 'request failed');
   }
 }

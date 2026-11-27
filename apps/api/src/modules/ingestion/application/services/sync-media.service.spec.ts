@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CLOCK_PORT } from '@/modules/shared/clock';
@@ -5,6 +6,7 @@ import { SyncMediaService } from './sync-media.service';
 import { EpisodeMergeService } from './episode-merge.service';
 import { TmdbEpisodeSourcesService } from './tmdb-episode-sources.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
+import { TvMazeScheduleService } from './tvmaze-schedule.service';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
 import {
@@ -12,6 +14,7 @@ import {
   type AggregatedRatings,
   type AggregatedRatingsPort,
 } from '@/modules/ingestion/domain/ports/aggregated-ratings.port';
+import { EpisodeScheduleUnavailableError } from '@/modules/ingestion/domain/errors/episode-schedule-unavailable.error';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';
@@ -115,6 +118,7 @@ describe('SyncMediaService', () => {
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: AGGREGATED_RATINGS_PORT, useValue: mockAggregatedRatings },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
+        TvMazeScheduleService,
         EpisodeMergeService,
         TmdbEpisodeSourcesService,
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
@@ -740,15 +744,99 @@ describe('SyncMediaService', () => {
       );
     });
 
-    it('should handle TVMaze failure gracefully', async () => {
-      const mockShow = { ...mockMedia, type: MediaType.SHOW };
-      tmdbAdapter.getShow.mockResolvedValue(mockShow);
-      tvMazeEnrichment.enrich.mockRejectedValue(new Error('TVMaze Down'));
+    describe('when TVMaze is unavailable', () => {
+      const tmdbShow: any = {
+        ...mockMedia,
+        type: MediaType.SHOW,
+        details: {
+          status: 'Returning Series',
+          totalSeasons: 2,
+          totalEpisodes: 16,
+          lastAirDate: new Date('2026-11-20T00:00:00Z'),
+          seasons: [
+            { number: 1, tmdbId: 101, episodeCount: 8, episodes: [] },
+            { number: 2, tmdbId: 102, episodeCount: 8, episodes: [] },
+          ],
+        },
+      };
 
-      await service.syncShow(1000);
+      beforeEach(() => {
+        tmdbAdapter.getShow.mockResolvedValue(tmdbShow);
+        tvMazeEnrichment.enrich.mockRejectedValue(new EpisodeScheduleUnavailableError(429, 'slow'));
+        mediaRepository.findByTmdbId.mockResolvedValue({
+          id: 'media-item-1',
+          ingestionStatus: IngestionStatus.READY,
+        });
+      });
 
-      // Should not throw, should just skip TVMaze
-      expect(mediaRepository.upsert).toHaveBeenCalled();
+      it('keeps stored episodes and show dates instead of falling back to TMDB', async () => {
+        await service.syncShow(1000);
+
+        expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
+        expect(tmdbAdapter.getSeasonsEpisodes).not.toHaveBeenCalled();
+        const { details } = mediaRepository.upsert.mock.calls[0][0];
+        expect(details).toEqual({ status: 'Returning Series', totalSeasons: 2 });
+      });
+
+      it('scores with the stored lastAirDate and writes it back unchanged', async () => {
+        const stored = new Date('2026-11-21T01:00:00Z');
+        mediaRepository.findByIdForScoring.mockResolvedValue({ lastAirDate: stored });
+
+        await service.syncShow(1000);
+
+        expect(scoreCalculator.calculate).toHaveBeenCalledWith(
+          expect.objectContaining({ lastAirDate: stored }),
+        );
+        expect(mediaRepository.upsert.mock.calls[0][0].details.lastAirDate).toBe(stored);
+      });
+
+      it('logs one structured warning with the status code', async () => {
+        const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+
+        await service.syncShow(1000);
+
+        expect(warn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'TVMaze unavailable',
+            tmdbId: 550,
+            statusCode: 429,
+            keptStoredEpisodes: true,
+          }),
+        );
+        warn.mockRestore();
+      });
+
+      it('falls back to TMDB episodes for a show imported for the first time', async () => {
+        mediaRepository.findByTmdbId.mockResolvedValue({
+          id: 'media-item-1',
+          ingestionStatus: IngestionStatus.IMPORTING,
+        });
+        tmdbAdapter.getSeasonEpisodes.mockResolvedValue([
+          { number: 1, title: 'Серія 1', airDate: new Date('2026-01-15T12:00:00Z') },
+        ]);
+
+        await service.syncShow(1000);
+
+        expect(tmdbAdapter.getSeasonEpisodes).toHaveBeenCalledTimes(2);
+        expect(mediaRepository.upsert.mock.calls[0][0].details.seasons).toHaveLength(2);
+      });
+
+      it('keeps stored data when it cannot tell whether the show was synced before', async () => {
+        mediaRepository.findByTmdbId.mockRejectedValueOnce(new Error('db down'));
+
+        await service.syncShow(1000);
+
+        expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
+      });
+
+      it('also keeps stored data when enrichment breaks unexpectedly', async () => {
+        tvMazeEnrichment.enrich.mockRejectedValue(new Error('bug'));
+
+        await service.syncShow(1000);
+
+        expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
+        expect(mediaRepository.upsert.mock.calls[0][0].details.seasons).toBeUndefined();
+      });
     });
   });
 

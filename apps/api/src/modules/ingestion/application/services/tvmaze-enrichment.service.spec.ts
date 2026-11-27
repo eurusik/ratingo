@@ -6,6 +6,8 @@ import {
   type EpisodeSchedulePort,
 } from '@/modules/ingestion/domain/ports/episode-schedule.port';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { ShowStatus } from '@/common/enums/show-status.enum';
+import { EpisodeScheduleUnavailableError } from '@/modules/ingestion/domain/errors/episode-schedule-unavailable.error';
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 
 describe('TvMazeEnrichmentService', () => {
@@ -66,8 +68,8 @@ describe('TvMazeEnrichmentService', () => {
         const log = jest.spyOn(Logger.prototype, 'log').mockImplementation();
         episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
           episode(1, '2020-01-01'),
-          episode(2, '2021-01-01'),
-          episode(3, '2022-01-01'),
+          episode(3, '2021-01-01'),
+          episode(4, '2022-01-01'),
         ]);
 
         await service.enrich(mockShow);
@@ -80,7 +82,7 @@ describe('TvMazeEnrichmentService', () => {
             skippedSeasons: 2,
             notInTmdb: 2,
             yearMismatch: 0,
-            skippedSeasonNumbers: '2,3',
+            skippedSeasonNumbers: '3,4',
           }),
         );
       });
@@ -398,12 +400,23 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.seasons?.find((s) => s.number === 0)?.name).toBe('Specials');
     });
 
-    it('should handle TVMaze failure gracefully', async () => {
-      episodeSchedule.getEpisodesByImdbId.mockRejectedValue(new Error('TVMaze API Error'));
+    it('passes a TVMaze failure on instead of treating it as no data', async () => {
+      const failure = new EpisodeScheduleUnavailableError(503, 'down');
+      episodeSchedule.getEpisodesByImdbId.mockRejectedValue(failure);
 
-      const result = await service.enrich(mockShow);
+      await expect(service.enrich(mockShow)).rejects.toBe(failure);
+      expect(episodeSchedule.getEpisodesByShowName).not.toHaveBeenCalled();
+    });
 
-      expect(result).toEqual(mockShow);
+    it('passes a failed name search on after the IMDb lookup found nothing', async () => {
+      episodeSchedule.getEpisodesByImdbId.mockResolvedValue([]);
+      episodeSchedule.getEpisodesByShowName.mockRejectedValue(
+        new EpisodeScheduleUnavailableError(429, 'rate limited'),
+      );
+
+      await expect(service.enrich(mockShow)).rejects.toBeInstanceOf(
+        EpisodeScheduleUnavailableError,
+      );
     });
 
     it('should fallback to name search when IMDb lookup returns empty', async () => {
@@ -693,19 +706,68 @@ describe('TvMazeEnrichmentService', () => {
         },
       };
 
-      it('should drop a TVMaze season that TMDB does not have (spin-off folded in)', async () => {
-        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
-          ...Array.from({ length: 7 }, (_, i) => episode(1, i + 1, '2022-10-02')),
-          ...Array.from({ length: 8 }, (_, i) => episode(2, i + 1, '2024-05-12')),
-          ...Array.from({ length: 7 }, (_, i) => episode(3, i + 1, '2099-06-07')),
-        ]);
+      const tvMazeSeasons = (...extra: ReturnType<typeof episode>[]) => [
+        ...Array.from({ length: 7 }, (_, i) => episode(1, i + 1, '2022-10-02')),
+        ...Array.from({ length: 8 }, (_, i) => episode(2, i + 1, '2024-05-12')),
+        ...extra,
+      ];
+
+      it('should accept the next season TVMaze announces before TMDB lists it', async () => {
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+          tvMazeSeasons(
+            episode(3, 1, '2099-06-07T01:00:00Z'),
+            episode(3, 2, '2099-06-14T01:00:00Z'),
+          ),
+        );
+
+        const result = await service.enrich({
+          ...showWithTwoSeasons,
+          details: { ...showWithTwoSeasons.details, status: ShowStatus.RETURNING_SERIES },
+        });
+
+        const announced = result.details?.seasons?.find((s) => s.number === 3);
+        expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2, 3]);
+        expect(announced).toMatchObject({ tmdbId: undefined, name: undefined, episodeCount: 2 });
+        expect(result.details?.totalEpisodes).toBe(17);
+        expect(result.details?.nextAirDate).toEqual(new Date('2099-06-07T01:00:00Z'));
+      });
+
+      it('should drop a TVMaze season two or more past the last TMDB season', async () => {
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+          tvMazeSeasons(episode(4, 1, '2099-06-07')),
+        );
 
         const result = await service.enrich(showWithTwoSeasons);
 
         expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2]);
-        expect(result.details?.totalEpisodes).toBe(15);
         expect(result.details?.nextAirDate).toBeNull();
       });
+
+      it('should drop an undated next season', async () => {
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue(tvMazeSeasons(episode(3, 1, null)));
+
+        const result = await service.enrich(showWithTwoSeasons);
+
+        expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2]);
+      });
+
+      it.each([ShowStatus.ENDED, ShowStatus.CANCELED])(
+        'should drop a next season of a show TMDB marks %s (spin-off folded in)',
+        async (status) => {
+          episodeSchedule.getEpisodesByImdbId.mockResolvedValue(
+            tvMazeSeasons(episode(3, 1, '2099-06-07')),
+          );
+
+          const result = await service.enrich({
+            ...showWithTwoSeasons,
+            details: { ...showWithTwoSeasons.details, status },
+          });
+
+          expect(result.details?.seasons?.map((s) => s.number)).toEqual([1, 2]);
+          expect(result.details?.totalEpisodes).toBe(15);
+          expect(result.details?.nextAirDate).toBeNull();
+        },
+      );
 
       it('should keep the TMDB season when the TVMaze season airs in a different year', async () => {
         const anthologySeason: NormalizedMedia = {

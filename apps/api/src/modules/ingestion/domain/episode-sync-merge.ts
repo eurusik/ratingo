@@ -31,6 +31,18 @@ export function withTmdbDetails<Title extends string | null>(
   };
 }
 
+function withTmdbTwin(
+  episode: NormalizedEpisode,
+  twin: NormalizedEpisode,
+  nowMs: number,
+): NormalizedEpisode {
+  return {
+    ...episode,
+    ...withTmdbDetails(episode, twin, nowMs),
+    airDateDayOnly: episode.airDate ? episode.airDateDayOnly : twin.airDateDayOnly,
+  };
+}
+
 export function mergeTmdbEpisodeDetails(
   seasons: readonly NormalizedSeason[],
   tmdb: TmdbSeasonEpisodes,
@@ -44,7 +56,7 @@ export function mergeTmdbEpisodeDetails(
       ...season,
       episodes: season.episodes.map((episode) => {
         const twin = pairs.get(episode.number);
-        return twin ? { ...episode, ...withTmdbDetails(episode, twin, nowMs) } : episode;
+        return twin ? withTmdbTwin(episode, twin, nowMs) : episode;
       }),
     };
   });
