@@ -573,7 +573,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Railway watch paths cover the Dockerfile
-        run: node .github/scripts/check-railway-watch-paths.cjs apps/ai/veronica apps/ai/happy
+        run: |
+          node --test .github/scripts/check-railway-watch-paths.test.cjs
+          node .github/scripts/check-railway-watch-paths.cjs
 
       - name: Build shared packages
         run: npm run build:packages --workspace=@ratingo/ai-veronica
@@ -613,7 +615,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Railway watch paths cover the Dockerfile
-        run: node .github/scripts/check-railway-watch-paths.cjs apps/ai/veronica apps/ai/happy
+        run: |
+          node --test .github/scripts/check-railway-watch-paths.test.cjs
+          node .github/scripts/check-railway-watch-paths.cjs
 
       - name: Build shared packages
         run: npm run build:packages --workspace=@ratingo/ai-happy
