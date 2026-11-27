@@ -8,6 +8,7 @@ const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const emptyToUndefined = (value: unknown): unknown => (value === '' ? undefined : value);
 
 const optionalText = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optionalUrl = z.preprocess(emptyToUndefined, z.url().optional());
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -21,4 +22,10 @@ export const envSchema = z.object({
   GITHUB_READ_TOKEN: optionalText,
   GITHUB_API_URL: z.preprocess(emptyToUndefined, z.url().default(DEFAULT_GITHUB_API_URL)),
   DUME_LOCAL_CHECKOUT: optionalText,
+  GRAFANA_LOKI_URL: optionalUrl,
+  GRAFANA_LOKI_USER: optionalText,
+  GRAFANA_LOKI_TOKEN: optionalText,
+  GRAFANA_PROM_URL: optionalUrl,
+  GRAFANA_PROM_TOKEN: optionalText,
+  AI_READER_DATABASE_URL: optionalText,
 });

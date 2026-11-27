@@ -117,6 +117,17 @@ export const missingRequiredFiles = (
   return required.filter((path) => !cited.has(path));
 };
 
+const citedEvidenceTools = (answer: VerifiedAnswer): Set<string> =>
+  new Set(answer.facts.flatMap((fact) => fact.evidence.map((evidence) => evidence.tool)));
+
+export const missingRequiredEvidence = (
+  answer: VerifiedAnswer,
+  required: readonly string[],
+): string[] => {
+  const cited = citedEvidenceTools(answer);
+  return required.filter((tool) => !cited.has(tool));
+};
+
 export const fabricatedCitationCount = (answer: VerifiedAnswer): number =>
   answer.assumptions
     .filter((entry) => entry.origin === AssumptionOrigin.UNVERIFIED_CLAIM)

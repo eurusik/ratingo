@@ -2,6 +2,8 @@ import {
   AssumptionOrigin,
   type Assumption,
   type Citation,
+  type ShownEvidence,
+  type VerifiedClaim,
 } from '../domain/entities/investigation-answer';
 import {
   InvestigationStatus,
@@ -24,6 +26,17 @@ export const plainLine = (text: string): string =>
 
 const citationText = (citation: Citation): string =>
   `${citation.path}:${citation.startLine}${citation.endLine === citation.startLine ? '' : `-${citation.endLine}`}`;
+
+const evidenceText = (evidence: ShownEvidence): string =>
+  `${evidence.ref}: ${plainLine(evidence.summary)}`;
+
+const factLines = (fact: VerifiedClaim, index: number): string[] => [
+  `  ${index + 1}. ${plainLine(fact.text)}`,
+  ...(fact.citations.length === 0
+    ? []
+    : [`     ${fact.citations.map((citation) => plainLine(citationText(citation))).join(', ')}`]),
+  ...fact.evidence.map((evidence) => `     runtime ${evidenceText(evidence)}`),
+];
 
 const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : ['', `${title}:`, ...lines];
@@ -53,11 +66,8 @@ export const formatOutcome = (outcome: InvestigationOutcome): string => {
   return [
     plainLine(answer.answer),
     ...section(
-      'Facts (each citation was read in this run and exists at the commit)',
-      answer.facts.flatMap((fact, index) => [
-        `  ${index + 1}. ${plainLine(fact.text)}`,
-        `     ${fact.citations.map((citation) => plainLine(citationText(citation))).join(', ')}`,
-      ]),
+      'Facts (each citation was read in this run and exists at the commit; each runtime row was shown by a tool in this run)',
+      answer.facts.flatMap(factLines),
     ),
     ...section('Assumptions and unverified claims', answer.assumptions.map(assumptionLine)),
     ...section(

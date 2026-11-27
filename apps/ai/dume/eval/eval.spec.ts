@@ -4,15 +4,16 @@ import { summarize } from './aggregate';
 import { ANSWERABLE_CASES } from './cases/answerable.cases';
 import { EVAL_CASES } from './cases/cases';
 import { INJECTION_CASES } from './cases/injection.cases';
+import { RUNTIME_CASES } from './cases/runtime.cases';
 import { UNKNOWN_CASES } from './cases/unknown.cases';
-import { CaseKind, type EvalCase } from './eval-case';
+import { CaseKind, type EvalCase, type RuntimeSource } from './eval-case';
 import { runEval } from './eval-runner';
 import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness';
 import { ReferenceJudge } from './judge';
 import { StaleCaseError } from './reference-script';
 
 const MIN_CASES = 15;
-const MAX_CASES = 20;
+const MAX_CASES = 30;
 const MIN_UNKNOWN_CASES = 3;
 
 describe('the investigation eval on the stub model', () => {
@@ -23,7 +24,7 @@ describe('the investigation eval on the stub model', () => {
     environment = await createEvalEnvironment('stub:review', undefined);
   });
 
-  it('keeps between 15 and 20 cases with unique ids, unknown questions and an injection case', () => {
+  it('keeps between 15 and 30 cases with unique ids, unknown questions and an injection case', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(MIN_CASES);
     expect(EVAL_CASES.length).toBeLessThanOrEqual(MAX_CASES);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
@@ -38,12 +39,17 @@ describe('the investigation eval on the stub model', () => {
       expect(testCase.reference.answer.length).toBeGreaterThan(0);
       for (const claim of testCase.reference.claims) {
         expect(claim.evidence.every((index) => testCase.evidence[index] !== undefined)).toBe(true);
+        expect(
+          (claim.runtime ?? []).every((index) => testCase.runtimeSources?.[index] !== undefined),
+        ).toBe(true);
       }
       if (testCase.kind === CaseKind.UNKNOWN) {
         expect(testCase.evidence).toEqual([]);
         expect(testCase.reference.unknowns.length).toBeGreaterThan(0);
       } else {
-        expect(testCase.requiredFiles.length).toBeGreaterThan(0);
+        expect(
+          testCase.requiredFiles.length + (testCase.requiredEvidence ?? []).length,
+        ).toBeGreaterThan(0);
         expect(
           testCase.requiredFiles.every((file) =>
             testCase.evidence.some((entry) => entry.path === file),
@@ -72,6 +78,36 @@ describe('the investigation eval on the stub model', () => {
       unscorableRuns: 0,
       honestUnknownRate: 1,
     });
+  });
+
+  it('cites the rows and calls the tools returned, so the facts of a runtime case carry runtime evidence', async () => {
+    const testCase = RUNTIME_CASES.find(
+      (entry) => entry.id === 'tracked-show-errors-not-in-job-failures',
+    ) as EvalCase;
+
+    const outcome = await runCase(testCase, environment);
+
+    expect(outcome.answer?.facts.flatMap((fact) => fact.evidence.map((row) => row.ref))).toEqual([
+      'job_failures#1',
+      'logs_search#1.1',
+    ]);
+    expect(outcome.answer?.assumptions).toEqual([]);
+  });
+
+  it('fails a runtime case whose cited row is not in what the tool returned', async () => {
+    const testCase = RUNTIME_CASES[0] as EvalCase;
+    const [source] = testCase.runtimeSources ?? [];
+    const changed: EvalCase = {
+      ...testCase,
+      runtimeSources: [{ ...(source as RuntimeSource), anchor: 'no such row' }],
+    };
+
+    const outcome = await runCase(changed, environment);
+
+    expect(outcome.answer?.facts.map((fact) => fact.text)).not.toContain(
+      testCase.reference.claims[0]?.text,
+    );
+    expect(outcome.answer?.assumptions[0]?.problems[0]?.failure).toBe('evidence_not_shown');
   });
 
   it('fails a case whose answer differs from what the judge expects', async () => {

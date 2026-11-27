@@ -11,6 +11,10 @@ const citationSchema = z.object({
 const claimSchema = z.object({
   text: z.string().min(1).max(600),
   citations: z.array(citationSchema).max(CitationLimits.MAX_CITATIONS_PER_CLAIM),
+  evidence: z
+    .array(z.string().min(1).max(CitationLimits.MAX_EVIDENCE_REF_CHARS))
+    .max(CitationLimits.MAX_EVIDENCE_PER_CLAIM)
+    .default([]),
 });
 
 export const investigationDraftSchema = z.object({

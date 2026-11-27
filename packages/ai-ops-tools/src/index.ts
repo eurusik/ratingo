@@ -71,6 +71,7 @@ export { metricsQueryInput, type MetricsQueryInput } from './metrics/metrics-que
 export { OpsTool } from './tools/ops-tool-names';
 export {
   createOpsTools,
+  opsContentBudget,
   type OpsExecutors,
   type OpsOutputDecorator,
   type OpsTools,
@@ -82,3 +83,8 @@ export {
   type LokiScenario,
   type SimulatedLogRecord,
 } from './testing/loki.simulator';
+export {
+  createJobFailuresSimulator,
+  type SimulatedJobFailureDay,
+} from './testing/job-failures.simulator';
+export { createPrometheusSimulator, type PrometheusAnswer } from './testing/prometheus.simulator';

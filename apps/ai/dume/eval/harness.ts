@@ -21,6 +21,7 @@ import {
   type InvestigationOutcome,
 } from '../src/modules/investigation/public';
 import type { EvalCase } from './eval-case';
+import { opsForFixture } from './runtime-ops';
 import { buildReferenceScript } from './reference-script';
 
 const REPOSITORY_ROOT = path.resolve(__dirname, '../../../..');
@@ -76,6 +77,7 @@ export const runCase = async (
     providers,
     aliases: { review: [environment.modelRef] },
     clock: environment.clock,
+    ops: opsForFixture(testCase.runtime),
   });
   return investigator.investigate({
     question: testCase.question,

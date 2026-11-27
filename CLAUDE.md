@@ -3,6 +3,7 @@
 Ratingo — Ukrainian-language streaming content discovery service. NPM workspaces + Turborepo monorepo. Path-scoped rules live in `.claude/rules/`; design docs are `apps/api/src/ARCHITECTURE.md`, `apps/ai/ARCHITECTURE.md` and `apps/api/src/modules/*/README.md`.
 
 ## Key Rules
+
 - Keep domain layer pure: only interfaces, entities, constants — use `CLOCK_PORT` instead of `Date`, constants instead of `process.env`
 - Import across modules through `module/public/` barrel exports only
 - Use `import type { components } from '@ratingo/api-contract'` for all API types on frontend
@@ -11,25 +12,30 @@ Ratingo — Ukrainian-language streaming content discovery service. NPM workspac
 - Use conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`)
 
 ## Review After Every Step
+
 Review the changed code before moving on and fix what the reviews find, using the user-installed skills `code-review`, `clean-code`; backend (`apps/api`) also `clean-ddd-hexagonal` and `nestjs-best-practices`; frontend (`apps/storefront`, `apps/web-client`, web packages) also `vercel-react-best-practices` and `web-design-guidelines`, plus `feature-sliced-design` for the storefront. If a skill is unavailable, review against this file and `.claude/rules`.
 
 ## Layout
+
 - `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL + BullMQ
 - `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5 (admin and legacy site)
 - `apps/storefront/` — the public site: Next.js 16, FSD v2.1; rules in `.claude/rules/storefront.md`
 - `apps/pg-backup/` — daily `pg_dump` of prod to the Railway bucket
-- `apps/ai/veronica/`, `apps/ai/happy/`, `apps/ai/dume/` — AI agents (daily ops digest, PR reviewer, code investigator); they import only `@ratingo/ai-core` and `@ratingo/node-telemetry`, never each other; see `apps/ai/ARCHITECTURE.md`
+- `apps/ai/veronica/`, `apps/ai/happy/`, `apps/ai/dume/` — AI agents (daily ops digest, PR reviewer, code investigator); they import only `@ratingo/ai-core`, `@ratingo/ai-ops-tools` and `@ratingo/node-telemetry`, never each other; see `apps/ai/ARCHITECTURE.md`
 - `packages/ai-core/` — agent platform: model ports, tools, agent loop, budgets, runs
+- `packages/ai-ops-tools/` — the read-only `logs_search`, `job_failures` and `metrics_query` tools, shared by Veronica and DUM-E; Veronica's tool definitions and outputs are pinned by `ops-tools.golden.spec.ts`
 - `packages/node-telemetry/` — OpenTelemetry conventions shared by the API and the storefront; renaming a metric or label breaks the Grafana dashboards and alerts
 - `packages/web-core/`, `packages/ui/` — framework-agnostic code shared by the web apps
 - `packages/api-contract/` — OpenAPI types (auto-generated)
 
 ## Branches & Deploy
+
 - Open PRs against `development` (not `main`); promote with a release PR `development` → `main`; hotfixes go to `main`, then back-merge into `development`
 - `development` deploys to Railway dev, `main` to Railway production. `ratingo.top` is served by the storefront, `admin.ratingo.top` by `web-client`
 - CI (`.github/workflows/ci.yml`) only validates; on PRs only jobs whose paths changed run, and `ci` is the single required check. Read `ci.yml` for the job list
 
 ## Commands
+
 ```bash
 docker-compose up postgres-v2 redis   # PostgreSQL (5434, db ratingo_v2) + Redis (6379)
 npm run dev:api                       # Backend (3001)
@@ -51,6 +57,7 @@ npm run db:generate | db:migrate      # from apps/api/
 ```
 
 ## Constitution
+
 - Map providers through the provider module: `ProviderMappingService.resolve/resolveMany`, `NormalizationService` from `provider/public`, the `provider_mappings` table
 - Load country/language lists from PolicyConfig in DB
 - Log every failure with a reason
@@ -60,4 +67,5 @@ npm run db:generate | db:migrate      # from apps/api/
 - Document new entities in the owning module's README (or `apps/api/src/ARCHITECTURE.md` for cross-module ones) before merge
 
 ## Context Preservation
+
 When compacting, preserve: list of modified files, test commands, and queue/job definitions (`modules/shared/contracts/queues.ts`, `ingestion-jobs.ts`, or the owning module's constants).

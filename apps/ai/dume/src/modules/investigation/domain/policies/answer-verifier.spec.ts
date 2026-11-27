@@ -11,6 +11,7 @@ import {
 } from '../entities/investigation-answer';
 import { verifyAnswer } from './answer-verifier';
 import { EvidenceLedger } from './evidence-ledger';
+import { RuntimeEvidenceLedger } from './runtime-evidence-ledger';
 
 const FILES: readonly SnapshotFile[] = [
   { path: 'apps/api/a.ts', bytes: 100, lineCount: 100 },
@@ -27,9 +28,11 @@ const ledgerReading = (...ranges: [string, number, number][]): EvidenceLedger =>
   return ledger;
 };
 
-const draftWith = (...claims: { text: string; citations: Citation[] }[]): InvestigationDraft => ({
+const draftWith = (
+  ...claims: { text: string; citations: Citation[]; evidence?: string[] }[]
+): InvestigationDraft => ({
   answer: 'short answer',
-  claims: claims,
+  claims: claims.map((claim) => ({ ...claim, evidence: claim.evidence ?? [] })),
   assumptions: [],
   unknowns: [],
 });
@@ -49,7 +52,7 @@ describe('verifyAnswer', () => {
     );
 
     expect(verified.facts).toEqual([
-      { text: 'it retries', citations: [cite('apps/api/a.ts', 10, 20)] },
+      { text: 'it retries', citations: [cite('apps/api/a.ts', 10, 20)], evidence: [] },
     ]);
     expect(verified.assumptions).toEqual([]);
     expect(verified.support).toBe(AnswerSupport.SUPPORTED);
@@ -192,5 +195,95 @@ describe('verifyAnswer', () => {
       ),
       { numRuns: 500 },
     );
+  });
+});
+
+describe('verifyAnswer with runtime evidence', () => {
+  const shown = (...refs: string[]): RuntimeEvidenceLedger => {
+    const runtime = new RuntimeEvidenceLedger();
+    refs.forEach((ref) =>
+      runtime.record({ ref, tool: ref.split('#')[0] as string, summary: `row ${ref}` }),
+    );
+    return runtime;
+  };
+
+  it('keeps a claim as a fact when every runtime row it cites was shown, and carries the rows', () => {
+    const verified = verifyAnswer(
+      draftWith({ text: 'timeouts today', citations: [], evidence: ['logs_search#1.2'] }),
+      snapshot,
+      new EvidenceLedger(),
+      shown('logs_search#1', 'logs_search#1.2'),
+    );
+
+    expect(verified.facts).toEqual([
+      {
+        text: 'timeouts today',
+        citations: [],
+        evidence: [{ ref: 'logs_search#1.2', tool: 'logs_search', summary: 'row logs_search#1.2' }],
+      },
+    ]);
+    expect(verified.support).toBe(AnswerSupport.SUPPORTED);
+  });
+
+  it('demotes a claim whose runtime row was never shown, naming the ref', () => {
+    const verified = verifyAnswer(
+      draftWith({ text: 'invented', citations: [], evidence: ['logs_search#9.1'] }),
+      snapshot,
+      new EvidenceLedger(),
+      shown('logs_search#1.1'),
+    );
+
+    expect(verified.facts).toEqual([]);
+    expect(verified.assumptions[0]).toMatchObject({
+      origin: AssumptionOrigin.UNVERIFIED_CLAIM,
+      problems: [
+        {
+          citation: null,
+          evidenceRef: 'logs_search#9.1',
+          failure: CitationFailure.EVIDENCE_NOT_SHOWN,
+        },
+      ],
+    });
+    expect(verified.support).toBe(AnswerSupport.UNSUPPORTED);
+  });
+
+  it('needs both the code lines and the runtime rows to be real when a claim cites both', () => {
+    const claim = {
+      text: 'timeout set in code and seen in logs',
+      citations: [cite('apps/api/a.ts', 1, 5)],
+      evidence: ['logs_search#1.1'],
+    };
+
+    const both = verifyAnswer(
+      draftWith(claim),
+      snapshot,
+      ledgerReading(['apps/api/a.ts', 1, 5]),
+      shown('logs_search#1.1'),
+    );
+    const rowOnly = verifyAnswer(
+      draftWith(claim),
+      snapshot,
+      new EvidenceLedger(),
+      shown('logs_search#1.1'),
+    );
+
+    expect(both.facts).toHaveLength(1);
+    expect(rowOnly.facts).toEqual([]);
+    expect(rowOnly.assumptions[0]?.problems).toEqual([
+      { citation: cite('apps/api/a.ts', 1, 5), failure: CitationFailure.NOT_READ_IN_THIS_RUN },
+    ]);
+  });
+
+  it('still demotes a claim with neither code citations nor runtime rows', () => {
+    const verified = verifyAnswer(
+      draftWith({ text: 'bare', citations: [], evidence: [] }),
+      snapshot,
+      new EvidenceLedger(),
+      shown('logs_search#1.1'),
+    );
+
+    expect(verified.assumptions[0]?.problems).toEqual([
+      { citation: null, failure: CitationFailure.NO_CITATION },
+    ]);
   });
 });

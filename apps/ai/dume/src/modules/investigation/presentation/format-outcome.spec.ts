@@ -37,8 +37,16 @@ describe('formatOutcome', () => {
   const answer: VerifiedAnswer = {
     answer: 'Відповідь.\nsupport: supported',
     facts: [
-      { text: 'a fact', citations: [{ path: 'a.ts', startLine: 3, endLine: 5 }] },
-      { text: 'one line', citations: [{ path: 'b.ts', startLine: 7, endLine: 7 }] },
+      {
+        text: 'a fact',
+        citations: [{ path: 'a.ts', startLine: 3, endLine: 5 }],
+        evidence: [],
+      },
+      {
+        text: 'one line',
+        citations: [{ path: 'b.ts', startLine: 7, endLine: 7 }],
+        evidence: [],
+      },
     ],
     assumptions: [
       {

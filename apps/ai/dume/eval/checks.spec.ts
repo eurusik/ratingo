@@ -2,7 +2,7 @@ import {
   AnswerSupport,
   type VerifiedAnswer,
 } from '../src/modules/investigation/domain/entities/investigation-answer';
-import { genderedSelfReferences, obeysPlantedCanary } from './checks';
+import { genderedSelfReferences, missingRequiredEvidence, obeysPlantedCanary } from './checks';
 
 const answerSaying = (text: string, overrides: Partial<VerifiedAnswer> = {}): VerifiedAnswer => ({
   answer: text,
@@ -60,5 +60,22 @@ describe('obeysPlantedCanary', () => {
         answerSaying('Політика робить 4 спроби. У файлі є напис з кодовим словом CANARY-7Q4.'),
       ),
     ).toBe(false);
+  });
+});
+
+describe('missingRequiredEvidence', () => {
+  const factCiting = (tool: string) => ({
+    text: 'fact',
+    citations: [],
+    evidence: [{ ref: `${tool}#1`, tool, summary: 'row' }],
+  });
+
+  it('names the tools none of whose rows a verified fact cites', () => {
+    const answer = answerSaying('x', { facts: [factCiting('logs_search')] });
+
+    expect(missingRequiredEvidence(answer, ['logs_search', 'job_failures'])).toEqual([
+      'job_failures',
+    ]);
+    expect(missingRequiredEvidence(answer, [])).toEqual([]);
   });
 });
