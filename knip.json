@@ -54,6 +54,13 @@
       "jest": {
         "config": ["jest.config.js"]
       }
+    },
+    "apps/ai/dume": {
+      "entry": ["src/main.ts", "eval/run-eval.ts"],
+      "project": ["src/**/*.ts", "eval/**/*.ts", "*.{js,ts}"],
+      "jest": {
+        "config": ["jest.config.js"]
+      }
     }
   },
   "ignoreIssues": {

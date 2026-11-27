@@ -122,6 +122,7 @@ export class TelemetryRunRepository implements RunRepository {
       trigger: run.trigger,
       status: run.status,
       stopReason: run.stopReason,
+      stopDetail: run.stopDetail,
       turns: run.turns,
       costUsd: run.costUsd,
       inputTokens: run.usage.inputTokens,

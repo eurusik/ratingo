@@ -5,7 +5,7 @@ import { defineTool } from './define-tool';
 import { redactSecrets } from './redact';
 import { NativeToolSource } from './sources/native.tool-source';
 import { TRUNCATION_MARKER, ToolRegistry } from './tool-registry';
-import { RowList, fitRowList } from './row-list';
+import { RowList, countRowsThatFit, fitRowList } from './row-list';
 
 const HINT = 'pass name=<part of the name> to see fewer rows';
 
@@ -148,5 +148,31 @@ describe('defineTool with a row list', () => {
 
     expect(output.length).toBeLessThanOrEqual(300);
     expect(JSON.parse(output).omitted).toBeGreaterThan(0);
+  });
+});
+
+describe('countRowsThatFit', () => {
+  it('matches the number of rows fitRowList keeps, for any rows and any cap', () => {
+    fc.assert(
+      fc.property(
+        fc.array(row, { maxLength: 40 }),
+        fc.integer({ min: 50, max: 3000 }),
+        (rows, cap) => {
+          const list = RowList.of(rows, HINT);
+          const kept = countRowsThatFit(list, cap);
+          const parsed = JSON.parse(fitRowList(list, cap)) as { rows: unknown[] };
+
+          expect(parsed.rows).toHaveLength(kept);
+          expect(kept).toBeLessThanOrEqual(rows.length);
+        },
+      ),
+    );
+  });
+
+  it('counts every row when they all fit and none when not even one does', () => {
+    const list = RowList.of([{ id: 1 }, { id: 2 }], HINT);
+
+    expect(countRowsThatFit(list, 1000)).toBe(2);
+    expect(countRowsThatFit(list, 5)).toBe(0);
   });
 });

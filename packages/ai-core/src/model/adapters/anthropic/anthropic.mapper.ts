@@ -9,7 +9,7 @@ import type {
   ModelUsage,
   ToolDefinition,
 } from '../../model.types';
-import { ContentPartType, StopReason } from '../../model.types';
+import { ContentPartType, StopReason, ToolChoice } from '../../model.types';
 import { sanitizeStructuredOutputSchema } from './anthropic.schema';
 
 export const ANTHROPIC_PROVIDER = 'anthropic';
@@ -87,6 +87,14 @@ function toolsParam(request: ModelRequest): Pick<Anthropic.MessageCreateParams, 
     : { tools: tools.map((tool, index) => (index === last ? withCacheBreakpoint(tool) : tool)) };
 }
 
+function toolChoiceParam(
+  request: ModelRequest,
+): Pick<Anthropic.MessageCreateParams, 'tool_choice'> {
+  return request.toolChoice === ToolChoice.NONE && request.tools.length > 0
+    ? { tool_choice: { type: 'none' } }
+    : {};
+}
+
 function withCacheBreakpoint(tool: Anthropic.Tool): Anthropic.Tool {
   return { ...tool, cache_control: CACHE_CONTROL };
 }
@@ -118,6 +126,7 @@ export function toAnthropicRequest(
       .filter((message) => message.content.length > 0),
     ...systemParam(request),
     ...toolsParam(request),
+    ...toolChoiceParam(request),
     ...outputConfigParam(request),
   };
 }
@@ -196,6 +205,11 @@ function clientErrorMessage(providerMessage: string, status: number | undefined)
   return `Anthropic rejected the request (HTTP ${String(status)}): ${providerMessage}`;
 }
 
+function providerErrorType(body: unknown): string | undefined {
+  const type = (body as { error?: { type?: unknown } } | undefined)?.error?.type;
+  return typeof type === 'string' ? type : undefined;
+}
+
 export function translateProviderError(error: unknown): unknown {
   if (error instanceof Anthropic.APIConnectionError) {
     return new ModelError(ModelErrorCategory.TRANSPORT, error.message);
@@ -203,15 +217,26 @@ export function translateProviderError(error: unknown): unknown {
   if (error instanceof Anthropic.APIError) {
     const status = error.status as number | undefined;
     if (status === RATE_LIMIT_STATUS) {
-      return new ModelError(ModelErrorCategory.RATE_LIMIT, error.message, status);
+      return new ModelError(
+        ModelErrorCategory.RATE_LIMIT,
+        error.message,
+        status,
+        providerErrorType(error.error),
+      );
     }
     if (status !== undefined && status >= SERVER_ERROR_MIN_STATUS) {
-      return new ModelError(ModelErrorCategory.SERVER, error.message, status);
+      return new ModelError(
+        ModelErrorCategory.SERVER,
+        error.message,
+        status,
+        providerErrorType(error.error),
+      );
     }
     return new ModelError(
       ModelErrorCategory.CLIENT,
       clientErrorMessage(error.message, status),
       status,
+      providerErrorType(error.error),
     );
   }
   return error;

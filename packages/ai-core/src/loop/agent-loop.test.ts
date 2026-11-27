@@ -16,7 +16,7 @@ import type { ModelPrice } from '../model/model-pricing';
 import { MissingModelPriceError } from '../model/model-pricing';
 import { formatModelRef } from '../model/model-ref';
 import type { ModelRequest, ModelResponse } from '../model/model.types';
-import { ContentPartType, MessageRole, StopReason } from '../model/model.types';
+import { ContentPartType, MessageRole, StopReason, ToolChoice } from '../model/model.types';
 import { InMemoryRunRepository } from '../runs/in-memory.run-repository';
 import { Run, RunStatus, RunStopReason, RunTrigger } from '../runs/run';
 import { defineTool } from '../tools/define-tool';
@@ -451,6 +451,259 @@ describe('AgentLoop', () => {
 
     expect(result).toMatchObject({ output: 'resumed' });
     expect(result.run.turns).toBe(2);
+  });
+
+  describe('final answer turn', () => {
+    const schema = z.object({ headline: z.string() });
+    const FINAL_PROMPT = 'No tool turns are left: answer now.';
+
+    const answersOnlyWithoutTools: StubScript = {
+      respond: (request, callIndex) => {
+        const model = formatModelRef({ provider: 'stub', model: request.model });
+        if (request.toolChoice !== ToolChoice.NONE)
+          return createStubScript(StubScenario.RUNAWAY).respond(request, callIndex);
+        return {
+          model,
+          content: [{ type: ContentPartType.TEXT, text: '{"headline":"partial"}' }],
+          stopReason: StopReason.END,
+          usage: DEFAULT_STUB_USAGE,
+        };
+      },
+    };
+
+    it('takes the tools away on the last allowed turn and accepts the answer', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          limits: { ...LIMITS, maxTurns: 3 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run).toMatchObject({ stopReason: RunStopReason.END, turns: 3 });
+      expect(model.requests.map((request) => request.toolChoice === ToolChoice.NONE)).toEqual([
+        false,
+        false,
+        true,
+      ]);
+      expect(model.requests.every((request) => request.tools.length > 0)).toBe(true);
+    });
+
+    it('puts the instruction after the tool results in the same user message', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          limits: { ...LIMITS, maxTurns: 2 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      const last = model.requests[1]?.messages.at(-1);
+      expect(last?.role).toBe(MessageRole.USER);
+      expect(last?.content.map((part) => part.type)).toEqual([
+        ContentPartType.TOOL_RESULT,
+        ContentPartType.TEXT,
+      ]);
+    });
+
+    it('keeps the tool definitions on the final turn so earlier tool blocks stay valid', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          limits: { ...LIMITS, maxTurns: 3 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(model.requests.at(-1)?.tools.map((tool) => tool.name)).toEqual(['lookup']);
+    });
+
+    it('treats a tool call on the final turn as no answer and does not run it', async () => {
+      const stubborn: StubScript = {
+        respond: (request, callIndex) => ({
+          model: formatModelRef({ provider: 'stub', model: request.model }),
+          content: [
+            {
+              type: ContentPartType.TOOL_CALL,
+              call: {
+                id: `call-${callIndex}`,
+                name: 'lookup',
+                input: { query: String(callIndex) },
+              },
+            },
+          ],
+          stopReason: StopReason.TOOL_USE,
+          usage: DEFAULT_STUB_USAGE,
+        }),
+      };
+      const { loop, run } = await harness(scripted(stubborn));
+
+      const result = await loop.run(
+        run,
+        baseRequest({ limits: { ...LIMITS, maxTurns: 3 }, finalAnswer: { prompt: FINAL_PROMPT } }),
+      );
+
+      expect(result.run).toMatchObject({
+        stopReason: RunStopReason.MAX_TURNS,
+        stopDetail: 'tool use requested on the final answer turn',
+        turns: 3,
+      });
+      expect(result.run.toolCalls).toEqual({ lookup: 2 });
+    });
+
+    it('asks for the final answer before the deadline leaves time for only one more call', async () => {
+      const clock = new FixedClock(1_000);
+      const slow: StubScript = {
+        respond: (request, callIndex) => {
+          clock.advance(25_000);
+          return answersOnlyWithoutTools.respond(request, callIndex);
+        },
+      };
+      const model = scripted(slow);
+      const { loop, run } = await harness(model, { clock });
+
+      const result = await loop.run(
+        run,
+        baseRequest({ responseSchema: schema, finalAnswer: { prompt: FINAL_PROMPT } }),
+      );
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run.stopReason).toBe(RunStopReason.END);
+      expect(model.requests.at(-1)?.toolChoice).toBe(ToolChoice.NONE);
+    });
+
+    it('keeps the old behaviour when the option is not set', async () => {
+      const { loop, run } = await harness(scripted(answersOnlyWithoutTools));
+
+      const result = await loop.run(
+        run,
+        baseRequest({ responseSchema: schema, limits: { ...LIMITS, maxTurns: 3 } }),
+      );
+
+      expect(result.run.stopReason).toBe(RunStopReason.MAX_TURNS);
+      expect(result.value).toBeUndefined();
+    });
+
+    it('asks for the final answer while the budget can still pay for it', async () => {
+      const model = scripted(answersOnlyWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          budgets: { perRunUsd: 0.0026 },
+          limits: { ...LIMITS, maxTurns: 10 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toEqual({ headline: 'partial' });
+      expect(result.run.stopReason).toBe(RunStopReason.END);
+      const forbidden = model.requests.map((request) => request.toolChoice === ToolChoice.NONE);
+      expect(forbidden.at(-1)).toBe(true);
+      expect(forbidden.slice(0, -1).some(Boolean)).toBe(false);
+      expect(forbidden.length).toBeLessThan(10);
+    });
+  });
+
+  describe('final answer reserve', () => {
+    const schema = z.object({ headline: z.string() });
+    const FINAL_PROMPT = 'No tool turns are left: answer now.';
+    const answerWithoutTools: StubScript = {
+      respond: (request, callIndex) => ({
+        model: formatModelRef({ provider: 'stub', model: request.model }),
+        content:
+          request.toolChoice === ToolChoice.NONE
+            ? [{ type: ContentPartType.TEXT, text: '{"headline":"early"}' }]
+            : [
+                {
+                  type: ContentPartType.TOOL_CALL,
+                  call: { id: `call-${callIndex}`, name: 'lookup', input: { query: 'x' } },
+                },
+              ],
+        stopReason: request.toolChoice === ToolChoice.NONE ? StopReason.END : StopReason.TOOL_USE,
+        usage: DEFAULT_STUB_USAGE,
+      }),
+    };
+
+    it('finalizes on the very first turn when the budget cannot pay for a turn and a final call', async () => {
+      const model = scripted(answerWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          budgets: { perRunUsd: 0.0015 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toEqual({ headline: 'early' });
+      expect(model.requests).toHaveLength(1);
+      expect(model.requests[0]?.toolChoice).toBe(ToolChoice.NONE);
+    });
+
+    it('does not finalize at turn zero when the budget is ample', async () => {
+      const model = scripted(answerWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          budgets: { perRunUsd: 10 },
+          limits: { ...LIMITS, maxTurns: 2 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(model.requests[0]?.toolChoice).toBeUndefined();
+    });
+
+    it('does not count the per-call level twice', async () => {
+      const model = scripted(answerWithoutTools);
+      const { loop, run } = await harness(model);
+
+      await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          budgets: { perRunUsd: 10, perCallUsd: 0.0016 },
+          limits: { ...LIMITS, maxTurns: 2 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(model.requests[0]?.toolChoice).toBeUndefined();
+    });
+
+    it('does not look at the reserve when no final answer is configured', async () => {
+      const model = scripted(answerWithoutTools);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({ responseSchema: schema, budgets: { perRunUsd: 0.0015 } }),
+      );
+
+      expect(model.requests.every((request) => request.toolChoice === undefined)).toBe(true);
+      expect(result.run.stopReason).not.toBe(RunStopReason.END);
+    });
   });
 
   describe('structured output', () => {

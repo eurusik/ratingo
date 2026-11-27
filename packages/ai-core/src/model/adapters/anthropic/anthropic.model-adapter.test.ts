@@ -2,7 +2,13 @@ import { z } from 'zod';
 import { zodToJsonSchema } from '../../../schema/zod-json-schema';
 import { ModelError, ModelErrorCategory } from '../../model.errors';
 import type { ModelRequest } from '../../model.types';
-import { ContentPartType, MessageRole, StopReason, textMessage } from '../../model.types';
+import {
+  ContentPartType,
+  MessageRole,
+  StopReason,
+  ToolChoice,
+  textMessage,
+} from '../../model.types';
 import { createAnthropicModelAdapter } from './anthropic.model-adapter';
 import type { AnthropicModelAdapter } from './anthropic.model-adapter';
 
@@ -238,6 +244,33 @@ describe('AnthropicModelAdapter', () => {
       expect(bodies[0]).not.toHaveProperty('stream');
     });
 
+    it('forbids tool use with tool_choice none while keeping the tool definitions', async () => {
+      const { adapter, bodies } = adapterReturning(() => jsonResponse(message()));
+      const tools = [
+        { name: 'lookup', description: 'Look up', inputSchema: { type: 'object', properties: {} } },
+      ];
+
+      await adapter.generate(request({ tools, toolChoice: ToolChoice.NONE }));
+
+      expect(bodies[0]).toMatchObject({
+        tool_choice: { type: 'none' },
+        tools: [{ name: 'lookup' }],
+      });
+    });
+
+    it('sends no tool_choice for auto, for an unset choice, or when there are no tools', async () => {
+      const { adapter, bodies } = adapterReturning(() => jsonResponse(message()));
+      const tools = [
+        { name: 'lookup', description: 'Look up', inputSchema: { type: 'object', properties: {} } },
+      ];
+
+      await adapter.generate(request({ tools, toolChoice: ToolChoice.AUTO }));
+      await adapter.generate(request({ tools }));
+      await adapter.generate(request({ toolChoice: ToolChoice.NONE }));
+
+      expect(bodies.some((body) => 'tool_choice' in body)).toBe(false);
+    });
+
     it('omits an empty system prompt and empty text blocks', async () => {
       const { adapter, bodies } = adapterReturning(() => jsonResponse(message()));
 
@@ -354,7 +387,7 @@ describe('AnthropicModelAdapter', () => {
       const failure = await adapter.generate(request()).catch((error: unknown) => error);
 
       expect(failure).toBeInstanceOf(ModelError);
-      expect(failure).toMatchObject({ category, status });
+      expect(failure).toMatchObject({ category, status, providerType: type });
     });
 
     it('maps a network failure to a transport error', async () => {

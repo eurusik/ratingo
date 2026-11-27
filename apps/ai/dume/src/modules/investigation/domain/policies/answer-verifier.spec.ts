@@ -1,0 +1,196 @@
+import fc from 'fast-check';
+
+import { CitationLimits } from '../constants/investigation.constants';
+import type { CodeSnapshot, SnapshotFile } from '../entities/code-snapshot';
+import {
+  AnswerSupport,
+  AssumptionOrigin,
+  CitationFailure,
+  type Citation,
+  type InvestigationDraft,
+} from '../entities/investigation-answer';
+import { verifyAnswer } from './answer-verifier';
+import { EvidenceLedger } from './evidence-ledger';
+
+const FILES: readonly SnapshotFile[] = [
+  { path: 'apps/api/a.ts', bytes: 100, lineCount: 100 },
+  { path: 'apps/api/b.ts', bytes: 10, lineCount: 10 },
+];
+
+const snapshot: Pick<CodeSnapshot, 'fileAt'> = {
+  fileAt: (path) => FILES.find((file) => file.path === path),
+};
+
+const ledgerReading = (...ranges: [string, number, number][]): EvidenceLedger => {
+  const ledger = new EvidenceLedger();
+  ranges.forEach(([path, start, end]) => ledger.record(path, start, end));
+  return ledger;
+};
+
+const draftWith = (...claims: { text: string; citations: Citation[] }[]): InvestigationDraft => ({
+  answer: 'short answer',
+  claims: claims,
+  assumptions: [],
+  unknowns: [],
+});
+
+const cite = (path: string, startLine: number, endLine: number): Citation => ({
+  path,
+  startLine,
+  endLine,
+});
+
+describe('verifyAnswer', () => {
+  it('keeps a claim as a fact when every citation exists and was read in this run', () => {
+    const verified = verifyAnswer(
+      draftWith({ text: 'it retries', citations: [cite('apps/api/a.ts', 10, 20)] }),
+      snapshot,
+      ledgerReading(['apps/api/a.ts', 1, 50]),
+    );
+
+    expect(verified.facts).toEqual([
+      { text: 'it retries', citations: [cite('apps/api/a.ts', 10, 20)] },
+    ]);
+    expect(verified.assumptions).toEqual([]);
+    expect(verified.support).toBe(AnswerSupport.SUPPORTED);
+  });
+
+  it.each([
+    ['a missing file', cite('apps/api/missing.ts', 1, 2), CitationFailure.FILE_NOT_IN_SNAPSHOT],
+    ['lines past the end', cite('apps/api/b.ts', 5, 11), CitationFailure.LINES_OUT_OF_RANGE],
+    ['an inverted range', cite('apps/api/a.ts', 9, 3), CitationFailure.LINES_OUT_OF_RANGE],
+    ['line zero', cite('apps/api/a.ts', 0, 3), CitationFailure.LINES_OUT_OF_RANGE],
+    ['a fractional line', cite('apps/api/a.ts', 1.5, 3), CitationFailure.LINES_OUT_OF_RANGE],
+    ['a parent path', cite('apps/../etc/passwd', 1, 1), CitationFailure.INVALID_PATH],
+    ['a range nobody read', cite('apps/api/a.ts', 60, 70), CitationFailure.NOT_READ_IN_THIS_RUN],
+    [
+      'a range only partly read',
+      cite('apps/api/a.ts', 40, 60),
+      CitationFailure.NOT_READ_IN_THIS_RUN,
+    ],
+    ['a range that is too large', cite('apps/api/a.ts', 1, 100), CitationFailure.RANGE_TOO_LARGE],
+  ])(
+    'moves a claim with %s to the assumptions and never to the facts',
+    (_name, citation, failure) => {
+      const verified = verifyAnswer(
+        draftWith({ text: 'it retries', citations: [citation] }),
+        snapshot,
+        ledgerReading(['apps/api/a.ts', 1, 50], ['apps/api/b.ts', 1, 10]),
+      );
+
+      expect(verified.facts).toEqual([]);
+      expect(verified.assumptions).toHaveLength(1);
+      expect(verified.assumptions[0]).toMatchObject({
+        text: 'it retries',
+        origin: AssumptionOrigin.UNVERIFIED_CLAIM,
+        problems: [{ failure }],
+      });
+      expect(verified.support).toBe(AnswerSupport.UNSUPPORTED);
+    },
+  );
+
+  it('demotes a claim without any citation', () => {
+    const verified = verifyAnswer(
+      draftWith({ text: 'trust me', citations: [] }),
+      snapshot,
+      new EvidenceLedger(),
+    );
+
+    expect(verified.facts).toEqual([]);
+    expect(verified.assumptions[0]?.problems).toEqual([
+      { citation: null, failure: CitationFailure.NO_CITATION },
+    ]);
+  });
+
+  it('demotes the whole claim when one of several citations fails', () => {
+    const verified = verifyAnswer(
+      draftWith({
+        text: 'two places',
+        citations: [cite('apps/api/a.ts', 1, 5), cite('apps/api/b.ts', 1, 5)],
+      }),
+      snapshot,
+      ledgerReading(['apps/api/a.ts', 1, 5]),
+    );
+
+    expect(verified.facts).toEqual([]);
+    expect(verified.assumptions[0]?.problems).toHaveLength(1);
+  });
+
+  it('normalizes cited paths and reports partial support', () => {
+    const verified = verifyAnswer(
+      draftWith(
+        { text: 'good', citations: [cite('./apps/api/a.ts', 1, 5)] },
+        { text: 'bad', citations: [cite('apps/api/a.ts', 70, 75)] },
+      ),
+      snapshot,
+      ledgerReading(['apps/api/a.ts', 1, 5]),
+    );
+
+    expect(verified.facts[0]?.citations).toEqual([cite('apps/api/a.ts', 1, 5)]);
+    expect(verified.support).toBe(AnswerSupport.PARTLY_SUPPORTED);
+  });
+
+  it('keeps stated assumptions and unknowns and reports no claims for an honest unknown', () => {
+    const verified = verifyAnswer(
+      {
+        answer: 'The code does not say.',
+        claims: [],
+        assumptions: ['maybe a cron'],
+        unknowns: ['the value is set elsewhere'],
+      },
+      snapshot,
+      new EvidenceLedger(),
+    );
+
+    expect(verified.support).toBe(AnswerSupport.NO_CLAIMS);
+    expect(verified.assumptions).toEqual([
+      { text: 'maybe a cron', origin: AssumptionOrigin.STATED_BY_MODEL, problems: [] },
+    ]);
+    expect(verified.unknowns).toEqual(['the value is set elsewhere']);
+  });
+
+  it('never loses a claim and never lets an unread range become a fact', () => {
+    const citation = fc.record({
+      path: fc.constantFrom('apps/api/a.ts', 'apps/api/b.ts', 'apps/api/c.ts', '../x'),
+      startLine: fc.integer({ min: -2, max: 120 }),
+      endLine: fc.integer({ min: -2, max: 120 }),
+    });
+    const range = fc.tuple(
+      fc.constantFrom('apps/api/a.ts', 'apps/api/b.ts'),
+      fc.integer({ min: 1, max: 100 }),
+      fc.integer({ min: 1, max: 100 }),
+    );
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            text: fc.string({ minLength: 1 }),
+            citations: fc.array(citation, { maxLength: CitationLimits.MAX_CITATIONS_PER_CLAIM }),
+          }),
+          { maxLength: 8 },
+        ),
+        fc.array(range, { maxLength: 6 }),
+        (claims, reads) => {
+          const ledger = ledgerReading(...reads);
+          const verified = verifyAnswer(draftWith(...claims), snapshot, ledger);
+          const demoted = verified.assumptions.filter(
+            (entry) => entry.origin === AssumptionOrigin.UNVERIFIED_CLAIM,
+          );
+
+          expect(verified.facts.length + demoted.length).toBe(claims.length);
+          for (const fact of verified.facts) {
+            expect(fact.citations.length).toBeGreaterThan(0);
+            for (const entry of fact.citations) {
+              expect(ledger.covers(entry.path, entry.startLine, entry.endLine)).toBe(true);
+              expect(snapshot.fileAt(entry.path)).toBeDefined();
+              expect(entry.endLine).toBeLessThanOrEqual(
+                snapshot.fileAt(entry.path)?.lineCount ?? 0,
+              );
+            }
+          }
+        },
+      ),
+      { numRuns: 500 },
+    );
+  });
+});
