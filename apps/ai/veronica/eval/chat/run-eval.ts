@@ -24,14 +24,8 @@ import { CALIBRATION_ITEMS } from './calibration.set';
 import { EVAL_CASES } from './cases';
 import type { EvalCase } from './eval-case';
 import { parseEvalOptions, type EvalOptions } from './eval-options';
-import {
-  needsExplorerDatabase,
-  startExplorerEvalDatabase,
-  stopExplorerEvalDatabase,
-} from './explorer-eval-database';
-import { EXPLORER_EVAL_DATABASE_VARIABLE, planExplorerCases } from '@ratingo/ai-ops-tools/testing';
-
 import { runEval, type EvalRun } from './eval-runner';
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { isStubModel, runCase } from './harness';
 import type { JudgePort } from './judge';
 import { ModelJudge } from './model-judge';
@@ -102,14 +96,13 @@ const executeCases = async (
     anthropicApiKey: identity.apiKey,
     anthropicMaxRetries: ANTHROPIC_MAX_RETRIES,
   };
-  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
-  if (adminUrl !== undefined && adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
   const {
     runnable,
     skipped: skippedCases,
     notice,
-  } = planExplorerCases(selectCases(options.only), needsExplorerDatabase, adminUrl);
+  } = explorerEval.plan(selectCases(options.only), needsExplorerDatabase);
   if (notice !== null) write(notice);
+  await explorerEval.startIfConfigured();
   try {
     const run = await runEval(
       runnable,
@@ -123,7 +116,7 @@ const executeCases = async (
     );
     return { run, skippedCases };
   } finally {
-    await stopExplorerEvalDatabase();
+    await explorerEval.stop();
   }
 };
 

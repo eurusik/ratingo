@@ -12,6 +12,5 @@ export {
 export {
   EXPLORER_EVAL_DATABASE_VARIABLE,
   ExplorerEvalSession,
-  planExplorerCases,
   type ExplorerCasePlan,
 } from './explorer-eval-session';

@@ -7,8 +7,6 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 
 import { AppModule } from './app.module';
 import { SERVICE_CONFIG, type ServiceConfig } from './config/config.constants';
-import { OPS_RUNTIME } from './core/ai-core.constants';
-import type { OpsRuntime } from './core/ops-runtime.factory';
 import { InvestigationWorker } from './modules/investigation-requests/application/workers/investigation.worker';
 import { INVESTIGATION_QUEUE } from './modules/investigation-requests/domain/ports/investigation-queue.port';
 import { MAX_BODY_BYTES } from './modules/investigation-requests/investigation-requests.constants';
@@ -37,7 +35,6 @@ const shutdownAfterSignal = (app: NestFastifyApplication): void => {
           name: 'queue',
           run: () => app.get<BullmqInvestigationQueue>(INVESTIGATION_QUEUE).close(),
         },
-        { name: 'ops', run: () => app.get<OpsRuntime>(OPS_RUNTIME, { strict: false }).close() },
         { name: 'app', run: () => app.close() },
         { name: 'telemetry', run: async () => telemetrySdk?.shutdown() },
         { name: 'logs', run: () => appLogger.flush() },

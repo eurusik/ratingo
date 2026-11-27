@@ -40,13 +40,19 @@ const FORBIDDEN_FUNCTIONS = new Set([
   'pg_cancel_backend',
   'pg_reload_conf',
   'pg_rotate_logfile',
+  'pg_logical_emit_message',
   'lo_import',
   'lo_export',
-  'query_to_xml',
-  'query_to_xml_and_xmlschema',
-  'query_to_xmlschema',
 ]);
-const FORBIDDEN_FUNCTION_PREFIXES = ['pg_advisory', 'pg_try_advisory'];
+const FORBIDDEN_FUNCTION_PREFIXES = [
+  'pg_advisory',
+  'pg_try_advisory',
+  'query_to_xml',
+  'cursor_to_xml',
+  'table_to_xml',
+  'schema_to_xml',
+  'database_to_xml',
+];
 
 const ROW_LOCK_WORDS = new Set(['update', 'share', 'no', 'key']);
 
@@ -59,6 +65,10 @@ interface Scanned {
 
 const isWordStart = (char: string): boolean => /[A-Za-z_\u0080-\uffff]/.test(char);
 const isWordPart = (char: string): boolean => /[A-Za-z0-9_$\u0080-\uffff]/.test(char);
+
+const UNICODE_ESCAPE = /^[Uu]&["']/;
+
+const refusal = (message: string): InvalidOpsInputError => new InvalidOpsInputError(message);
 
 const unterminated = (what: string): InvalidOpsInputError =>
   new InvalidOpsInputError(`sql has an unterminated ${what}`);
@@ -123,6 +133,11 @@ const scan = (sql: string): Scanned => {
     const char = sql.charAt(index);
     let next = index + 1;
     let kept = char;
+    if (UNICODE_ESCAPE.test(sql.slice(index, index + 3)) && !isWordPart(sql.charAt(index - 1))) {
+      throw refusal(
+        'Unicode escapes such as U&"..." are not supported: write the characters directly',
+      );
+    }
     if (sql.startsWith('--', index)) {
       const lineEnd = sql.indexOf('\n', index);
       next = lineEnd === -1 ? sql.length : lineEnd;
@@ -136,8 +151,14 @@ const scan = (sql: string): Scanned => {
     } else if (char === '"') {
       next = skipQuoted(sql, index, '"', false);
       kept = sql.slice(index, next);
+      if (kept.includes('\\')) throw refusal('a quoted name must not contain a backslash');
       quotedNames.push(kept.slice(1, -1).replace(/""/g, '"').toLowerCase());
     } else if (char === '$' && !isWordPart(sql.charAt(index - 1))) {
+      if (/[0-9]/.test(sql.charAt(index + 1))) {
+        throw refusal(
+          'parameters such as $1 are not supported: write the value into the statement',
+        );
+      }
       const tag = dollarTagAt(sql, index);
       if (tag !== null) {
         next = skipDollarQuoted(sql, index, tag);

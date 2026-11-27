@@ -168,7 +168,44 @@ describe('ChatWorker', () => {
     });
   });
 
+  const deferred = () => {
+    let settle: () => void = () => undefined;
+    const promise = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    return { promise, settle };
+  };
+
   it('closes the explorer connection only after the worker has finished its jobs', async () => {
+    const order: string[] = [];
+    const finishing = deferred();
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => order.push('redis') } as never,
+      { close: async () => void order.push('explorer') } as never,
+    );
+    Object.assign(worker, {
+      worker: {
+        close: async () => {
+          await finishing.promise;
+          order.push('worker');
+        },
+      },
+    });
+
+    const shutdown = worker.onApplicationShutdown();
+    await Promise.resolve();
+    expect(order).toEqual([]);
+    finishing.settle();
+    await shutdown;
+
+    expect(order).toEqual(['worker', 'explorer', 'redis']);
+  });
+
+  it('closes the explorer connection and redis even when the worker fails to close', async () => {
     const order: string[] = [];
     const worker = new ChatWorker(
       {} as never,
@@ -178,23 +215,26 @@ describe('ChatWorker', () => {
       { disconnect: () => order.push('redis') } as never,
       { close: async () => void order.push('explorer') } as never,
     );
-    Object.assign(worker, { worker: { close: async () => void order.push('worker') } });
+    Object.assign(worker, { worker: { close: async () => Promise.reject(new Error('stuck')) } });
 
-    await worker.onApplicationShutdown();
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('stuck');
 
-    expect(order).toEqual(['worker', 'explorer', 'redis']);
+    expect(order).toEqual(['explorer', 'redis']);
   });
 
-  it('shuts down even when the explorer connection fails to close', async () => {
+  it('still disconnects redis when the explorer connection fails to close', async () => {
+    const disconnect = jest.fn();
     const worker = new ChatWorker(
       {} as never,
       {} as never,
       {} as never,
       {} as never,
-      { disconnect: jest.fn() } as never,
+      { disconnect } as never,
       { close: async () => Promise.reject(new Error('broken')) } as never,
     );
 
-    await expect(worker.onApplicationShutdown()).resolves.toBeUndefined();
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('broken');
+
+    expect(disconnect).toHaveBeenCalledTimes(1);
   });
 });

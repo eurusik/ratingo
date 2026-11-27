@@ -98,9 +98,15 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   }
 
   async onApplicationShutdown(): Promise<void> {
-    await this.worker?.close();
-    await this.explorer.close?.().catch(() => undefined);
-    this.connection.disconnect();
+    try {
+      await this.worker?.close();
+    } finally {
+      try {
+        await this.explorer.close?.();
+      } finally {
+        this.connection.disconnect();
+      }
+    }
   }
 
   async process(job: Pick<Job, 'name' | 'data'>): Promise<string> {

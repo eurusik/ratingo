@@ -53,6 +53,7 @@ const aiOpsToolsPostgresFiles = [
   'packages/ai-ops-tools/src/job-failures/postgres.job-failures-adapter.ts',
   'packages/ai-ops-tools/src/job-failures/reporting-connection.ts',
   'packages/ai-ops-tools/src/database/postgres.explorer-adapter.ts',
+  'packages/ai-ops-tools/src/database/explorer-session.ts',
 ];
 const aiCoreAnthropicAdapterFiles = [
   'packages/ai-core/src/model/adapters/anthropic/anthropic.mapper.ts',

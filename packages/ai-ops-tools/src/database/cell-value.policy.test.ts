@@ -11,8 +11,8 @@ describe('cellOf', () => {
     ]);
   });
 
-  it('turns a bigint into a number and binary data into a short description', () => {
-    expect([cellOf(BigInt(42)), cellOf(new Uint8Array(3))]).toEqual([42, '[binary, 3 bytes]']);
+  it('turns binary data into a short description', () => {
+    expect(cellOf(new Uint8Array(3))).toBe('[binary, 3 bytes]');
   });
 
   it('cuts a long text and says how long it was', () => {
@@ -33,6 +33,6 @@ describe('cellOf', () => {
 
 describe('rowOf', () => {
   it('converts every cell of a row', () => {
-    expect(rowOf({ n: BigInt(7), label: 'ok' })).toEqual({ n: 7, label: 'ok' });
+    expect(rowOf({ n: 7, label: 'ok' })).toEqual({ n: 7, label: 'ok' });
   });
 });

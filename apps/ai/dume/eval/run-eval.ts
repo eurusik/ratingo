@@ -22,13 +22,7 @@ import { runEval, type EvalRun } from './eval-runner';
 import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness';
 import { ModelJudge, ReferenceJudge, type JudgePort } from './judge';
 import { parseEvalOptions, type EvalOptions } from './options';
-import {
-  needsExplorerDatabase,
-  startExplorerEvalDatabase,
-  stopExplorerEvalDatabase,
-} from './explorer-eval-database';
-import { EXPLORER_EVAL_DATABASE_VARIABLE, planExplorerCases } from '@ratingo/ai-ops-tools/testing';
-
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { renderCase, renderDiff, renderSummary } from './report';
 
 Logger.overrideLogger(['error']);
@@ -75,14 +69,13 @@ const execute = async (
   options: EvalOptions,
   judge: JudgePort,
 ): Promise<ExecutedCases> => {
-  const adminUrl = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
   const {
     runnable,
     skipped: skippedCases,
     notice,
-  } = planExplorerCases(selectCases(options.only), needsExplorerDatabase, adminUrl);
+  } = explorerEval.plan(selectCases(options.only), needsExplorerDatabase);
   if (notice !== null) write(notice);
-  if (adminUrl !== undefined && adminUrl !== '') await startExplorerEvalDatabase(adminUrl);
+  await explorerEval.startIfConfigured();
   try {
     const run = await runEval(
       runnable,
@@ -96,7 +89,7 @@ const execute = async (
     );
     return { run, skippedCases };
   } finally {
-    await stopExplorerEvalDatabase();
+    await explorerEval.stop();
   }
 };
 

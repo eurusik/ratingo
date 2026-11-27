@@ -8,13 +8,7 @@ import { RUNTIME_CASES } from './cases/runtime.cases';
 import { UNKNOWN_CASES } from './cases/unknown.cases';
 import { CaseKind, type EvalCase, type RuntimeSource } from './eval-case';
 import { runEval } from './eval-runner';
-import { EXPLORER_EVAL_DATABASE_VARIABLE } from '@ratingo/ai-ops-tools/testing';
-
-import {
-  needsExplorerDatabase,
-  startExplorerEvalDatabase,
-  stopExplorerEvalDatabase,
-} from './explorer-eval-database';
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { createEvalEnvironment, runCase, type EvalEnvironment } from './harness';
 import { ReferenceJudge } from './judge';
 import { StaleCaseError } from './reference-script';
@@ -23,8 +17,7 @@ const MIN_CASES = 15;
 const MAX_CASES = 40;
 const MIN_UNKNOWN_CASES = 3;
 
-const EXPLORER_ADMIN_URL = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
-const describeWithExplorerDatabase = EXPLORER_ADMIN_URL ? describe : describe.skip;
+const describeWithExplorerDatabase = explorerEval.adminUrl === undefined ? describe.skip : describe;
 const CASES_WITHOUT_DATABASE = EVAL_CASES.filter((testCase) => !needsExplorerDatabase(testCase));
 const CASES_WITH_DATABASE = EVAL_CASES.filter(needsExplorerDatabase);
 
@@ -171,11 +164,11 @@ describeWithExplorerDatabase(
     beforeAll(async () => {
       Logger.overrideLogger(false);
       environment = await createEvalEnvironment('stub:review', undefined);
-      await startExplorerEvalDatabase(EXPLORER_ADMIN_URL as string);
+      await explorerEval.startIfConfigured();
     }, 60_000);
 
     afterAll(async () => {
-      await stopExplorerEvalDatabase();
+      await explorerEval.stop();
     });
 
     it('passes every case whose tools run against the migrated database, with refs to the real rows', async () => {

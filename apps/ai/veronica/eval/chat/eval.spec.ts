@@ -7,20 +7,13 @@ import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
 import { runEval } from './eval-runner';
 import { findForbiddenContent } from './forbidden-content';
 import { GA_EVAL_CASES } from './google-analytics.cases';
-import { EXPLORER_EVAL_DATABASE_VARIABLE } from '@ratingo/ai-ops-tools/testing';
-
-import {
-  needsExplorerDatabase,
-  startExplorerEvalDatabase,
-  stopExplorerEvalDatabase,
-} from './explorer-eval-database';
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { fixtureExecutors, runCase } from './harness';
 import { LOKI_EVAL_CASES } from './loki.cases';
 import { ReferenceJudge } from './reference-judge';
 
 const STUB = { modelRef: 'stub:digest' };
-const EXPLORER_ADMIN_URL = process.env[EXPLORER_EVAL_DATABASE_VARIABLE];
-const describeWithExplorerDatabase = EXPLORER_ADMIN_URL ? describe : describe.skip;
+const describeWithExplorerDatabase = explorerEval.adminUrl === undefined ? describe.skip : describe;
 const CASES_WITHOUT_DATABASE = EVAL_CASES.filter((testCase) => !needsExplorerDatabase(testCase));
 const CASES_WITH_DATABASE = EVAL_CASES.filter(needsExplorerDatabase);
 const STUB_EVAL_TIMEOUT_MS = 60_000;
@@ -285,11 +278,11 @@ describe('chat eval on the stub model', () => {
 
 describeWithExplorerDatabase('chat eval of the database tools on the stub model', () => {
   beforeAll(async () => {
-    await startExplorerEvalDatabase(EXPLORER_ADMIN_URL as string);
+    await explorerEval.startIfConfigured();
   }, STUB_EVAL_TIMEOUT_MS);
 
   afterAll(async () => {
-    await stopExplorerEvalDatabase();
+    await explorerEval.stop();
   });
 
   it(

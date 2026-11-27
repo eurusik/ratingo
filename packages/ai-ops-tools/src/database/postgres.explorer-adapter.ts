@@ -1,23 +1,22 @@
 import postgres from 'postgres';
 
 import { rowOf } from './cell-value.policy';
-import { assertNamedColumns, boundedSelect, type OutputColumn } from './column-projection.policy';
+import { assertNamedColumns, boundedSelect } from './column-projection.policy';
 import {
   DB_CLIENT_DEADLINE_SLACK_MS,
   DB_CONNECT_TIMEOUT_SECONDS,
   DB_IDLE_IN_TRANSACTION_TIMEOUT_MS,
   DB_LOCK_TIMEOUT_MS,
   DB_STATEMENT_TIMEOUT_MS,
-  QueryRefusal,
 } from './database.constants';
 import {
-  ExplorerQueryRefusedError,
   type ExplorerPort,
   type QueryRequest,
   type QueryRows,
   type SchemaListing,
 } from './database.port';
-import { failureOfQuery, failureOfSchema, isConnectionLoss } from './query-failure.policy';
+import { ExplorerSession } from './explorer-session';
+import { failureOfQuery, failureOfSchema } from './query-failure.policy';
 import { SCHEMA_SQL, toSchemaListing, type SchemaRow } from './schema-listing.mapper';
 
 const SHUTDOWN_GRACE_SECONDS = 5;
@@ -36,13 +35,6 @@ const rawText = { serialize: (value: unknown) => String(value), parse: (value: s
 const connectionTypes = {
   date: { to: TIMESTAMPTZ_OID, from: [DATE_OID, TIMESTAMP_OID, TIMESTAMPTZ_OID], ...rawText },
 };
-
-class ClientDeadlineError extends ExplorerQueryRefusedError {
-  constructor() {
-    super(QueryRefusal.TIMEOUT, 'the client deadline passed');
-    this.name = 'ClientDeadlineError';
-  }
-}
 
 export class PostgresExplorerAdapter implements ExplorerPort {
   static connect(
@@ -66,6 +58,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   }
 
   private sql: postgres.Sql;
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly createSql: () => postgres.Sql,
@@ -77,8 +70,7 @@ export class PostgresExplorerAdapter implements ExplorerPort {
   async schema(): Promise<SchemaListing> {
     try {
       const rows = await this.inRolledBackTransaction(
-        async (connection) =>
-          (await this.execute(connection, SCHEMA_SQL)) as unknown as SchemaRow[],
+        async (session) => (await session.run(SCHEMA_SQL)) as unknown as SchemaRow[],
       );
       return toSchemaListing(rows);
     } catch (error) {
@@ -88,11 +80,11 @@ export class PostgresExplorerAdapter implements ExplorerPort {
 
   async query(request: QueryRequest): Promise<QueryRows> {
     try {
-      return await this.inRolledBackTransaction(async (connection) => {
+      return await this.inRolledBackTransaction(async (session) => {
         const statement = request.explain
           ? `EXPLAIN (FORMAT TEXT) ${request.sql}`
-          : await this.boundedStatement(connection, request);
-        const result = await this.execute(connection, statement);
+          : await this.boundedStatement(session, request);
+        const result = await session.run(statement);
         const all = Array.from(result, (row) => rowOf(row));
         return {
           columns: result.columns.map((column) => column.name),
@@ -109,60 +101,42 @@ export class PostgresExplorerAdapter implements ExplorerPort {
     await this.sql.end({ timeout: SHUTDOWN_GRACE_SECONDS });
   }
 
-  private async boundedStatement(
-    connection: postgres.ReservedSql,
-    request: QueryRequest,
-  ): Promise<string> {
-    const described = await connection.unsafe(request.sql, [], FORCE_EXTENDED_PROTOCOL).describe();
-    const columns: OutputColumn[] = described.columns.map(({ name, type }) => ({ name, type }));
+  private async boundedStatement(session: ExplorerSession, request: QueryRequest): Promise<string> {
+    const { columns } = await session.describe(request.sql);
     assertNamedColumns(columns);
     return boundedSelect(columns, request.sql, request.rowLimit);
   }
 
-  private async execute(connection: postgres.ReservedSql, statement: string) {
-    const query = connection.unsafe(statement, [], FORCE_EXTENDED_PROTOCOL);
-    let timer: NodeJS.Timeout | undefined;
-    const deadline = new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => {
-        query.cancel();
-        reject(new ClientDeadlineError());
-      }, this.statementTimeoutMs + DB_CLIENT_DEADLINE_SLACK_MS);
-    });
+  private inRolledBackTransaction<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
+    const turn = this.queue.then(
+      () => this.withSession(work),
+      () => this.withSession(work),
+    );
+    this.queue = turn.catch(() => undefined);
+    return turn;
+  }
+
+  private async withSession<T>(work: (session: ExplorerSession) => Promise<T>): Promise<T> {
+    const session = new ExplorerSession(
+      await this.sql.reserve(),
+      this.statementTimeoutMs + DB_CLIENT_DEADLINE_SLACK_MS,
+    );
     try {
-      return await Promise.race([query, deadline]);
+      await session.control('BEGIN READ ONLY');
+      await session.control(this.limits());
+      return await work(session);
     } finally {
-      clearTimeout(timer);
+      await this.finish(session);
     }
   }
 
-  private async inRolledBackTransaction<T>(
-    work: (connection: postgres.ReservedSql) => Promise<T>,
-  ): Promise<T> {
-    const connection = await this.sql.reserve();
-    let reusable = true;
-    try {
-      await connection.unsafe('BEGIN READ ONLY');
-      await connection.unsafe(this.limits());
-      return await work(connection);
-    } catch (error) {
-      reusable =
-        !isConnectionLoss(failureOfQuery(error)) && !(error instanceof ClientDeadlineError);
-      throw error;
-    } finally {
-      if (reusable) reusable = await this.resetSession(connection);
-      if (reusable) connection.release();
-      else await this.replaceConnection();
+  private async finish(session: ExplorerSession): Promise<void> {
+    if (session.reusable) {
+      await session.control('ROLLBACK').catch(() => undefined);
+      await session.control('DISCARD ALL').catch(() => undefined);
     }
-  }
-
-  private async resetSession(connection: postgres.ReservedSql): Promise<boolean> {
-    try {
-      await connection.unsafe('ROLLBACK');
-      await connection.unsafe('DISCARD ALL');
-      return true;
-    } catch {
-      return false;
-    }
+    if (session.reusable) session.release();
+    else await this.replaceConnection();
   }
 
   private async replaceConnection(): Promise<void> {

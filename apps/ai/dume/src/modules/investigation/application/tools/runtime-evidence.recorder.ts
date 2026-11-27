@@ -13,7 +13,7 @@ import type { RuntimeEvidenceLedger } from '../../domain/policies/runtime-eviden
 
 const REF_FIELD = /"(?:ref|callRef)":"([^"]+)"/g;
 const UNTRUSTED_WRAPPER = /^<untrusted[^>]*>\n([\s\S]*)\n<\/untrusted>$/;
-const DATABASE_TOOLS: ReadonlySet<OpsTool> = new Set([OpsTool.DB_SCHEMA, OpsTool.DB_QUERY]);
+const DATABASE_TOOL_NAMES: ReadonlySet<string> = new Set([OpsTool.DB_SCHEMA, OpsTool.DB_QUERY]);
 
 const summaryOf = (value: unknown): string =>
   redactSecrets(JSON.stringify(value) ?? '').slice(0, EvidenceLimits.SUMMARY_MAX_CHARS);
@@ -70,7 +70,7 @@ export const createRuntimeEvidenceRecorder = (
     list.mapRows((row, index) => {
       const ref = `${callRef}.${index + 1}`;
       offer(ref, tool, summaryOf(row));
-      if (DATABASE_TOOLS.has(tool)) return { ref, row };
+      if (DATABASE_TOOL_NAMES.has(tool)) return { ref, row };
       return isRecord(row) ? { ref, ...row } : row;
     });
 
@@ -90,15 +90,16 @@ export const createRuntimeEvidenceRecorder = (
       : tagCall(tool, callRef, output);
   };
 
-  const confirmShown = (tool: Tool, content: string): void => {
+  const shownRefs = (tool: Tool, content: string): string[] => {
     const visible = sanitizeToolOutput(tool, content);
-    const refs = DATABASE_TOOLS.has(tool.name as OpsTool)
-      ? databaseRefsIn(visible)
-      : refsIn(visible);
-    const mayBeCut = visible.endsWith(TRUNCATION_MARKER);
-    const complete =
-      mayBeCut && !DATABASE_TOOLS.has(tool.name as OpsTool) ? refs.slice(0, -1) : refs;
-    for (const ref of complete) {
+    const cut = visible.endsWith(TRUNCATION_MARKER);
+    if (DATABASE_TOOL_NAMES.has(tool.name)) return cut ? [] : databaseRefsIn(content);
+    const refs = refsIn(visible);
+    return cut ? refs.slice(0, -1) : refs;
+  };
+
+  const confirmShown = (tool: Tool, content: string): void => {
+    for (const ref of shownRefs(tool, content)) {
       const evidence = offered.get(ref);
       if (evidence !== undefined) ledger.record(evidence);
     }

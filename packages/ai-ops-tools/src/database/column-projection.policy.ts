@@ -6,23 +6,66 @@ export interface OutputColumn {
   type: number;
 }
 
-const FIXED_SIZE_TYPES = new Set([
-  16, 20, 21, 23, 26, 700, 701, 790, 1082, 1083, 1114, 1184, 1186, 1266, 1700, 2950,
+const TypeOid = {
+  BOOL: 16,
+  BYTEA: 17,
+  INT8: 20,
+  INT2: 21,
+  INT4: 23,
+  OID: 26,
+  FLOAT4: 700,
+  FLOAT8: 701,
+  MONEY: 790,
+  DATE: 1082,
+  TIME: 1083,
+  TIMESTAMP: 1114,
+  TIMESTAMPTZ: 1184,
+  INTERVAL: 1186,
+  TIMETZ: 1266,
+  NUMERIC: 1700,
+  UUID: 2950,
+} as const;
+
+const FIXED_SIZE_TYPES: ReadonlySet<number> = new Set([
+  TypeOid.BOOL,
+  TypeOid.INT8,
+  TypeOid.INT2,
+  TypeOid.INT4,
+  TypeOid.OID,
+  TypeOid.FLOAT4,
+  TypeOid.FLOAT8,
+  TypeOid.MONEY,
+  TypeOid.DATE,
+  TypeOid.TIME,
+  TypeOid.TIMESTAMP,
+  TypeOid.TIMESTAMPTZ,
+  TypeOid.INTERVAL,
+  TypeOid.TIMETZ,
+  TypeOid.UUID,
 ]);
-const BYTEA = 17;
 const UNNAMED_COLUMN = '?column?';
 
 const quoted = (name: string): string => `"${name.replace(/"/g, '""')}"`;
 
+const cutNote = (column: string, length: string): string =>
+  `left(${column}::text, ${DB_QUERY_CELL_MAX_CHARS}) || '... [cut, ' || ${length} || ' characters in total]'`;
+
 const boundedExpression = (name: string): string => {
   const column = quoted(name);
   const length = `char_length(${column}::text)`;
-  return `CASE WHEN ${length} > ${DB_QUERY_CELL_MAX_CHARS} THEN to_jsonb(left(${column}::text, ${DB_QUERY_CELL_MAX_CHARS}) || '... [cut, ' || ${length} || ' characters in total]') ELSE to_jsonb(${column}) END`;
+  return `CASE WHEN ${length} > ${DB_QUERY_CELL_MAX_CHARS} THEN to_jsonb(${cutNote(column, length)}) ELSE to_jsonb(${column}) END`;
+};
+
+const boundedText = (name: string): string => {
+  const column = quoted(name);
+  const length = `char_length(${column}::text)`;
+  return `CASE WHEN ${length} > ${DB_QUERY_CELL_MAX_CHARS} THEN ${cutNote(column, length)} ELSE ${column}::text END`;
 };
 
 const expressionOf = ({ name, type }: OutputColumn): string => {
   if (FIXED_SIZE_TYPES.has(type)) return quoted(name);
-  if (type === BYTEA) return `'[binary, ' || octet_length(${quoted(name)}) || ' bytes]'`;
+  if (type === TypeOid.NUMERIC) return boundedText(name);
+  if (type === TypeOid.BYTEA) return `'[binary, ' || octet_length(${quoted(name)}) || ' bytes]'`;
   return boundedExpression(name);
 };
 

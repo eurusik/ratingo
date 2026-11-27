@@ -14,7 +14,6 @@ const structuredCell = (value: object): unknown => {
 };
 
 export const cellOf = (value: unknown): unknown => {
-  if (typeof value === 'bigint') return Number(value);
   if (value instanceof Uint8Array) return `[binary, ${value.byteLength} bytes]`;
   if (typeof value === 'string') return shortened(value, 'text');
   if (typeof value === 'object' && value !== null) return structuredCell(value);

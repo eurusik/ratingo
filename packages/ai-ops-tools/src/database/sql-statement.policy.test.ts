@@ -134,6 +134,56 @@ describe('readOnlyStatement', () => {
       "select query_to_xml('select 1', true, true, '')",
       'query_to_xml is not allowed: this tool only reads data',
     ],
+    [
+      'a unicode-escaped function name',
+      "select U&\"set\\005fconfig\"('work_mem', '2GB', true)",
+      'Unicode escapes such as U&"..." are not supported: write the characters directly',
+    ],
+    [
+      'a unicode-escaped string',
+      "select u&'a\\0041'",
+      'Unicode escapes such as U&"..." are not supported: write the characters directly',
+    ],
+    [
+      'a backslash in a quoted name',
+      'select 1 as "a\\b"',
+      'a quoted name must not contain a backslash',
+    ],
+    [
+      'a numbered parameter',
+      'select $1::int',
+      'parameters such as $1 are not supported: write the value into the statement',
+    ],
+    [
+      'a numbered parameter in a longer statement',
+      'select id from users where id = $2',
+      'parameters such as $1 are not supported: write the value into the statement',
+    ],
+    [
+      'cursor_to_xml',
+      "select cursor_to_xml('c', 1, true, true, '')",
+      'cursor_to_xml is not allowed: this tool only reads data',
+    ],
+    [
+      'table_to_xml',
+      "select table_to_xml('users', true, true, '')",
+      'table_to_xml is not allowed: this tool only reads data',
+    ],
+    [
+      'table_to_xmlschema',
+      "select table_to_xmlschema('users', true, true, '')",
+      'table_to_xmlschema is not allowed: this tool only reads data',
+    ],
+    [
+      'database_to_xml',
+      "select database_to_xml(true, true, '')",
+      'database_to_xml is not allowed: this tool only reads data',
+    ],
+    [
+      'pg_logical_emit_message',
+      "select pg_logical_emit_message(true, 'p', 'm')",
+      'pg_logical_emit_message is not allowed: this tool only reads data',
+    ],
   ])('refuses %s', (_label, sql, message) => {
     expect(messageOf(sql)).toBe(message);
   });
@@ -189,6 +239,19 @@ describe('readOnlyStatement', () => {
           (head, tail) => {
             fc.pre(tail.trim() !== '');
             expect(messageOf(`${head}; ${tail}`)).not.toBe('accepted');
+          },
+        ),
+      );
+    });
+
+    it('never accepts a unicode escape, however the name or the string is spelled', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom('U&"', "U&'", 'u&"', "u&'"),
+          fc.stringMatching(/^[a-z0-9\\_ ]{0,20}$/),
+          fc.constantFrom('select ', 'select 1, ', 'with a as (select 1) select '),
+          (opening, body, head) => {
+            expect(messageOf(`${head}${opening}${body}`)).toContain('Unicode escapes');
           },
         ),
       );

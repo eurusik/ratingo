@@ -6,7 +6,17 @@ const QUERY_CANCELED = '57014';
 const LOCK_NOT_AVAILABLE = '55P03';
 const TOO_MANY_CONNECTIONS = '53300';
 const NOT_FOUND_CODES = new Set(['42P01', '42703', '42883', '3F000']);
-const CONNECTION_LOST_PREFIXES = ['08', '57P0'];
+const CONNECTION_LOST_CODES = new Set([
+  '08000',
+  '08001',
+  '08003',
+  '08004',
+  '08006',
+  '57P01',
+  '57P02',
+  '57P03',
+]);
+const PROTOCOL_VIOLATION = '08P01';
 const NETWORK_CODES = new Set([
   'ECONNREFUSED',
   'ECONNRESET',
@@ -37,6 +47,7 @@ const refusalFor = (code: string | undefined, message: string): QueryRefusal | n
   if (code === QUERY_CANCELED) return QueryRefusal.TIMEOUT;
   if (code === LOCK_NOT_AVAILABLE || code === TOO_MANY_CONNECTIONS) return QueryRefusal.BUSY;
   if (code !== undefined && NOT_FOUND_CODES.has(code)) return QueryRefusal.NOT_FOUND;
+  if (code === PROTOCOL_VIOLATION) return QueryRefusal.INVALID_QUERY;
   if (code !== undefined && /^(42|22|25)/.test(code)) return QueryRefusal.INVALID_QUERY;
   return null;
 };
@@ -44,9 +55,7 @@ const refusalFor = (code: string | undefined, message: string): QueryRefusal | n
 const unavailableReason = (error: unknown): string => {
   const code = codeOf(error);
   if (code !== undefined && NETWORK_CODES.has(code)) return 'network';
-  if (code !== undefined && CONNECTION_LOST_PREFIXES.some((prefix) => code.startsWith(prefix))) {
-    return 'connection_lost';
-  }
+  if (code !== undefined && CONNECTION_LOST_CODES.has(code)) return 'connection_lost';
   if (code !== undefined && ACCESS_DENIED_CODES.has(code)) return 'access_denied';
   return error instanceof Error ? `query failed (${error.name})` : 'query failed';
 };

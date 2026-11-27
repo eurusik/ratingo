@@ -20,7 +20,8 @@ const tokens = (characters: number): number => Math.ceil(characters / CHARACTERS
 
 describe('a typical run with the database tools, at the largest output the tools may return', () => {
   it('costs less than half of her per-message budget on the smallest model', async () => {
-    const testCase = EVAL_CASES.find((current) => current.id === 'db-not-configured')!;
+    const testCase = EVAL_CASES.find((current) => current.id === 'db-not-configured');
+    if (testCase === undefined) throw new Error('the eval case db-not-configured is missing');
     const tools = buildInvestigationTools(fixtureExecutors(testCase), NO_DELEGATION);
     const folder = await loadVeronicaAgentFolder();
     const prompt = Object.values(folder.prompts).join('\n');

@@ -7,6 +7,7 @@ import {
   type ExplorerTestDatabase,
 } from '../testing/explorer-database';
 import { seedExplorerFixture } from '../testing/explorer-fixture';
+import { startStallingProxy } from '../testing/stalling-proxy';
 import {
   DATABASE_SETUP_TIMEOUT_MS,
   DATABASE_TEARDOWN_TIMEOUT_MS,
@@ -220,5 +221,75 @@ describeWithDatabase('the explorer adapter against hostile statements', () => {
     expect(state.rows).toEqual([
       { timeout: '5s', lock_timeout: '2s', read_only: 'on', zone: 'UTC' },
     ]);
+  });
+
+  it('refuses numbered parameters without treating the protocol error as a lost connection', async () => {
+    const plain = await run('select $1::int as n').catch((error: unknown) => error);
+    const planned = await run('select $1::int as n', true).catch((error: unknown) => error);
+
+    expect(plain).toMatchObject({ refusal: QueryRefusal.INVALID_QUERY });
+    expect(planned).toMatchObject({ refusal: QueryRefusal.INVALID_QUERY });
+    expect(await outcomeOf('select 1 as ok')).toBe('rows');
+  });
+
+  it('bounds a numeric with a hundred thousand digits as text, before it reaches the process', async () => {
+    const result = await run('select power(10::numeric, 100000) as big, 1::numeric as small');
+
+    const big = String(result.rows[0]?.big);
+    expect(big.length).toBeLessThan(1100);
+    expect(big).toContain('[cut, 100001 characters in total]');
+    expect(result.rows[0]?.small).toBe('1');
+  });
+
+  it('keeps wide numeric rows small even with many columns and rows', async () => {
+    const columns = Array.from(
+      { length: 40 },
+      (_unused, index) => `power(10::numeric, 50000) as c${index}`,
+    );
+
+    const result = await run(`select ${columns.join(', ')} from generate_series(1, 101)`);
+
+    expect(JSON.stringify(result.rows).length).toBeLessThan(100 * 40 * 1100);
+    expect(result.hasMoreRows).toBe(true);
+  });
+
+  it('does not fail a waiting call when another call loses its connection', async () => {
+    const first = outcomeOf('select pg_sleep(3) as slept');
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+    const second = outcomeOf('select 1 as waited');
+    await database.admin`SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+                         WHERE application_name = 'ratingo-ai-explorer' AND state = 'active'`;
+
+    expect(await first).toMatch(/^unavailable:(network|connection_lost)$/);
+    expect(await second).toBe('rows');
+    expect(uncaught).toEqual([]);
+  });
+
+  it('survives a stalled connection that refuses new connections, without an uncaught error', async () => {
+    const { hostname, port } = new URL(database.explorerUrl);
+    const proxy = await startStallingProxy(hostname, Number(port));
+    const url = new URL(database.explorerUrl);
+    url.hostname = '127.0.0.1';
+    url.port = String(proxy.port);
+    const stalled = PostgresExplorerAdapter.connect(url.toString(), { statementTimeoutMs: 100 });
+    try {
+      await stalled.query({ sql: 'select 1 as warm', explain: false, rowLimit: 100 });
+      await proxy.stall();
+
+      const outcome = await stalled
+        .query({ sql: 'select 2 as lost', explain: false, rowLimit: 100 })
+        .catch((error: unknown) => error);
+      await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+      const after = await stalled
+        .query({ sql: 'select 3 as refused', explain: false, rowLimit: 100 })
+        .catch((error: unknown) => error);
+
+      expect(outcome).toMatchObject({ refusal: QueryRefusal.TIMEOUT });
+      expect(after).toMatchObject({ reason: expect.stringMatching(/network|connection_lost/) });
+      expect(uncaught).toEqual([]);
+    } finally {
+      await stalled.close().catch(() => undefined);
+      await proxy.close();
+    }
   });
 });

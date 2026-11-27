@@ -115,6 +115,55 @@ describe('createRuntimeEvidenceRecorder', () => {
     expect(ledger.find('db_query#1.2')).toBeUndefined();
   });
 
+  it('still counts rows whose column names or json keys look like secrets, because refs are read before redaction', async () => {
+    const rows = [{ max_token: 'abcdefgh12345678', doc: { password: 'hunter2hunter2' } }];
+
+    const { result, ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT 1 AS max_token',
+    });
+
+    expect(result.content).toContain('[REDACTED]');
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+  });
+
+  it('does not count a ref that only appears as text inside a string value', async () => {
+    const rows = [{ note: '"ref":"db_query#1.2"' }, { doc: 'x'.repeat(9000) }];
+
+    const { ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT note FROM t',
+    });
+
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+    expect(ledger.find('db_query#1.2')).toBeUndefined();
+  });
+
+  it('records the rows of a schema listing the model was shown', async () => {
+    const tables = [{ table: 'users', columns: 'id, role' }];
+
+    const { result, ledger } = await run(
+      { dbSchema: async () => listOf(tables) },
+      OpsTool.DB_SCHEMA,
+      {},
+    );
+
+    expect(result.content).toContain('{"ref":"db_schema#1.1","row":{"table":"users"');
+    expect(ledger.find('db_schema#1.1')).toBeDefined();
+  });
+
+  it('records nothing from a database result that was cut, because no row can be trusted as shown', async () => {
+    const rows = Array.from({ length: 3 }, (_unused, index) => ({
+      value: `${index}`.repeat(4000),
+    }));
+
+    const { result, ledger } = await run({ dbQuery: async () => ({ rows }) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT value FROM t',
+    });
+
+    expect(result.content.includes('[output truncated]')).toBe(true);
+    expect(ledger.find('db_query#1')).toBeUndefined();
+    expect(ledger.find('db_query#1.1')).toBeUndefined();
+  });
+
   it('numbers the calls of each tool on its own', async () => {
     const ledger = new RuntimeEvidenceLedger();
     const executors = {
