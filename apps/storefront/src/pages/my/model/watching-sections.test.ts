@@ -35,6 +35,7 @@ function episode(showId: string, overrides: Partial<CalendarEpisode> = {}): Cale
     episodeNumber: 1,
     title: null,
     airDate: PAST,
+    airDateDayOnly: false,
     seasonEpisodeCount: 8,
     showPopularity: 1,
     isTracked: true,

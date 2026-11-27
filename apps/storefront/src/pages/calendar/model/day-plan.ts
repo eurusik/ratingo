@@ -1,4 +1,5 @@
 import type { CalendarEpisode } from '@/shared/api';
+import { kyivDateKey } from './calendar-dates';
 import type { CalendarMode } from './calendar-query';
 
 const VISIBLE_SHOWS_PER_DAY = 3;
@@ -86,6 +87,7 @@ export function episodeMark(episode: CalendarEpisode): EpisodeMark | undefined {
 }
 
 function hasAired(episode: CalendarEpisode, now: number): boolean {
+  if (episode.airDateDayOnly) return kyivDateKey(episode.airDate) <= kyivDateKey(new Date(now));
   return Date.parse(episode.airDate) <= now;
 }
 

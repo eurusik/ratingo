@@ -35,6 +35,7 @@ const rawRow = (overrides: Record<string, unknown> = {}) => ({
   title: 'Ep',
   overview: 'ov',
   airDate: new Date('2024-05-10'),
+  airDateDayOnly: false,
   runtime: 45,
   stillPath: '/still.jpg',
   isTracked: true,
@@ -73,6 +74,26 @@ describe('CalendarEpisodesQuery', () => {
 
     expect(episode.showPopularity).toBe(0);
     expect(episode.seasonEpisodeCount).toBeNull();
+  });
+
+  it('selects the day-only flag with legacy nulls read as an exact time', async () => {
+    setup([rawRow({ airDateDayOnly: null })]);
+
+    const [episode] = await query.execute(new Date(), new Date());
+
+    const selection = db.select.mock.calls[0][0];
+    expect(dialect.sqlToQuery(selection.airDateDayOnly).sql).toBe(
+      'coalesce("episodes"."air_date_day_only", false)',
+    );
+    expect(episode.airDateDayOnly).toBe(false);
+  });
+
+  it('keeps a day-only air date flagged', async () => {
+    setup([rawRow({ airDateDayOnly: true })]);
+
+    const [episode] = await query.execute(new Date(), new Date());
+
+    expect(episode.airDateDayOnly).toBe(true);
   });
 
   const leftJoinSql = (table: string) => {

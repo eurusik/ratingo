@@ -3214,6 +3214,11 @@ export interface components {
             overview?: string | null;
             /** Format: date-time */
             airDate: string;
+            /**
+             * @description The source gave only the air day, so airDate is midday UTC of that day and its clock time is not real.
+             * @example false
+             */
+            airDateDayOnly: boolean;
             /** @example 45 */
             runtime?: number | null;
             /** @example http://image.com/1.jpg */

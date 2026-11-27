@@ -102,6 +102,7 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
   const { mode, now, viewer } = useCalendarContext();
   const mark = episodeMark(episode);
   const action = episodeAction(episode, { mode, now, viewer });
+  const line = episodeLine(episode, dict, locale);
 
   return (
     <li className={RELEASE_ROW}>
@@ -127,9 +128,9 @@ export const CalendarEpisodeItem = memo(function CalendarEpisodeItem({
           <span className={cn('truncate text-[15px] font-bold', episode.isWatched && 'text-muted')}>
             {episode.showTitle}
           </span>
-          <span className="truncate text-[13px] text-muted tabular-nums">
-            {episodeLine(episode, dict, locale)}
-          </span>
+          {line ? (
+            <span className="truncate text-[13px] text-muted tabular-nums">{line}</span>
+          ) : null}
         </span>
       </ForwardLink>
       {action === 'watch' ? <WatchCheckbox episode={episode} /> : null}

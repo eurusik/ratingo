@@ -131,6 +131,7 @@ export interface CalendarEpisode {
   title: string | null;
   overview: string | null;
   airDate: Date;
+  airDateDayOnly: boolean;
   runtime: number | null;
   stillPath: string | null;
   seasonEpisodeCount: number | null;
