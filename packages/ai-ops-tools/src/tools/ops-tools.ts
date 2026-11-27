@@ -5,6 +5,7 @@ import { defineTool, type Tool } from '@ratingo/ai-core';
 import {
   DB_QUERY_OUTPUT_CAP,
   DB_QUERY_ROW_LIMIT,
+  DB_QUERY_TIMEOUT_LIMIT_STATUS,
   DB_QUERY_TIMEOUTS_PER_RUN,
   DB_SCHEMA_OUTPUT_CAP,
   DB_STATEMENT_TIMEOUT_MS,
@@ -72,6 +73,11 @@ const DB_QUERY_DESCRIPTION = `Runs one read-only SQL statement (SELECT or WITH, 
 
 const DB_UNTRUSTED_LABEL = 'database rows';
 
+const TIMEOUT_LIMIT_ANSWER = {
+  status: DB_QUERY_TIMEOUT_LIMIT_STATUS,
+  message: `The limit of ${DB_QUERY_TIMEOUTS_PER_RUN} timed-out queries for this question is reached: no more queries will run. Answer now from what you already have, do not state any number from the stopped queries, and say plainly that the full calculation did not finish because the database stopped the queries at the time limit.`,
+};
+
 const isTimeoutAnswer = (output: unknown): boolean =>
   typeof output === 'object' &&
   output !== null &&
@@ -84,14 +90,10 @@ export const createOpsTools = (
   const decorated = async (tool: OpsTool, output: Promise<unknown>): Promise<unknown> =>
     decorate === undefined ? output : decorate(tool, await output);
   let timeouts = 0;
-  let lastTimeoutAnswer: unknown = null;
   const dbQuery = async (input: DbQueryInput): Promise<unknown> => {
-    if (timeouts >= DB_QUERY_TIMEOUTS_PER_RUN) return lastTimeoutAnswer;
+    if (timeouts >= DB_QUERY_TIMEOUTS_PER_RUN) return TIMEOUT_LIMIT_ANSWER;
     const output = await executors.dbQuery(input);
-    if (isTimeoutAnswer(output)) {
-      timeouts += 1;
-      lastTimeoutAnswer = output;
-    }
+    if (isTimeoutAnswer(output)) timeouts += 1;
     return output;
   };
   return {

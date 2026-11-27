@@ -1,6 +1,10 @@
 import type { ToolContext } from '@ratingo/ai-core';
 
-import { DB_QUERY_TIMEOUTS_PER_RUN, QueryRefusal } from '../database/database.constants';
+import {
+  DB_QUERY_TIMEOUT_LIMIT_STATUS,
+  DB_QUERY_TIMEOUTS_PER_RUN,
+  QueryRefusal,
+} from '../database/database.constants';
 
 import { createOpsTools, type OpsExecutors } from './ops-tools';
 
@@ -24,7 +28,7 @@ const dbToolAnswering = (answer: () => unknown) => {
 };
 
 describe('db_query timeouts in one run', () => {
-  it(`stops calling the database after ${DB_QUERY_TIMEOUTS_PER_RUN} timeouts and repeats the same answer`, async () => {
+  it(`stops calling the database after ${DB_QUERY_TIMEOUTS_PER_RUN} timeouts and says the limit is reached`, async () => {
     const tool = dbToolAnswering(() => TIMEOUT_ANSWER);
 
     const answers: string[] = [];
@@ -32,9 +36,17 @@ describe('db_query timeouts in one run', () => {
       answers.push(await tool.ask());
     }
 
+    const afterLimit = answers.slice(DB_QUERY_TIMEOUTS_PER_RUN);
     expect(tool.callsToDatabase()).toBe(DB_QUERY_TIMEOUTS_PER_RUN);
-    expect(new Set(answers).size).toBe(1);
-    expect(answers[0]).toContain('the database stopped the query');
+    expect(answers.slice(0, DB_QUERY_TIMEOUTS_PER_RUN).every((a) => a.includes('"timeout"'))).toBe(
+      true,
+    );
+    expect(afterLimit).toHaveLength(EXTRA_ATTEMPTS);
+    for (const answer of afterLimit) {
+      expect(answer).toContain(`"status":"${DB_QUERY_TIMEOUT_LIMIT_STATUS}"`);
+      expect(answer).toContain('no more queries will run');
+      expect(answer).toContain('the full calculation did not finish');
+    }
   });
 
   it('does not count answers that are not timeouts', async () => {

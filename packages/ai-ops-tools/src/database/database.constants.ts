@@ -12,6 +12,7 @@ export const DB_CONNECT_TIMEOUT_SECONDS = 10;
 export const DB_CLIENT_DEADLINE_SLACK_MS = 2000;
 export const DB_MAX_PENDING_CALLS = 4;
 export const DB_QUERY_TIMEOUTS_PER_RUN = 2;
+export const DB_QUERY_TIMEOUT_LIMIT_STATUS = 'timeout_limit';
 export const DB_TABLE_FILTER_MAX_CHARS = 63;
 
 export const QueryRefusal = {
