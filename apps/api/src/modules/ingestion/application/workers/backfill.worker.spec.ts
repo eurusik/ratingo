@@ -9,6 +9,7 @@ import { ResolveImportItemPipeline } from '@/modules/user-media/application/pipe
 import { IngestionJob } from '@/modules/ingestion/ingestion.constants';
 import { destroyTraktRateLimiter } from '@/modules/trakt/infrastructure/adapters/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
+import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 
 import { BackfillWorker } from './backfill.worker';
@@ -20,6 +21,7 @@ afterAll(() => {
 describe('BackfillWorker', () => {
   let worker: BackfillWorker;
   let backfillAltTitlesPipeline: any;
+  let backfillEpisodeTextsPipeline: any;
   let backfillImdbPipeline: any;
   let resolveImportDispatcherPipeline: any;
   let resolveImportItemPipeline: any;
@@ -27,6 +29,10 @@ describe('BackfillWorker', () => {
 
   beforeEach(async () => {
     backfillAltTitlesPipeline = {
+      processItem: jest.fn().mockResolvedValue(undefined),
+    };
+
+    backfillEpisodeTextsPipeline = {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -50,6 +56,7 @@ describe('BackfillWorker', () => {
       providers: [
         BackfillWorker,
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
+        { provide: BackfillEpisodeTextsPipeline, useValue: backfillEpisodeTextsPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
         {
           provide: ResolveImportDispatcherPipeline,
@@ -88,6 +95,23 @@ describe('BackfillWorker', () => {
         type: MediaType.MOVIE,
         title: 'Test Movie',
         originalTitle: 'Original Test',
+      });
+    });
+  });
+
+  describe('process - BACKFILL_EPISODE_TEXTS_ITEM', () => {
+    it('should route to backfillEpisodeTextsPipeline.processItem()', async () => {
+      const job = {
+        name: IngestionJob.BACKFILL_EPISODE_TEXTS_ITEM,
+        data: { showId: 'show-1', tmdbId: 1399 },
+        id: 'episode-texts-1',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(backfillEpisodeTextsPipeline.processItem).toHaveBeenCalledWith({
+        showId: 'show-1',
+        tmdbId: 1399,
       });
     });
   });

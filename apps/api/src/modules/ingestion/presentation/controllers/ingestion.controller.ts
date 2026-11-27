@@ -502,6 +502,39 @@ export class IngestionController {
     };
   }
 
+  @Post('backfill/episode-texts')
+  @ApiOperation({
+    summary: 'Backfill Ukrainian episode titles and overviews from TMDB',
+    description:
+      'Finds shows with episodes that have no Ukrainian title and fetches Ukrainian titles and ' +
+      'overviews from TMDB, one request per 20 seasons. No Trakt, OMDb or TVMaze calls. ' +
+      'Future syncs keep the texts Ukrainian on their own.',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication (allows re-running within the same UTC day)',
+  })
+  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async backfillEpisodeTexts(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const window = isForce ? Date.now().toString() : formatUtcDayId();
+    const job = await this.ingestionQueue.add(
+      IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+      {},
+      { jobId: `backfill_episode_texts_${window}` },
+    );
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.BACKFILL_EPISODE_TEXTS_DISPATCHER,
+      force: isForce,
+    };
+  }
+
   /**
    * Queues backfill job for items missing Rotten Tomatoes ratings.
    * Fetches RT critics + audience scores from MDBList for items where

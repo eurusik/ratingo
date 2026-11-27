@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
+import { EpisodeLocalizationService } from './episode-localization.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
@@ -64,6 +65,9 @@ describe('SyncMediaService', () => {
       getShow: jest.fn(),
       getTrending: jest.fn(),
       getSeasonEpisodes: jest.fn().mockResolvedValue([]),
+      getSeasonsEpisodes: jest
+        .fn()
+        .mockResolvedValue({ episodesBySeason: new Map(), failedSeasons: [] }),
     };
 
     const mockTraktAdapter = {
@@ -110,6 +114,7 @@ describe('SyncMediaService', () => {
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: AGGREGATED_RATINGS_PORT, useValue: mockAggregatedRatings },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
+        EpisodeLocalizationService,
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
@@ -742,6 +747,88 @@ describe('SyncMediaService', () => {
 
       // Should not throw, should just skip TVMaze
       expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+  });
+
+  describe('Ukrainian episode texts', () => {
+    const tvMazeShow = (seasons: unknown[]) => ({
+      ...mockMedia,
+      type: MediaType.SHOW,
+      details: { seasons },
+    });
+    const persistedSeasons = () =>
+      (mediaRepository.upsert.mock.calls[0][0] as any).details.seasons as any[];
+
+    it('replaces TVMaze texts with Ukrainian TMDB texts and keeps TVMaze dates', async () => {
+      const airDate = new Date('2026-01-15T02:00:00Z');
+      const show = tvMazeShow([
+        {
+          number: 1,
+          episodeCount: 2,
+          episodes: [
+            { number: 1, title: 'Winter Is Coming', overview: 'English', airDate },
+            { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate },
+          ],
+        },
+      ]);
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockResolvedValue({
+        episodesBySeason: new Map([
+          [
+            1,
+            [
+              { number: 1, title: 'Зима близько', overview: 'Український опис' },
+              { number: 2, title: 'Серія 2', overview: null },
+            ],
+          ],
+        ]),
+        failedSeasons: [],
+      });
+
+      await service.syncShow(1399);
+
+      expect(tmdbAdapter.getSeasonsEpisodes).toHaveBeenCalledWith(550, [1]);
+      expect(persistedSeasons()[0].episodes).toEqual([
+        { number: 1, title: 'Зима близько', overview: 'Український опис', airDate },
+        { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate },
+      ]);
+    });
+
+    it('skips specials and seasons already filled from TMDB', async () => {
+      const show = tvMazeShow([
+        { number: 0, episodeCount: 1, episodes: [{ number: 1, title: 'Special' }] },
+        { number: 1, episodeCount: 1, episodes: [{ tmdbId: 9, number: 1, title: 'Пілот' }] },
+        { number: 2, episodeCount: 1, episodes: [{ number: 1, title: 'Return' }] },
+      ]);
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+
+      await service.syncShow(1399);
+
+      expect(tmdbAdapter.getSeasonsEpisodes).toHaveBeenCalledWith(550, [2]);
+    });
+
+    it('keeps TVMaze texts when TMDB fails', async () => {
+      const show = tvMazeShow([
+        { number: 1, episodeCount: 1, episodes: [{ number: 1, title: 'Pilot' }] },
+      ]);
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockRejectedValue(new Error('TMDB down'));
+
+      await service.syncShow(1399);
+
+      expect(persistedSeasons()[0].episodes).toEqual([{ number: 1, title: 'Pilot' }]);
+    });
+
+    it('does not ask TMDB for movies', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(tmdbAdapter.getSeasonsEpisodes).not.toHaveBeenCalled();
     });
   });
 
