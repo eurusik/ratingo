@@ -19,13 +19,7 @@ export interface Baseline {
   cases: Record<string, BaselineEntry>;
 }
 
-export interface BaselineContext {
-  model: string;
-  judgeModel: string;
-  runs: number;
-  passAt: number;
-  savedAtMs: number;
-}
+export type BaselineContext = Omit<Baseline, 'version' | 'cases'>;
 
 const entryOf = (outcome: CaseOutcome): BaselineEntry => ({
   passes: outcome.passes,
@@ -61,7 +55,6 @@ export interface Regression extends CaseChange {
 }
 
 const MIN_LOST_PASSES = 2;
-const RATE_TOLERANCE = 1e-9;
 
 export interface BaselineDiff {
   newlyFailing: CaseChange[];
@@ -71,6 +64,7 @@ export interface BaselineDiff {
   newCases: CaseChange[];
   removedCases: string[];
   regressions: Regression[];
+  softenedFailures: CaseChange[];
 }
 
 const changeOf = (baseline: Baseline, outcome: CaseOutcome): CaseChange => ({
@@ -82,11 +76,9 @@ const changeOf = (baseline: Baseline, outcome: CaseOutcome): CaseChange => ({
 const stoppedPassing = (before: BaselineEntry, after: BaselineEntry): boolean =>
   before.passed && !after.passed && (!before.flaky || !after.flaky);
 
-const passesLost = (before: BaselineEntry, after: BaselineEntry): number =>
-  (before.passes / before.runs - after.passes / after.runs) * after.runs;
-
 const lostTooManyPasses = (before: BaselineEntry, after: BaselineEntry): boolean =>
-  !before.flaky && passesLost(before, after) >= MIN_LOST_PASSES - RATE_TOLERANCE;
+  !before.flaky &&
+  before.passes * after.runs - after.passes * before.runs >= MIN_LOST_PASSES * before.runs;
 
 const regressionOf = (change: CaseChange): Regression | null => {
   const { before, after } = change;
@@ -114,6 +106,10 @@ export const diffBaseline = (
   const newCases = changes.filter((change) => change.before === null);
   const newlyFailing = known.filter((change) => change.before.passed && !change.after.passed);
   const present = new Set(outcomes.map((outcome) => outcome.caseId));
+  const regressions = changes
+    .map(regressionOf)
+    .filter((regression): regression is Regression => regression !== null);
+  const regressed = new Set(regressions.map((regression) => regression.caseId));
   return {
     newlyFailing,
     newlyPassing: known.filter((change) => !change.before.passed && change.after.passed),
@@ -123,8 +119,7 @@ export const diffBaseline = (
     removedCases: options.fullRun
       ? Object.keys(baseline.cases).filter((caseId) => !present.has(caseId))
       : [],
-    regressions: changes
-      .map(regressionOf)
-      .filter((regression): regression is Regression => regression !== null),
+    regressions,
+    softenedFailures: newlyFailing.filter((change) => !regressed.has(change.caseId)),
   };
 };

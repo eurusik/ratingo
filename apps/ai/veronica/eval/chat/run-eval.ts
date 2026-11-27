@@ -44,6 +44,12 @@ interface RunIdentity {
   apiKey: string | undefined;
 }
 
+interface RunContext {
+  identity: RunIdentity;
+  options: EvalOptions;
+  baseline: Baseline | null;
+}
+
 const write = (text: string): void => {
   process.stdout.write(`${text}\n`);
 };
@@ -96,8 +102,7 @@ const executeCases = async (
 };
 
 const printSummary = (
-  identity: RunIdentity,
-  options: EvalOptions,
+  { identity, options }: RunContext,
   run: EvalRun,
   summary: EvalSummary,
 ): void =>
@@ -118,11 +123,7 @@ const dumpRun = async (path: string, summary: EvalSummary, run: EvalRun): Promis
   await writeFile(path, `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`);
 };
 
-const saveBaseline = async (
-  identity: RunIdentity,
-  options: EvalOptions,
-  run: EvalRun,
-): Promise<void> => {
+const saveBaseline = async ({ identity, options }: RunContext, run: EvalRun): Promise<void> => {
   await writeBaselineFile(
     options.baselinePath,
     buildBaseline(run.outcomes, {
@@ -136,11 +137,7 @@ const saveBaseline = async (
   write(`baseline saved to ${options.baselinePath}`);
 };
 
-const exitCodeAgainstBaseline = (
-  baseline: Baseline | null,
-  options: EvalOptions,
-  run: EvalRun,
-): number => {
+const exitCodeAgainstBaseline = ({ options, baseline }: RunContext, run: EvalRun): number => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
     return 0;
@@ -150,22 +147,18 @@ const exitCodeAgainstBaseline = (
   return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
 };
 
-const reportRun = async (
-  identity: RunIdentity,
-  options: EvalOptions,
-  baseline: Baseline | null,
-  run: EvalRun,
-): Promise<number> => {
+const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => {
+  const { identity, options } = context;
   const summary = summarize(run.outcomes);
-  printSummary(identity, options, run, summary);
+  printSummary(context, run, summary);
   if (options.dumpPath !== null) await dumpRun(options.dumpPath, summary, run);
   if (identity.structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
   if (run.stoppedForCost || summary.unscorableRuns > 0) {
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(baseline, options, run);
-  if (options.saveBaseline) await saveBaseline(identity, options, run);
+  const exitCode = exitCodeAgainstBaseline(context, run);
+  if (options.saveBaseline) await saveBaseline(context, run);
   return exitCode;
 };
 
@@ -208,9 +201,7 @@ async function main(): Promise<number> {
   let exitCode = 0;
   if (!options.calibrateOnly) {
     exitCode = await reportRun(
-      identity,
-      options,
-      baseline,
+      { identity, options, baseline },
       await executeCases(identity, options, judge),
     );
   }

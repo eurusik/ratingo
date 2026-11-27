@@ -5,6 +5,8 @@ import type { RunVerdict } from './scorer';
 
 const ID_COLUMN_WIDTH = 30;
 const COST_DECIMALS = 4;
+
+const usd = (amount: number): string => '$' + amount.toFixed(COST_DECIMALS);
 const QUOTE_LIMIT = 90;
 
 const clip = (text: string): string =>
@@ -57,13 +59,11 @@ const section = (title: string, lines: readonly string[]): string[] =>
   lines.length === 0 ? [] : [title, ...lines];
 
 export const renderDiff = (diff: BaselineDiff): string => {
-  const regressed = new Set(diff.regressions.map((regression) => regression.caseId));
-  const flakyFailures = diff.newlyFailing.filter((change) => !regressed.has(change.caseId));
   return [
     ...section('REGRESSIONS (block the merge):', diff.regressions.map(regressionLine)),
     ...section(
       'newly failing, but flaky in the baseline (not blocking):',
-      flakyFailures.map(changeLine),
+      diff.softenedFailures.map(changeLine),
     ),
     ...section('newly passing:', diff.newlyPassing.map(changeLine)),
     ...section('became flaky:', diff.becameFlaky.map(changeLine)),
@@ -86,7 +86,7 @@ export const renderCalibration = (report: CalibrationReport): string =>
     ...section('judge accepted a bad answer:', report.falsePasses.map(calibrationLine)),
     ...section('judge rejected a good answer:', report.falseFails.map(calibrationLine)),
     ...section('could not be judged:', report.unscorable.map(calibrationLine)),
-    `calibration cost: $${report.costUsd.toFixed(COST_DECIMALS)}`,
+    `calibration cost: ${usd(report.costUsd)}`,
   ].join('\n');
 
 export interface SummaryContext {
@@ -117,7 +117,7 @@ export const renderSummary = (summary: EvalSummary, context: SummaryContext): st
     `runs that could not be scored: ${summary.unscorableRuns}`,
     `failed cases: ${summary.failedCases.join(', ') || 'none'}`,
     `flaky cases: ${summary.flakyCases.join(', ') || 'none'}`,
-    `cost: $${totalCost.toFixed(COST_DECIMALS)} (agent $${context.agentCostUsd.toFixed(COST_DECIMALS)}, judge $${context.judgeCostUsd.toFixed(COST_DECIMALS)})`,
+    `cost: ${usd(totalCost)} (agent ${usd(context.agentCostUsd)}, judge ${usd(context.judgeCostUsd)})`,
     ...(context.stoppedForCost
       ? ['STOPPED EARLY: the cost cap was reached, so the results above are incomplete']
       : []),

@@ -1,3 +1,4 @@
+import { aggregateCase, majorityPassAt, type CaseOutcome } from './aggregate';
 import { EvalKind } from './eval-case';
 import type { RunVerdict } from './scorer';
 
@@ -27,3 +28,15 @@ export const failingRun = (overrides: Partial<RunVerdict> = {}): RunVerdict =>
 
 export const runsWithPasses = (passes: number, total: number): RunVerdict[] =>
   Array.from({ length: total }, (_, index) => (index < passes ? passingRun() : failingRun()));
+
+const DEFAULT_RUNS = 3;
+
+export const outcomeWithPasses = (
+  caseId: string,
+  passes: number,
+  runs: number = DEFAULT_RUNS,
+): CaseOutcome =>
+  aggregateCase(caseId, EvalKind.KNOWN, runsWithPasses(passes, runs), {
+    runs,
+    passAt: majorityPassAt(runs),
+  });

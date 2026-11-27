@@ -1,3 +1,4 @@
+import { plainText } from './answer-text';
 import { measureJudgeAgreement } from './calibration-runner';
 import {
   CalibrationSource,
@@ -30,8 +31,7 @@ const labelledJudge = (
   },
 });
 
-const plain = (item: CalibrationItem): string =>
-  item.answer.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
+const plain = (item: CalibrationItem): string => plainText(item.answer);
 
 const labelsOf = (items: readonly CalibrationItem[]): Map<string, boolean> =>
   new Map(items.map((item) => [plain(item), item.meaningGood]));

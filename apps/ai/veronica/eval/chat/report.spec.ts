@@ -4,17 +4,12 @@ import { summarizeCalibration, CalibrationSource } from './calibration';
 import { EvalKind } from './eval-case';
 import { ForbiddenKind } from './forbidden-content';
 import { renderCalibration, renderCase, renderDiff, renderSummary } from './report';
-import { failingRun, passingRun, runsWithPasses } from './verdict.testing';
+import { failingRun, outcomeWithPasses, passingRun } from './verdict.testing';
 
 const POLICY = { runs: 3, passAt: 2 };
-const outcome = (id: string, passes: number) =>
-  aggregateCase(id, EvalKind.KNOWN, runsWithPasses(passes, 3), POLICY);
+const outcome = (id: string, passes: number) => outcomeWithPasses(id, passes);
 
-const outcomeOf = (id: string, passes: number, runs: number) =>
-  aggregateCase(id, EvalKind.KNOWN, runsWithPasses(passes, runs), {
-    runs,
-    passAt: Math.floor(runs / 2) + 1,
-  });
+const outcomeOf = outcomeWithPasses;
 
 describe('renderCase', () => {
   it('shows passes out of runs and marks a flaky case', () => {

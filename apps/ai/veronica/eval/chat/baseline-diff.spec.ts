@@ -1,19 +1,14 @@
 import fc from 'fast-check';
 
-import { aggregateCase, majorityPassAt, type CaseOutcome } from './aggregate';
+import type { CaseOutcome } from './aggregate';
 import { RegressionReason, buildBaseline, diffBaseline } from './baseline-diff';
-import { EvalKind } from './eval-case';
-import { runsWithPasses } from './verdict.testing';
+import { outcomeWithPasses } from './verdict.testing';
 
 const CONTEXT = { model: 'm', judgeModel: 'j', runs: 3, passAt: 2, savedAtMs: 1 };
 
-const outcomeOf = (caseId: string, passes: number, runs: number): CaseOutcome =>
-  aggregateCase(caseId, EvalKind.KNOWN, runsWithPasses(passes, runs), {
-    runs,
-    passAt: majorityPassAt(runs),
-  });
+const outcomeOf = outcomeWithPasses;
 
-const outcome = (caseId: string, passes: number): CaseOutcome => outcomeOf(caseId, passes, 3);
+const outcome = (caseId: string, passes: number): CaseOutcome => outcomeWithPasses(caseId, passes);
 
 const baselineOf = (passes: Record<string, number>) =>
   buildBaseline(
@@ -178,6 +173,34 @@ describe('diffBaseline', () => {
             pairs.map(([, after], index) => outcome(`c${index}`, after)),
           );
           expect(diff.regressions).toEqual([]);
+        },
+      ),
+    );
+  });
+
+  it('splits every newly failing case into a regression or a softened failure, never both', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.integer({ min: 0, max: 3 }), fc.integer({ min: 0, max: 3 })), {
+          maxLength: 15,
+        }),
+        (pairs) => {
+          const baseline = buildBaseline(
+            pairs.map(([before], index) => outcome(`c${index}`, before)),
+            CONTEXT,
+          );
+          const diff = diffBaseline(
+            baseline,
+            pairs.map(([, after], index) => outcome(`c${index}`, after)),
+          );
+          const regressed = new Set(ids(diff.regressions));
+          const softened = new Set(ids(diff.softenedFailures));
+          for (const change of diff.newlyFailing) {
+            expect(regressed.has(change.caseId) !== softened.has(change.caseId)).toBe(true);
+          }
+          for (const caseId of softened) {
+            expect(regressed.has(caseId)).toBe(false);
+          }
         },
       ),
     );
