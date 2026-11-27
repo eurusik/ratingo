@@ -97,12 +97,20 @@ describe('SubmitInvestigationService', () => {
     };
 
     expect(await service.submit(submission)).toMatchObject({ created: false });
-    expect(queue.jobs).toHaveLength(0);
+    expect(queue.jobs).toEqual([{ requestId: 'tg1000001' }]);
   });
 
   it.each([
-    ['the day budget is spent', (l: FakeDayLimits) => (l.spent = l.budget), RejectionReason.DAY_BUDGET],
-    ['the daily count is reached', (l: FakeDayLimits) => (l.accepted = l.max), RejectionReason.DAILY_COUNT_CAP],
+    [
+      'the day budget is spent',
+      (l: FakeDayLimits) => (l.spent = l.budget),
+      RejectionReason.DAY_BUDGET,
+    ],
+    [
+      'the daily count is reached',
+      (l: FakeDayLimits) => (l.accepted = l.max),
+      RejectionReason.DAILY_COUNT_CAP,
+    ],
   ])('rejects without storing anything when %s', async (_name, exhaust, reason) => {
     const { service, store, queue, limits } = setup();
     exhaust(limits);
@@ -143,5 +151,59 @@ describe('SubmitInvestigationService', () => {
       record: { state: RequestState.FAILED, reason: FailureReason.INTERNAL_ERROR },
     });
     expect(store.records.get('tg1000001')?.state).toBe(RequestState.FAILED);
+  });
+
+  describe('replaying a request whose job may be lost', () => {
+    it('puts a stored queued request back in the queue and counts nothing', async () => {
+      const { service, store, queue, limits } = setup();
+      await service.submit(submission);
+      queue.jobs.length = 0;
+
+      const replay = await service.submit(submission);
+
+      expect(replay).toMatchObject({ kind: SubmitKind.ACCEPTED, created: false });
+      expect(queue.jobs).toEqual([{ requestId: 'tg1000001' }]);
+      expect(limits.accepted).toBe(1);
+      expect(store.records.get('tg1000001')?.state).toBe(RequestState.QUEUED);
+    });
+
+    it('revives a request that failed before it ever started', async () => {
+      const { service, store, queue } = setup();
+      await service.submit(submission);
+      const stored = store.records.get('tg1000001');
+      store.records.set('tg1000001', {
+        ...(stored as NonNullable<typeof stored>),
+        state: RequestState.FAILED,
+        reason: FailureReason.INTERNAL_ERROR,
+      });
+      queue.jobs.length = 0;
+
+      const replay = await service.submit(submission);
+
+      expect(replay).toMatchObject({ record: { state: RequestState.QUEUED } });
+      expect(queue.jobs).toHaveLength(1);
+    });
+
+    it.each([
+      ['an answered request', { state: RequestState.ANSWERED }],
+      [
+        'a request that failed after it started',
+        { state: RequestState.FAILED, reason: FailureReason.TIMEOUT, startedAtMs: NOW_MS },
+      ],
+      ['a running request', { state: RequestState.RUNNING, startedAtMs: NOW_MS }],
+    ])('leaves %s as it is', async (_name, change) => {
+      const { service, store, queue } = setup();
+      await service.submit(submission);
+      const stored = store.records.get('tg1000001') as NonNullable<
+        ReturnType<typeof store.records.get>
+      >;
+      store.records.set('tg1000001', { ...stored, ...change });
+      queue.jobs.length = 0;
+
+      await service.submit(submission);
+
+      expect(queue.jobs).toEqual([]);
+      expect(store.records.get('tg1000001')).toMatchObject(change);
+    });
   });
 });

@@ -793,13 +793,14 @@ jobs:
           test "$status" -eq 1
           grep -q "A question is required" <<< "$output"
 
-      - name: Start the service under tini and check health and the token wall
+      - name: Start the service under tini, check the token wall, a request and a graceful stop
         run: |
           docker network create ci-net
           docker run -d --name ci-redis --network ci-net redis:7-alpine
           docker run -d --name ci-dume --network ci-net -p 3006:3006 \
             -e NODE_ENV=production -e REDIS_URL=redis://ci-redis:6379 \
             -e ANTHROPIC_API_KEY=ci-key -e AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 \
+            -e GITHUB_API_URL=http://127.0.0.1:9 \
             -e DUME_SERVICE_TOKEN=ci-service-token-of-24-chars \
             ratingo-dume:ci
           for attempt in $(seq 1 30); do
@@ -807,12 +808,22 @@ jobs:
             sleep 1
           done
           curl -fsS http://localhost:3006/health | grep -q '"status":"ok"'
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations)" = 401
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations \
-            -H 'Authorization: Bearer ci-service-token-of-24-chars' -H 'content-type: application/json' -d '{}')" = 400
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3006/internal/investigations \
-            -H 'x-forwarded-for: 1.2.3.4' -H 'Authorization: Bearer ci-service-token-of-24-chars')" = 404
+          internal=http://localhost:3006/internal/investigations
+          auth='Authorization: Bearer ci-service-token-of-24-chars'
+          json='content-type: application/json'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H 'Authorization: Bearer ')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H "$auth" -H "$json" -d '{}')" = 400
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H 'x-forwarded-for: 1.2.3.4' -H "$auth")" = 404
+          head -c 9000 /dev/zero | tr '\0' 'x' > big.txt
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST $internal -H "$auth" -H "$json" --data-binary @big.txt)" = 413
+          curl -fsS -X POST $internal -H "$auth" -H "$json" \
+            -d '{"requestId":"ci-smoke-0001","question":"Where is the retry policy defined?"}' | grep -q '"status":"accepted"'
+          curl -fsS $internal/ci-smoke-0001 -H "$auth" | grep -q '"status":"found"'
           docker exec ci-dume cat /proc/1/comm | grep -qx tini
+          docker stop --time 60 ci-dume
+          test "$(docker inspect -f '{{.State.ExitCode}}' ci-dume)" = 0
+          docker logs ci-dume 2>&1 | grep -q 'shutdown.started'
 
       - if: failure()
         run: docker logs ci-dume || true

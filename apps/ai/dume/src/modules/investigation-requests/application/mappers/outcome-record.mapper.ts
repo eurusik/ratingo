@@ -1,15 +1,14 @@
-import {
-  InvestigationStatus,
-  type InvestigationOutcome,
-} from '../../../investigation/public';
+import { RunStopReason } from '@ratingo/ai-core';
+
+import { InvestigationStatus, type InvestigationOutcome } from '../../../investigation/public';
 import { FailureReason, RequestState } from '../../domain/constants/request.constants';
 import type { InvestigationRecord } from '../../domain/entities/investigation-record';
 
-const STOP_REASON_FAILURES: Readonly<Record<string, FailureReason>> = {
-  budget_exceeded: FailureReason.BUDGET_STOP,
-  timeout: FailureReason.TIMEOUT,
-  model_error: FailureReason.MODEL_ERROR,
-  unexpected_error: FailureReason.MODEL_ERROR,
+const STOP_REASON_FAILURES: Readonly<Partial<Record<string, FailureReason>>> = {
+  [RunStopReason.BUDGET_EXCEEDED]: FailureReason.BUDGET_STOP,
+  [RunStopReason.TIMEOUT]: FailureReason.TIMEOUT,
+  [RunStopReason.MODEL_ERROR]: FailureReason.MODEL_ERROR,
+  [RunStopReason.UNEXPECTED_ERROR]: FailureReason.MODEL_ERROR,
 };
 
 const failureFor = (outcome: InvestigationOutcome): FailureReason => {
@@ -19,16 +18,24 @@ const failureFor = (outcome: InvestigationOutcome): FailureReason => {
   return STOP_REASON_FAILURES[outcome.stopReason ?? ''] ?? FailureReason.NO_VALID_ANSWER;
 };
 
+const runIdOf = (outcome: InvestigationOutcome): { runId?: string } =>
+  outcome.runId === null ? {} : { runId: outcome.runId };
+
 export const finishRecord = (
   record: InvestigationRecord,
   outcome: InvestigationOutcome,
   repository: string,
   finishedAtMs: number,
 ): InvestigationRecord => {
-  if (outcome.status === InvestigationStatus.ANSWERED && outcome.answer !== null && outcome.commit !== null) {
+  if (
+    outcome.status === InvestigationStatus.ANSWERED &&
+    outcome.answer !== null &&
+    outcome.commit !== null
+  ) {
     return {
       ...record,
       state: RequestState.ANSWERED,
+      ...runIdOf(outcome),
       finishedAtMs,
       result: {
         repository,
@@ -40,7 +47,13 @@ export const finishRecord = (
       },
     };
   }
-  return { ...record, state: RequestState.FAILED, reason: failureFor(outcome), finishedAtMs };
+  return {
+    ...record,
+    state: RequestState.FAILED,
+    reason: failureFor(outcome),
+    ...runIdOf(outcome),
+    finishedAtMs,
+  };
 };
 
 export const failRecord = (

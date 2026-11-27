@@ -11,7 +11,8 @@ const FIRST_PRINTABLE = 32;
 const hasForbiddenControlCharacter = (text: string): boolean =>
   [...text].some((character) => {
     const code = character.charCodeAt(0);
-    const isControl = code < FIRST_PRINTABLE || (code >= FIRST_C1_CONTROL && code <= LAST_C1_CONTROL);
+    const isControl =
+      code < FIRST_PRINTABLE || (code >= FIRST_C1_CONTROL && code <= LAST_C1_CONTROL);
     return isControl && !ALLOWED_WHITESPACE_CODES.includes(code);
   });
 

@@ -5,6 +5,7 @@ export { ALLOWED_REFS, DEFAULT_REF } from '../domain/constants/snapshot.constant
 export { MAX_QUESTION_CHARS } from '../investigation.constants';
 export type { CodeSnapshot } from '../domain/entities/code-snapshot';
 export {
+  AnswerSupport,
   AssumptionOrigin,
   CitationFailure,
   type Citation,

@@ -2,12 +2,8 @@ import type Redis from 'ioredis';
 
 import type { AgentFolder, ClockPort, RunRepository } from '@ratingo/ai-core';
 
-import {
-  COUNT_KEY_PREFIX,
-  COUNT_TTL_SECONDS,
-  MS_PER_DAY,
-} from '../../investigation-requests.constants';
-import { utcDayKey } from '../../domain/policies/utc-day-key.policy';
+import { COUNT_KEY_PREFIX, COUNT_TTL_SECONDS } from '../../investigation-requests.constants';
+import { utcDayKey, utcDayStartMs } from '../../domain/policies/utc-day.policy';
 import type { DayLimitsPort } from '../../domain/ports/day-limits.port';
 
 type RedisCounter = Pick<Redis, 'get' | 'incr' | 'expire'>;
@@ -27,7 +23,7 @@ export class AgentDayLimits implements DayLimitsPort {
     const nowMs = this.options.clock.nowMs();
     return this.options.runs.spentUsd({
       agent: this.options.folder.manifest.name,
-      sinceMs: nowMs - (nowMs % MS_PER_DAY),
+      sinceMs: utcDayStartMs(nowMs),
     });
   }
 

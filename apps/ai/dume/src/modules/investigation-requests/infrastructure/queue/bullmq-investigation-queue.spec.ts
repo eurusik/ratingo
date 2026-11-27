@@ -1,9 +1,10 @@
 import {
   INVESTIGATION_JOB_NAME,
   INVESTIGATION_JOB_OPTIONS,
+  QUEUE_CALL_TIMEOUT_MS,
 } from '../../investigation-requests.constants';
 
-import { BullmqInvestigationQueue } from './bullmq-investigation-queue';
+import { BullmqInvestigationQueue, QueueTimeoutError } from './bullmq-investigation-queue';
 
 describe('BullmqInvestigationQueue', () => {
   it('uses the request id as the job id, so one request is one job, and never retries', async () => {
@@ -32,5 +33,22 @@ describe('BullmqInvestigationQueue', () => {
     });
 
     expect(await queue.waitingCount()).toBe(2);
+  });
+
+  it('gives up on a queue that does not answer', async () => {
+    jest.useFakeTimers();
+    const queue = new BullmqInvestigationQueue({
+      add: () => new Promise(() => undefined),
+      close: jest.fn(),
+      getWaitingCount: () => new Promise(() => undefined),
+    });
+
+    const adding = queue.enqueue({ requestId: 'tg1000001' }).catch((error: unknown) => error);
+    const counting = queue.waitingCount().catch((error: unknown) => error);
+    await jest.advanceTimersByTimeAsync(QUEUE_CALL_TIMEOUT_MS);
+
+    expect(await adding).toBeInstanceOf(QueueTimeoutError);
+    expect(await counting).toBeInstanceOf(QueueTimeoutError);
+    jest.useRealTimers();
   });
 });

@@ -15,9 +15,15 @@ import {
   INVESTIGATION_QUEUE_PREFIX,
   INVESTIGATION_WORKER_CONCURRENCY,
   QUEUE_REDIS,
+  WORKER_LOCK_MS,
 } from '../../investigation-requests.constants';
 import type { QueuedInvestigation } from '../../domain/ports/investigation-queue.port';
 import { RunInvestigationService } from '../services/run-investigation.service';
+
+const queueRedisLogger = new Logger('DumeQueueRedis');
+
+const logQueueRedisError = (error: Error): void =>
+  queueRedisLogger.warn({ message: 'redis.error', connection: 'worker', reason: error.name });
 
 const isQueuedInvestigation = (value: unknown): value is QueuedInvestigation =>
   typeof (value as Partial<QueuedInvestigation> | null)?.requestId === 'string';
@@ -34,10 +40,12 @@ export class InvestigationWorker implements OnModuleInit, OnApplicationShutdown 
 
   onModuleInit(): void {
     this.worker = new Worker(INVESTIGATION_QUEUE_NAME, (job) => this.process(job), {
-      connection: this.connection.duplicate(),
+      connection: this.connection.duplicate().on('error', logQueueRedisError),
       prefix: INVESTIGATION_QUEUE_PREFIX,
       concurrency: INVESTIGATION_WORKER_CONCURRENCY,
       maxStalledCount: 0,
+      lockDuration: WORKER_LOCK_MS,
+      stalledInterval: WORKER_LOCK_MS,
     });
     this.worker.on('failed', (job, error) => {
       this.logger.error({
@@ -51,8 +59,12 @@ export class InvestigationWorker implements OnModuleInit, OnApplicationShutdown 
     });
   }
 
-  async onApplicationShutdown(): Promise<void> {
+  async close(): Promise<void> {
     await this.worker?.close();
+  }
+
+  onApplicationShutdown(): Promise<void> {
+    return this.close();
   }
 
   private markInterrupted(requestId: string): void {

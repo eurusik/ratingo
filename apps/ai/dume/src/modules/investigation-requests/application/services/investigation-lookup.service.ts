@@ -17,9 +17,8 @@ export class InvestigationLookupService {
 
   async find(requestId: string): Promise<InvestigationRecord | null> {
     const record = await this.store.find(requestId);
-    if (record === null) return null;
-    const checked = interruptedIfStale(record, this.clock.nowMs(), this.folder.manifest.limits.timeoutMs);
-    if (checked !== record) await this.store.save(checked);
-    return checked;
+    return record === null
+      ? null
+      : interruptedIfStale(record, this.clock.nowMs(), this.folder.manifest.limits.timeoutMs);
   }
 }

@@ -1,5 +1,5 @@
-import { AnswerSupport } from '../../investigation/domain/entities/investigation-answer';
 import {
+  AnswerSupport,
   InvestigationStatus,
   type InvestigationOutcome,
 } from '../../investigation/public';
@@ -12,6 +12,7 @@ import type {
 } from '../domain/ports/investigation-queue.port';
 import {
   CreateOutcome,
+  FinishOutcome,
   type RequestStorePort,
 } from '../domain/ports/request-store.port';
 
@@ -33,6 +34,14 @@ export class InMemoryRequestStore implements RequestStorePort {
   async save(record: InvestigationRecord): Promise<void> {
     this.records.set(record.requestId, record);
   }
+
+  async finish(record: InvestigationRecord): Promise<FinishOutcome> {
+    if (this.records.get(record.requestId)?.state === RequestState.ANSWERED) {
+      return FinishOutcome.KEPT_ANSWER;
+    }
+    this.records.set(record.requestId, record);
+    return FinishOutcome.WRITTEN;
+  }
 }
 
 export class RecordingQueue implements InvestigationQueuePort {
@@ -42,6 +51,7 @@ export class RecordingQueue implements InvestigationQueuePort {
 
   async enqueue(job: QueuedInvestigation): Promise<void> {
     if (this.failWith !== null) throw this.failWith;
+    if (this.jobs.some((queued) => queued.requestId === job.requestId)) return;
     this.jobs.push(job);
   }
 
@@ -77,7 +87,9 @@ export class FakeDayLimits implements DayLimitsPort {
   }
 }
 
-export const queuedRecord = (overrides: Partial<InvestigationRecord> = {}): InvestigationRecord => ({
+export const queuedRecord = (
+  overrides: Partial<InvestigationRecord> = {},
+): InvestigationRecord => ({
   version: RECORD_VERSION,
   requestId: 'tg1000001',
   question: 'Why does sync-show time out?',

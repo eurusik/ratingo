@@ -27,9 +27,9 @@ describe('decideAdmission', () => {
   });
 
   it('names the money limit first when several limits are hit', () => {
-    expect(
-      decideAdmission({ ...open, spentTodayUsd: 2, acceptedToday: 10, waiting: 5 }),
-    ).toBe(RejectionReason.DAY_BUDGET);
+    expect(decideAdmission({ ...open, spentTodayUsd: 2, acceptedToday: 10, waiting: 5 })).toBe(
+      RejectionReason.DAY_BUDGET,
+    );
   });
 
   it('accepts exactly when no limit is reached', () => {

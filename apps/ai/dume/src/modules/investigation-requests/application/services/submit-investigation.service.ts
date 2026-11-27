@@ -40,6 +40,11 @@ export type SubmitResult =
   | { kind: typeof SubmitKind.REJECTED; reason: RejectionReason }
   | { kind: typeof SubmitKind.CONFLICT };
 
+const isFailedBeforeStart = (record: InvestigationRecord): boolean =>
+  record.state === RequestState.FAILED &&
+  record.reason === FailureReason.INTERNAL_ERROR &&
+  record.startedAtMs === undefined;
+
 const errorName = (error: unknown): string => (error instanceof Error ? error.name : 'error');
 
 @Injectable()
@@ -77,7 +82,10 @@ export class SubmitInvestigationService {
     return { kind: SubmitKind.ACCEPTED, created: true, record: accepted };
   }
 
-  private answerForExisting(record: InvestigationRecord, submission: Submission): SubmitResult {
+  private async answerForExisting(
+    record: InvestigationRecord,
+    submission: Submission,
+  ): Promise<SubmitResult> {
     const sameRequest = record.question === submission.question && record.ref === submission.ref;
     if (!sameRequest) {
       this.logger.warn({
@@ -86,7 +94,22 @@ export class SubmitInvestigationService {
       });
       return { kind: SubmitKind.CONFLICT };
     }
-    return { kind: SubmitKind.ACCEPTED, created: false, record };
+    return { kind: SubmitKind.ACCEPTED, created: false, record: await this.revived(record) };
+  }
+
+  private async revived(record: InvestigationRecord): Promise<InvestigationRecord> {
+    if (record.state === RequestState.QUEUED) return this.enqueued(record);
+    if (!isFailedBeforeStart(record)) return record;
+    const fresh: InvestigationRecord = {
+      ...record,
+      state: RequestState.QUEUED,
+      createdAtMs: this.clock.nowMs(),
+      reason: undefined,
+      finishedAtMs: undefined,
+    };
+    await this.store.save(fresh);
+    this.logger.warn({ message: 'investigation_request.revived', requestId: record.requestId });
+    return this.enqueued(fresh);
   }
 
   private async admissionDecision(): Promise<RejectionReason | null> {
@@ -139,7 +162,7 @@ export class SubmitInvestigationService {
         reason: errorName(error),
       });
       const failed = failRecord(record, FailureReason.INTERNAL_ERROR, this.clock.nowMs());
-      await this.store.save(failed);
+      await this.store.finish(failed);
       return failed;
     }
   }

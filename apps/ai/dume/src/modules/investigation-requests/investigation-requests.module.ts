@@ -30,6 +30,8 @@ import { AgentDayLimits } from './infrastructure/adapters/agent-day-limits.adapt
 import { BullmqInvestigationQueue } from './infrastructure/queue/bullmq-investigation-queue';
 import { RedisRequestStore } from './infrastructure/stores/redis.request-store';
 import {
+  FINAL_SAVE_DELAYS,
+  FINAL_SAVE_RETRY_DELAYS_MS,
   INVESTIGATION_QUEUE_NAME,
   INVESTIGATION_QUEUE_PREFIX,
   QUEUE_REDIS,
@@ -54,6 +56,7 @@ const requireRedisUrl = (config: RedisConfig): string => {
   controllers: [InternalInvestigationController],
   providers: [
     InternalApiGuard,
+    { provide: FINAL_SAVE_DELAYS, useValue: FINAL_SAVE_RETRY_DELAYS_MS },
     SubmitInvestigationService,
     InvestigationLookupService,
     RunInvestigationService,
@@ -87,7 +90,7 @@ const requireRedisUrl = (config: RedisConfig): string => {
       useFactory: (redis: Redis) =>
         new BullmqInvestigationQueue(
           new Queue(INVESTIGATION_QUEUE_NAME, {
-            connection: redis.duplicate(),
+            connection: redis.duplicate().on('error', logRedisError('queue-client')),
             prefix: INVESTIGATION_QUEUE_PREFIX,
           }),
         ),

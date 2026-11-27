@@ -17,6 +17,7 @@ export interface InvestigationRecord {
   ref: string;
   state: RequestState;
   reason?: FailureReason;
+  runId?: string;
   createdAtMs: number;
   startedAtMs?: number;
   finishedAtMs?: number;

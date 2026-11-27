@@ -23,7 +23,7 @@ describe('InvestigationLookupService', () => {
     expect(await service.find('tg1000009')).toBeNull();
   });
 
-  it('turns a run that is far past its timeout into an interrupted one and keeps that', async () => {
+  it('shows a run that is far past its timeout as interrupted without writing that into the store', async () => {
     const store = new InMemoryRequestStore();
     await store.save(queuedRecord({ state: RequestState.RUNNING, startedAtMs: NOW_MS }));
     const service = new InvestigationLookupService(
@@ -35,7 +35,7 @@ describe('InvestigationLookupService', () => {
     const record = await service.find('tg1000001');
 
     expect(record).toMatchObject({ state: RequestState.FAILED, reason: FailureReason.INTERRUPTED });
-    expect(store.records.get('tg1000001')?.reason).toBe(FailureReason.INTERRUPTED);
+    expect(store.records.get('tg1000001')?.state).toBe(RequestState.RUNNING);
   });
 
   it('returns a healthy record as it is', async () => {

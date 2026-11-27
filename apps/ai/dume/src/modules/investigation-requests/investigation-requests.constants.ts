@@ -23,4 +23,7 @@ export const QUEUE_REDIS = Symbol('DUME_QUEUE_REDIS');
 
 export const MAX_BODY_BYTES = 8 * 1024;
 export const REDIS_COMMAND_TIMEOUT_MS = 2_000;
-export const MS_PER_DAY = SECONDS_PER_DAY * 1000;
+export const QUEUE_CALL_TIMEOUT_MS = 3_000;
+export const WORKER_LOCK_MS = 5 * 60_000;
+export const FINAL_SAVE_DELAYS = Symbol('DUME_FINAL_SAVE_DELAYS');
+export const FINAL_SAVE_RETRY_DELAYS_MS: readonly number[] = [250, 1_000, 4_000];

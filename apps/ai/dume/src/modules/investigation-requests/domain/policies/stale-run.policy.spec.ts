@@ -1,4 +1,8 @@
-import { FailureReason, RequestState, STALE_RUNNING_MARGIN_MS } from '../constants/request.constants';
+import {
+  FailureReason,
+  RequestState,
+  STALE_RUNNING_MARGIN_MS,
+} from '../constants/request.constants';
 
 import { NOW_MS, queuedRecord } from '../../testing/investigation-requests.testing';
 
@@ -45,12 +49,9 @@ describe('interruptedIfStale', () => {
     });
   });
 
-  it.each([RequestState.ANSWERED, RequestState.FAILED])(
-    'never changes a %s request',
-    (state) => {
-      const record = queuedRecord({ state, startedAtMs: NOW_MS });
+  it.each([RequestState.ANSWERED, RequestState.FAILED])('never changes a %s request', (state) => {
+    const record = queuedRecord({ state, startedAtMs: NOW_MS });
 
-      expect(interruptedIfStale(record, NOW_MS * 2, TIMEOUT_MS)).toBe(record);
-    },
-  );
+    expect(interruptedIfStale(record, NOW_MS * 2, TIMEOUT_MS)).toBe(record);
+  });
 });

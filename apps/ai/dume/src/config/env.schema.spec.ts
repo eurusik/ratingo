@@ -31,11 +31,15 @@ describe('serviceEnvSchema', () => {
   );
 
   it('refuses a stub model in production', () => {
-    expect(issuesOf({ ...PRODUCTION, AI_MODEL_REVIEW: 'stub:review' })).toContain('AI_MODEL_REVIEW');
+    expect(issuesOf({ ...PRODUCTION, AI_MODEL_REVIEW: 'stub:review' })).toContain(
+      'AI_MODEL_REVIEW',
+    );
   });
 
   it('refuses a token shorter than 24 characters', () => {
-    expect(issuesOf({ ...PRODUCTION, DUME_SERVICE_TOKEN: 'short' })).toContain('DUME_SERVICE_TOKEN');
+    expect(issuesOf({ ...PRODUCTION, DUME_SERVICE_TOKEN: 'short' })).toContain(
+      'DUME_SERVICE_TOKEN',
+    );
   });
 
   it('lets a development environment run with the stub model and no token, but still needs Redis', () => {
