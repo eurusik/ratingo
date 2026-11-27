@@ -3,6 +3,7 @@ export const MONITORED_PROVIDER = {
   TRAKT: 'trakt',
   MDBLIST: 'mdblist',
   OMDB: 'omdb',
+  TVMAZE: 'tvmaze',
   S3: 's3',
 } as const;
 

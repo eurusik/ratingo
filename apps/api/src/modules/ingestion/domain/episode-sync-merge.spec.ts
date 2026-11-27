@@ -112,6 +112,39 @@ describe('mergeTmdbEpisodeDetails', () => {
     expect(season.episodes[0].airDate).toEqual(day('20261124'));
   });
 
+  it('marks the date day-only only when it came from TMDB', () => {
+    const evening = at('20261120', 2);
+    const tmdbDay = at('20261124', 12);
+    const [season] = mergeTmdbEpisodeDetails(
+      [
+        {
+          number: 1,
+          episodes: [
+            { number: 1, title: 'Pilot', airDate: evening, airDateDayOnly: false },
+            { number: 2, title: 'Finale', airDate: null, airDateDayOnly: false },
+          ],
+        },
+      ],
+      sources([
+        [
+          1,
+          [
+            { number: 1, title: 'Серія 1', airDate: at('20261119', 12), airDateDayOnly: true },
+            { number: 2, title: 'Серія 2', airDate: tmdbDay, airDateDayOnly: true },
+          ],
+        ],
+      ]),
+      NOW_MS,
+    );
+
+    expect(
+      season.episodes.map(({ airDate, airDateDayOnly }) => ({ airDate, airDateDayOnly })),
+    ).toEqual([
+      { airDate: evening, airDateDayOnly: false },
+      { airDate: tmdbDay, airDateDayOnly: true },
+    ]);
+  });
+
   it('leaves seasons and episodes TMDB does not know about', () => {
     const seasons = [
       { number: 1, episodes: [{ number: 9, title: 'Finale' }] },

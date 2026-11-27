@@ -13908,6 +13908,7 @@
                 "trakt",
                 "mdblist",
                 "omdb",
+                "tvmaze",
                 "s3"
               ],
               "type": "string"
@@ -22116,6 +22117,7 @@
               "trakt",
               "mdblist",
               "omdb",
+              "tvmaze",
               "s3"
             ],
             "example": "tmdb"
@@ -22196,6 +22198,7 @@
               "trakt",
               "mdblist",
               "omdb",
+              "tvmaze",
               "s3"
             ],
             "example": "tmdb"
@@ -22243,6 +22246,7 @@
               "trakt",
               "mdblist",
               "omdb",
+              "tvmaze",
               "s3"
             ],
             "example": "tmdb"

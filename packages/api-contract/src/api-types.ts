@@ -6539,7 +6539,7 @@ export interface components {
              * @example tmdb
              * @enum {string}
              */
-            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "tvmaze" | "s3";
             /**
              * @example valid
              * @enum {string}
@@ -6567,7 +6567,7 @@ export interface components {
              * @example tmdb
              * @enum {string}
              */
-            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "tvmaze" | "s3";
             latest: components["schemas"]["KeyHealthSnapshotDto"] | null;
             failures: components["schemas"]["ProviderFailureCountsDto"];
         };
@@ -6579,7 +6579,7 @@ export interface components {
              * @example tmdb
              * @enum {string}
              */
-            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+            provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "tvmaze" | "s3";
             items: components["schemas"]["KeyHealthSnapshotDto"][];
         };
     };
@@ -15321,7 +15321,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "s3";
+                provider: "tmdb" | "trakt" | "mdblist" | "omdb" | "tvmaze" | "s3";
             };
             cookie?: never;
         };

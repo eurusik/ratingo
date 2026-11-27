@@ -5,6 +5,7 @@ import {
   type NormalizedSeason,
   type NormalizedEpisode,
 } from '@/modules/ingestion/domain/models/normalized-media.model';
+import { isAnnouncedNextSeason } from '@/modules/ingestion/domain/next-season-announcement';
 import {
   EPISODE_SCHEDULE_PORT,
   type EpisodeSchedulePort,
@@ -47,46 +48,42 @@ export class TvMazeEnrichmentService {
    * @returns Enriched media with merged seasons and nextAirDate
    */
   async enrich(media: NormalizedMedia): Promise<NormalizedMedia> {
-    try {
-      const episodes = await this.fetchEpisodes(media);
-      if (episodes.length === 0) return media;
+    const episodes = await this.fetchEpisodes(media);
+    if (episodes.length === 0) return media;
 
-      const {
+    const {
+      seasons: mergedSeasons,
+      acceptedEpisodes,
+      skipped,
+    } = this.mergeSeasons(
+      episodes,
+      media.details?.seasons,
+      media.details?.status ?? media.status ?? null,
+    );
+    this.logSkippedSeasons(media, skipped);
+    if (acceptedEpisodes.length === 0) return media;
+
+    const nextAirDate = this.findNextAirDate(acceptedEpisodes);
+    const lastAirDate = this.findLastAirDate(acceptedEpisodes);
+
+    const tvmazeTotalEpisodes = mergedSeasons
+      .filter((s) => s.number > 0)
+      .reduce((sum, s) => sum + (s.episodeCount ?? 0), 0);
+
+    return {
+      ...media,
+      details: {
+        ...media.details,
         seasons: mergedSeasons,
-        acceptedEpisodes,
-        skipped,
-      } = this.mergeSeasons(episodes, media.details?.seasons);
-      this.logSkippedSeasons(media, skipped);
-      if (acceptedEpisodes.length === 0) return media;
-
-      const nextAirDate = this.findNextAirDate(acceptedEpisodes);
-      const lastAirDate = this.findLastAirDate(acceptedEpisodes);
-
-      const tvmazeTotalEpisodes = mergedSeasons
-        .filter((s) => s.number > 0)
-        .reduce((sum, s) => sum + (s.episodeCount ?? 0), 0);
-
-      return {
-        ...media,
-        details: {
-          ...media.details,
-          seasons: mergedSeasons,
-          totalEpisodes:
-            tvmazeTotalEpisodes > 0 ? tvmazeTotalEpisodes : media.details?.totalEpisodes,
-          // Episodes were fetched successfully, so a missing future episode means "no next
-          // episode": write explicit null (pickDefined keeps null, drops undefined) so a stale
-          // past nextAirDate gets cleared. A TMDB value is kept only while still in the future.
-          nextAirDate: nextAirDate ?? this.futureOrNull(media.details?.nextAirDate),
-          // TVMaze overrides TMDB's lastAirDate as TVMaze is "time authority"
-          lastAirDate: lastAirDate ?? media.details?.lastAirDate,
-        },
-      };
-    } catch (err) {
-      this.logger.warn(
-        `TVMaze enrichment failed for ${media.externalIds.imdbId ?? media.title}: ${(err as Error).message}`,
-      );
-      return media;
-    }
+        totalEpisodes: tvmazeTotalEpisodes > 0 ? tvmazeTotalEpisodes : media.details?.totalEpisodes,
+        // Episodes were fetched successfully, so a missing future episode means "no next
+        // episode": write explicit null (pickDefined keeps null, drops undefined) so a stale
+        // past nextAirDate gets cleared. A TMDB value is kept only while still in the future.
+        nextAirDate: nextAirDate ?? this.futureOrNull(media.details?.nextAirDate),
+        // TVMaze overrides TMDB's lastAirDate as TVMaze is "time authority"
+        lastAirDate: lastAirDate ?? media.details?.lastAirDate,
+      },
+    };
   }
 
   /**
@@ -144,7 +141,8 @@ export class TvMazeEnrichmentService {
   /** Merges TVMaze episodes with TMDB season metadata. */
   private mergeSeasons(
     scheduledEpisodes: ScheduledEpisode[],
-    tmdbSeasons?: NormalizedSeason[],
+    tmdbSeasons: NormalizedSeason[] | undefined,
+    showStatus: string | null,
   ): {
     seasons: NormalizedSeason[];
     acceptedEpisodes: NormalizedEpisode[];
@@ -175,7 +173,7 @@ export class TvMazeEnrichmentService {
 
     // Merge TVMaze with TMDB metadata
     for (const [seasonNum, episodes] of seasonMap.entries()) {
-      const skipReason = this.seasonSkipReason(seasonNum, episodes, tmdbSeasonMap);
+      const skipReason = this.seasonSkipReason(seasonNum, episodes, tmdbSeasonMap, showStatus);
       if (skipReason) {
         skipped[skipReason].push(seasonNum);
         continue;
@@ -215,11 +213,20 @@ export class TvMazeEnrichmentService {
     seasonNum: number,
     episodes: ScheduledEpisode[],
     tmdbSeasonMap: Map<number, NormalizedSeason>,
+    showStatus: string | null,
   ): SeasonSkipReason | null {
     if (tmdbSeasonMap.size === 0) return null;
 
     const tmdbSeason = tmdbSeasonMap.get(seasonNum);
-    if (!tmdbSeason) return SEASON_SKIP_REASON.NOT_IN_TMDB;
+    if (!tmdbSeason) {
+      const announced = isAnnouncedNextSeason({
+        seasonNumber: seasonNum,
+        lastKnownSeasonNumber: Math.max(...tmdbSeasonMap.keys()),
+        showStatus,
+        hasDatedEpisode: episodes.some((e) => e.airDate),
+      });
+      return announced ? null : SEASON_SKIP_REASON.NOT_IN_TMDB;
+    }
 
     const tmdbYear = tmdbSeason.airDate?.getFullYear();
     const tvmazeYear = this.earliestAirDate(episodes)?.getFullYear();

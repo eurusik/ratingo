@@ -65,8 +65,3 @@ export class MdblistApiException extends ExternalApiException {
 /**
  * Exception for TVMaze API errors.
  */
-export class TvMazeApiException extends ExternalApiException {
-  constructor(message: string, statusCode?: number) {
-    super(ErrorCode.TVMAZE_API_ERROR, `TVMaze API: ${message}`, { statusCode });
-  }
-}

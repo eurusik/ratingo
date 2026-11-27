@@ -128,6 +128,9 @@ module/
 - Metadata import from TMDB
 - Enrichment: TVMaze (episodes), Trakt/OMDb (ratings)
 - Episode merge (`domain/episode-pairing.ts`, `episode-sync-merge.ts`, `episode-backfill-plan.ts`): TVMaze leads for episodes it knows, TMDB fills per field (Ukrainian title and overview win; still, runtime, rating fill only gaps; a date-only TMDB air date fills an undated episode only two days after it passed). Episodes pair by number when both sources count the season the same and their air dates are within 2 days, otherwise only by unique English title. An undated season takes the date of its first episode. `BackfillEpisodeDetailsPipeline` applies the same rule to stored episodes every Sunday and skips shows checked in the last 28 days (`shows.episode_details_checked_at`); `RepairEpisodeTitlesPipeline` is a one-off that re-pairs renumbered seasons through TVMaze titles
+- TVMaze reliability: `TvMazeAdapter` returns no episodes only for a 404 and throws `EpisodeScheduleUnavailableError` for 429, 5xx, network errors and empty bodies (401/403/429 also emit `external-api.failure` for provider `tvmaze`); it starts at most 18 requests per 10 s. When TVMaze is unavailable the sync drops seasons, `totalEpisodes`, `lastAirDate` and `nextAirDate` from the payload (`domain/stored-episode-schedule.ts`), so stored episodes and show dates stay as they are and no TMDB fallback runs; scoring uses the stored `lastAirDate`
+- Date-only air dates: TMDB episode dates are stored at 12:00 UTC of their calendar day (`middayUtcOfCalendarDate`), which is the same day from UTC-11 to UTC+11, Kyiv included, and marked `episodes.air_date_day_only = true`; TVMaze airstamps are marked `false`, legacy rows are `null`. The episode upsert keeps a stored exact instant (`false`) when a day-only date for the same airing (within 2 days) arrives
+- Next season: a TVMaze season TMDB does not list is kept when it is the one right after TMDB's last season, has a dated episode, and TMDB does not mark the show `Ended` or `Canceled` (`domain/next-season-announcement.ts`); it is saved without TMDB season metadata, which the season upsert fills once TMDB lists it
 - Ratingo Score calculation
 - **Pipelines**: TrendingPipeline, SnapshotsPipeline, TrackedShowsPipeline, NowPlayingPipeline, NewReleasesPipeline, UpcomingMoviesPipeline, AnticipatedShowsPipeline
 - BullMQ worker for background jobs
@@ -292,7 +295,7 @@ POST /ingestion/sync { tmdbId, type }
          │
          ├──► TMDB: fetch metadata
          │
-         ├──► [if show] TVMaze: episodes
+         ├──► [if show] TVMaze: episodes (unavailable → keep stored episodes, skip TMDB episodes)
          │
          ├──► [if show] TMDB: episodes TVMaze lacks, fields TVMaze lacks
          │
