@@ -15,7 +15,7 @@ import {
   siteRenderP95,
   siteRequests,
   siteServerErrors,
-} from '../../domain/queries/prom-queries';
+} from '@ratingo/ai-ops-tools';
 
 import { baselineAt, guarded } from './collector-helpers';
 

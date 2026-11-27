@@ -26,7 +26,7 @@ const testCase: EvalCase = {
 
 const answerWith = (overrides: Partial<VerifiedAnswer> = {}): VerifiedAnswer => ({
   answer: 'Відповідь.',
-  facts: [{ text: 'fact', citations: [{ path: 'a.ts', startLine: 1, endLine: 2 }] }],
+  facts: [{ text: 'fact', citations: [{ path: 'a.ts', startLine: 1, endLine: 2 }], evidence: [] }],
   assumptions: [],
   unknowns: [],
   support: AnswerSupport.SUPPORTED,

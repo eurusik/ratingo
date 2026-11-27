@@ -4,9 +4,16 @@ export interface Citation {
   endLine: number;
 }
 
+export interface ShownEvidence {
+  ref: string;
+  tool: string;
+  summary: string;
+}
+
 export interface DraftClaim {
   text: string;
   citations: readonly Citation[];
+  evidence: readonly string[];
 }
 
 export interface InvestigationDraft {
@@ -23,17 +30,20 @@ export const CitationFailure = {
   LINES_OUT_OF_RANGE: 'lines_out_of_range',
   RANGE_TOO_LARGE: 'range_too_large',
   NOT_READ_IN_THIS_RUN: 'not_read_in_this_run',
+  EVIDENCE_NOT_SHOWN: 'evidence_not_shown',
 } as const;
 export type CitationFailure = (typeof CitationFailure)[keyof typeof CitationFailure];
 
 export interface CitationProblem {
   citation: Citation | null;
+  evidenceRef?: string;
   failure: CitationFailure;
 }
 
 export interface VerifiedClaim {
   text: string;
   citations: readonly Citation[];
+  evidence: readonly ShownEvidence[];
 }
 
 export const AssumptionOrigin = {

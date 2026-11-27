@@ -8,6 +8,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@ratingo/ai-core$': '<rootDir>/../../../packages/ai-core/src',
+    '^@ratingo/ai-ops-tools$': '<rootDir>/../../../packages/ai-ops-tools/src',
     '^@ratingo/node-telemetry$': '<rootDir>/../../../packages/node-telemetry/src',
   },
 };

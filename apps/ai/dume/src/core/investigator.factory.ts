@@ -6,6 +6,7 @@ import {
   type ModelProviders,
   type RunRepository,
 } from '@ratingo/ai-core';
+import type { OpsExecutors } from '@ratingo/ai-ops-tools';
 
 import { AgentRunner } from './agent-runner.service';
 import {
@@ -21,6 +22,7 @@ export interface InvestigatorParts {
   providers: ModelProviders;
   aliases: ModelAliases;
   clock: ClockPort;
+  ops: OpsExecutors;
   matcher?: PatternMatcherPort;
   runs?: RunRepository;
 }
@@ -39,5 +41,6 @@ export const createInvestigator = (parts: InvestigatorParts): InvestigationServi
     parts.matcher ?? new WorkerPatternMatcher(),
     runner,
     parts.folder,
+    parts.ops,
   );
 };

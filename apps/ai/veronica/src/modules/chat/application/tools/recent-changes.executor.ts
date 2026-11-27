@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CLOCK_PORT, RowList, type ClockPort, type RowOmission } from '@ratingo/ai-core';
+import { formatKyivDateTime, parseWindow } from '@ratingo/ai-ops-tools';
 
 import { RELEASE_BASE_BRANCH, RELEASE_HEAD_BRANCH } from '../../domain/constants/happy.constants';
 import {
@@ -8,9 +9,7 @@ import {
   CHANGE_TITLE_MAX_CHARS,
 } from '../../domain/constants/investigation.constants';
 import { clip } from '../../domain/policies/answer-sanitizer.policy';
-import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 import { isReleasePullRequest } from '../../domain/policies/release-pull-request.policy';
-import { parseWindow } from '../../domain/policies/metric-params.policy';
 import {
   RECENT_CHANGES_PORT,
   type RecentChangesPort,

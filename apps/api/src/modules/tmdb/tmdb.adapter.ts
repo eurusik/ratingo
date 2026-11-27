@@ -509,13 +509,14 @@ export class TmdbAdapter implements MetadataProviderPort {
   public async getSeasonsEpisodes(
     tmdbId: number,
     seasonNumbers: readonly number[],
+    language: string = this.DEFAULT_LANG,
   ): Promise<SeasonsEpisodesResult> {
     const result: SeasonsEpisodesResult = { episodesBySeason: new Map(), failedSeasons: [] };
 
     for (let start = 0; start < seasonNumbers.length; start += TMDB_MAX_APPENDED_RESPONSES) {
       const batch = seasonNumbers.slice(start, start + TMDB_MAX_APPENDED_RESPONSES);
       try {
-        const seasons = await this.fetchSeasonsBatch(tmdbId, batch);
+        const seasons = await this.fetchSeasonsBatch(tmdbId, batch, language);
         seasons.forEach((episodes, season) => result.episodesBySeason.set(season, episodes));
       } catch (error) {
         result.failedSeasons.push(...batch);
@@ -535,11 +536,13 @@ export class TmdbAdapter implements MetadataProviderPort {
   private async fetchSeasonsBatch(
     tmdbId: number,
     batch: readonly number[],
+    language: string,
   ): Promise<Map<number, NormalizedEpisode[]>> {
     const seasons = new Map<number, NormalizedEpisode[]>();
     const data = await this.fetch<Record<string, TmdbSeasonDetailResponse | undefined>>(
       `/tv/${tmdbId}`,
-      { append_to_response: batch.map((season) => `season/${season}`).join(',') },
+      { language, append_to_response: batch.map((season) => `season/${season}`).join(',') },
+      { skipLanguage: true },
     ).catch((error: unknown) => {
       if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
         return {} as Record<string, TmdbSeasonDetailResponse | undefined>;

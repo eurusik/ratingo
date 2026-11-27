@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 
+import { PrometheusMetricsAdapter } from '@ratingo/ai-ops-tools';
+
 import {
   GRAFANA_CONFIG,
   PRODUCT_STATS_CONFIG,
@@ -22,7 +24,6 @@ import { DIGEST_RENDERER_PORT } from './domain/ports/digest-renderer.port';
 import { METRICS_PORT } from './domain/ports/metrics.port';
 import { PRODUCT_SERIES_PORT } from './domain/ports/product-series.port';
 import { PRODUCT_STATS_PORT } from './domain/ports/product-stats.port';
-import { PrometheusMetricsAdapter } from './infrastructure/adapters/prometheus.metrics-adapter';
 import { PostgresProductStatsAdapter } from './infrastructure/adapters/postgres.product-stats-adapter';
 import { StubProductStatsAdapter } from './infrastructure/adapters/stub.product-stats-adapter';
 import { TelegramDigestTemplate } from './infrastructure/templates/telegram-digest.template';

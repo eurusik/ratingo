@@ -259,6 +259,7 @@ export const shows = pgTable(
     status: text('status'),
     lastAirDate: timestamp('last_air_date'),
     nextAirDate: timestamp('next_air_date'),
+    episodeDetailsCheckedAt: timestamp('episode_details_checked_at'),
 
     // Pre-calculated drop-off analysis (updated by background job)
     dropOffAnalysis: jsonb('drop_off_analysis').$type<{

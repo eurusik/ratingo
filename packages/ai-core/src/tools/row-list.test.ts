@@ -176,3 +176,26 @@ describe('countRowsThatFit', () => {
     expect(countRowsThatFit(list, 5)).toBe(0);
   });
 });
+
+describe('RowList.mapRows', () => {
+  it('replaces the rows and keeps the frame, the hint and the omission', () => {
+    const list = RowList.of([1, 2, 3], 'narrow it', (rows, omission) => ({
+      window: '24h',
+      items: rows,
+      ...omission,
+    }));
+
+    const mapped = list.mapRows((row, index) => ({ n: row, index }));
+
+    expect(mapped.withFirst(2)).toEqual({
+      window: '24h',
+      items: [
+        { n: 1, index: 0 },
+        { n: 2, index: 1 },
+      ],
+      omitted: 1,
+      hint: 'narrow it',
+    });
+    expect(list.rows).toEqual([1, 2, 3]);
+  });
+});

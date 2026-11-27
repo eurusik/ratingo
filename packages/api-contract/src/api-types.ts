@@ -1209,7 +1209,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ingestion/backfill/episode-texts": {
+    "/api/ingestion/backfill/episode-details": {
         parameters: {
             query?: never;
             header?: never;
@@ -1219,10 +1219,30 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Backfill Ukrainian episode titles and overviews from TMDB
-         * @description Finds shows with episodes that have no Ukrainian title and fetches Ukrainian titles and overviews from TMDB, one request per 20 seasons. No Trakt, OMDb or TVMaze calls. Future syncs keep the texts Ukrainian on their own.
+         * Backfill episode details from TMDB
+         * @description Finds shows with episodes that lack a Ukrainian title or overview, an air date, a runtime, a still or a rating, and fills them from TMDB, one request per 20 seasons, plus one for English titles when TMDB numbers a season differently. Ukrainian TMDB texts replace English ones; the other fields are filled only where empty. Also dates undated seasons by their first episode. No Trakt, OMDb or TVMaze calls.
          */
-        post: operations["IngestionController_backfillEpisodeTexts"];
+        post: operations["IngestionController_backfillEpisodeDetails"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/backfill/episode-titles-repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Repair Ukrainian episode titles in renumbered seasons
+         * @description One-off repair for seasons where TVMaze and TMDB count episodes differently, so titles once copied by episode number may belong to another episode. Re-pairs each stored episode with TMDB by its English TVMaze title and overwrites title and overview, including Ukrainian ones the pairing does not confirm. Runs on the ingestion queue (TVMaze calls). Rerunning changes nothing.
+         */
+        post: operations["IngestionController_repairEpisodeTitles"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10508,7 +10528,7 @@ export interface operations {
             };
         };
     };
-    IngestionController_backfillEpisodeTexts: {
+    IngestionController_backfillEpisodeDetails: {
         parameters: {
             query?: {
                 /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
@@ -10521,7 +10541,70 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Backfill job queued */
-            200: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing or invalid access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    IngestionController_repairEpisodeTitles: {
+        parameters: {
+            query?: {
+                /** @description Bypass daily deduplication (allows re-running within the same UTC day) */
+                force?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repair job queued */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

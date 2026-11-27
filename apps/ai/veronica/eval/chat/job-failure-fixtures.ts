@@ -1,4 +1,4 @@
-import { nothingRecordedNote } from '../../src/modules/chat/application/tools/job-failures.executor';
+import { nothingRecordedNote } from '@ratingo/ai-ops-tools';
 
 import { kyivDayFromEvalNow } from './eval-clock';
 

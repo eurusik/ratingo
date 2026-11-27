@@ -37,8 +37,16 @@ describe('formatOutcome', () => {
   const answer: VerifiedAnswer = {
     answer: 'Відповідь.\nsupport: supported',
     facts: [
-      { text: 'a fact', citations: [{ path: 'a.ts', startLine: 3, endLine: 5 }] },
-      { text: 'one line', citations: [{ path: 'b.ts', startLine: 7, endLine: 7 }] },
+      {
+        text: 'a fact',
+        citations: [{ path: 'a.ts', startLine: 3, endLine: 5 }],
+        evidence: [],
+      },
+      {
+        text: 'one line',
+        citations: [{ path: 'b.ts', startLine: 7, endLine: 7 }],
+        evidence: [],
+      },
     ],
     assumptions: [
       {
@@ -85,5 +93,39 @@ describe('formatOutcome', () => {
         snapshotFailure: 'rate_limited',
       }),
     ).toContain('rate_limited');
+  });
+
+  it('prints the runtime rows a fact cites and names the ref of a claim whose row was never shown', () => {
+    const runtime: VerifiedAnswer = {
+      ...answer,
+      facts: [
+        {
+          text: 'timeouts today',
+          citations: [],
+          evidence: [
+            { ref: 'logs_search#1.2', tool: 'logs_search', summary: 'TMDB \u001b[2Jtimeout' },
+          ],
+        },
+      ],
+      assumptions: [
+        {
+          text: 'invented',
+          origin: AssumptionOrigin.UNVERIFIED_CLAIM,
+          problems: [
+            {
+              citation: null,
+              evidenceRef: 'logs_search#9.1',
+              failure: CitationFailure.EVIDENCE_NOT_SHOWN,
+            },
+          ],
+        },
+      ],
+    };
+
+    const text = formatOutcome(outcomeWith(runtime));
+
+    expect(text).toContain('runtime logs_search#1.2: TMDB [2Jtimeout');
+    expect(text).toContain('[unverified claim: evidence_not_shown: logs_search#9.1] invented');
+    expect(text).not.toContain('\u001b');
   });
 });

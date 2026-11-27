@@ -1,0 +1,4 @@
+const HOURS_PER_DAY = 24;
+const WINDOW_MAX_DAYS = 7;
+
+export const WINDOW_MAX_HOURS = WINDOW_MAX_DAYS * HOURS_PER_DAY;

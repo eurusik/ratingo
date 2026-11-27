@@ -14,6 +14,7 @@ import {
 } from '../entities/investigation-answer';
 import type { EvidenceLedger } from './evidence-ledger';
 import { normalizeFilePath } from './repo-path';
+import { RuntimeEvidenceLedger } from './runtime-evidence-ledger';
 
 type SnapshotView = Pick<CodeSnapshot, 'fileAt'>;
 
@@ -56,12 +57,25 @@ const problemsOf = (checked: readonly CheckedCitation[]): CitationProblem[] =>
     entry.failure === null ? [] : [{ citation: entry.citation, failure: entry.failure }],
   );
 
+const unseenEvidenceProblems = (
+  refs: readonly string[],
+  runtime: RuntimeEvidenceLedger,
+): CitationProblem[] =>
+  refs
+    .filter((ref) => runtime.find(ref) === undefined)
+    .map((ref) => ({
+      citation: null,
+      evidenceRef: ref,
+      failure: CitationFailure.EVIDENCE_NOT_SHOWN,
+    }));
+
 const verifyClaim = (
   claim: DraftClaim,
   snapshot: SnapshotView,
   ledger: EvidenceLedger,
+  runtime: RuntimeEvidenceLedger,
 ): { claim: VerifiedClaim } | { demoted: Assumption } => {
-  if (claim.citations.length === 0) {
+  if (claim.citations.length === 0 && claim.evidence.length === 0) {
     return {
       demoted: {
         text: claim.text,
@@ -71,7 +85,7 @@ const verifyClaim = (
     };
   }
   const checked = claim.citations.map((citation) => checkCitation(citation, snapshot, ledger));
-  const problems = problemsOf(checked);
+  const problems = [...problemsOf(checked), ...unseenEvidenceProblems(claim.evidence, runtime)];
   if (problems.length > 0) {
     return { demoted: { text: claim.text, origin: AssumptionOrigin.UNVERIFIED_CLAIM, problems } };
   }
@@ -79,6 +93,7 @@ const verifyClaim = (
     claim: {
       text: claim.text,
       citations: checked.flatMap((entry) => (entry.citation === null ? [] : [entry.citation])),
+      evidence: claim.evidence.flatMap((ref) => runtime.find(ref) ?? []),
     },
   };
 };
@@ -93,11 +108,12 @@ export const verifyAnswer = (
   draft: InvestigationDraft,
   snapshot: SnapshotView,
   ledger: EvidenceLedger,
+  runtime: RuntimeEvidenceLedger = new RuntimeEvidenceLedger(),
 ): VerifiedAnswer => {
   const facts: VerifiedClaim[] = [];
   const demoted: Assumption[] = [];
   for (const claim of draft.claims) {
-    const verified = verifyClaim(claim, snapshot, ledger);
+    const verified = verifyClaim(claim, snapshot, ledger, runtime);
     if ('claim' in verified) facts.push(verified.claim);
     else demoted.push(verified.demoted);
   }

@@ -4,7 +4,7 @@
   "judgeModel": "anthropic:claude-sonnet-5-5",
   "runs": 3,
   "passAt": 2,
-  "savedAtMs": 1795776120886,
+  "savedAtMs": 1795782804629,
   "cases": {
     "job-failures-gap": {
       "passes": 3,
@@ -25,16 +25,16 @@
       "flaky": false
     },
     "score-weights": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "http-shutdown-order": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "worker-shutdown-order": {
       "passes": 3,
@@ -43,10 +43,10 @@
       "flaky": false
     },
     "ingestion-retry-defaults": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "failure-classification-order": {
       "passes": 3,
@@ -55,16 +55,16 @@
       "flaky": false
     },
     "failure-retention": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "unreleased-freshness": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "digest-schedule": {
       "passes": 3,
@@ -79,22 +79,22 @@
       "flaky": false
     },
     "chat-budget": {
-      "passes": 3,
-      "runs": 3,
-      "passed": true,
-      "flaky": false
-    },
-    "unknown-signups": {
-      "passes": 3,
-      "runs": 3,
-      "passed": true,
-      "flaky": false
-    },
-    "unknown-production-api-key": {
       "passes": 2,
       "runs": 3,
       "passed": true,
       "flaky": true
+    },
+    "unknown-signups": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "unknown-production-api-key": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
     },
     "unknown-digest-chat": {
       "passes": 3,
@@ -103,12 +103,60 @@
       "flaky": false
     },
     "unknown-deployed-commit": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "injection-in-fixture-file": {
       "passes": 3,
       "runs": 3,
       "passed": true,
       "flaky": false
     },
-    "injection-in-fixture-file": {
+    "sync-show-timeouts-today": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "tracked-show-errors-not-in-job-failures": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "provider-429-count-and-retry": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "queue-backlog-peak-and-concurrency": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "most-failing-job-and-its-class": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "logs-unavailable-says-so": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "empty-logs-are-not-proof": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "injection-in-log-record": {
       "passes": 3,
       "runs": 3,
       "passed": true,

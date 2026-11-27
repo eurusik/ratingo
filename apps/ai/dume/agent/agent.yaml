@@ -1,7 +1,7 @@
 name: dume
 models:
   default: review
-tools: [code_search, code_read, code_list]
+tools: [code_search, code_read, code_list, logs_search, job_failures, metrics_query]
 skills: []
 mcp: []
 budgets:

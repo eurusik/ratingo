@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CLOCK_PORT } from '@/modules/shared/clock';
 import { SyncMediaService } from './sync-media.service';
-import { EpisodeLocalizationService } from './episode-localization.service';
+import { EpisodeMergeService } from './episode-merge.service';
+import { TmdbEpisodeSourcesService } from './tmdb-episode-sources.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 import { TRAKT_RATINGS_PORT, type TraktRatingsPort } from '@/modules/trakt/public';
@@ -114,7 +115,8 @@ describe('SyncMediaService', () => {
         { provide: TRAKT_RATINGS_PORT, useValue: mockTraktAdapter },
         { provide: AGGREGATED_RATINGS_PORT, useValue: mockAggregatedRatings },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
-        EpisodeLocalizationService,
+        EpisodeMergeService,
+        TmdbEpisodeSourcesService,
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
@@ -750,7 +752,7 @@ describe('SyncMediaService', () => {
     });
   });
 
-  describe('Ukrainian episode texts', () => {
+  describe('TMDB episode details on TVMaze seasons', () => {
     const tvMazeShow = (seasons: unknown[]) => ({
       ...mockMedia,
       type: MediaType.SHOW,
@@ -789,10 +791,96 @@ describe('SyncMediaService', () => {
       await service.syncShow(1399);
 
       expect(tmdbAdapter.getSeasonsEpisodes).toHaveBeenCalledWith(550, [1]);
+      const fromTvMazeOnly = { runtime: null, stillPath: null, rating: null };
       expect(persistedSeasons()[0].episodes).toEqual([
-        { number: 1, title: 'Зима близько', overview: 'Український опис', airDate },
-        { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate },
+        {
+          number: 1,
+          title: 'Зима близько',
+          overview: 'Український опис',
+          airDate,
+          ...fromTvMazeOnly,
+        },
+        { number: 2, title: 'The Kingsroad', overview: 'English 2', airDate, ...fromTvMazeOnly },
       ]);
+    });
+
+    it('fills a missing still, runtime and rating from TMDB and dates the season', async () => {
+      const airDate = new Date('2002-01-21T00:00:00Z');
+      const show = tvMazeShow([
+        {
+          number: 3,
+          episodeCount: 1,
+          episodes: [{ number: 1, title: 'The Algae', airDate, stillPath: null, runtime: null }],
+        },
+      ]);
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockResolvedValue({
+        episodesBySeason: new Map([
+          [3, [{ number: 1, title: 'Серія 1', stillPath: '/still.jpg', runtime: 11, rating: 7 }]],
+        ]),
+        failedSeasons: [],
+      });
+
+      await service.syncShow(387);
+
+      const [season] = persistedSeasons();
+      expect(season.airDate).toBe(airDate);
+      expect(season.episodes[0]).toMatchObject({
+        title: 'The Algae',
+        airDate,
+        stillPath: '/still.jpg',
+        runtime: 11,
+        rating: 7,
+      });
+    });
+
+    it('takes a TMDB date only once it has safely passed and moves lastAirDate with it', async () => {
+      const now = new Date('2026-11-27T12:00:00Z');
+      (
+        service as unknown as { episodeMerge: { clock: { now: jest.Mock } } }
+      ).episodeMerge.clock.now.mockReturnValue(now);
+      const tvMazeAired = new Date('2026-11-01T01:00:00Z');
+      const show = {
+        ...tvMazeShow([
+          {
+            number: 1,
+            episodeCount: 3,
+            episodes: [
+              { number: 1, title: 'Pilot', airDate: tvMazeAired },
+              { number: 2, title: 'Second', airDate: null },
+              { number: 3, title: 'Finale', airDate: null },
+            ],
+          },
+        ]),
+      };
+      show.details = { ...show.details, lastAirDate: tvMazeAired, nextAirDate: null } as never;
+      tmdbAdapter.getShow.mockResolvedValue(show);
+      tvMazeEnrichment.enrich.mockResolvedValue(show);
+      tmdbAdapter.getSeasonsEpisodes.mockResolvedValue({
+        episodesBySeason: new Map([
+          [
+            1,
+            [
+              { number: 1, title: 'Серія 1', airDate: new Date('2026-10-31T00:00:00Z') },
+              { number: 2, title: 'Серія 2', airDate: new Date('2026-11-08T00:00:00Z') },
+              { number: 3, title: 'Серія 3', airDate: new Date('2026-11-28T00:00:00Z') },
+            ],
+          ],
+        ]),
+        failedSeasons: [],
+      });
+
+      await service.syncShow(1399);
+
+      const { details } = mediaRepository.upsert.mock.calls[0][0] as any;
+      expect(details.seasons[0].episodes.map((episode: any) => episode.airDate)).toEqual([
+        tvMazeAired,
+        new Date('2026-11-08T00:00:00Z'),
+        null,
+      ]);
+      expect(details.lastAirDate).toEqual(new Date('2026-11-08T00:00:00Z'));
+      expect(details.nextAirDate).toBeNull();
     });
 
     it('skips specials and seasons already filled from TMDB', async () => {

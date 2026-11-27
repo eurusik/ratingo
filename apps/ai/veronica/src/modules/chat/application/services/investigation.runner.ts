@@ -18,6 +18,7 @@ import {
   type RunRepository,
   type Tool,
 } from '@ratingo/ai-core';
+import { formatKyivDateTime } from '@ratingo/ai-ops-tools';
 
 import { MODEL_ALIASES } from '../../../../config/config.constants';
 import {
@@ -49,7 +50,6 @@ import {
   FLAGGED_NOTE_MAX_CHARS,
   withFlaggedNumbers,
 } from '../../domain/policies/flagged-numbers.policy';
-import { formatKyivDateTime } from '../../domain/policies/kyiv-time.policy';
 import { renderSystemCard } from '../../domain/policies/system-card.policy';
 import { SYSTEM_CARD } from '../../domain/constants/system-card.constants';
 import { requestedReportDates } from '../../domain/policies/report-dates.policy';

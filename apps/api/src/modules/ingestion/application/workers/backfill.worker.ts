@@ -16,7 +16,7 @@ import {
 } from '@/modules/user-media/public';
 
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
-import { BackfillEpisodeTextsPipeline } from '../pipelines/backfill-episode-texts.pipeline';
+import { BackfillEpisodeDetailsPipeline } from '../pipelines/backfill-episode-details.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 
 /**
@@ -39,7 +39,7 @@ export class BackfillWorker extends WorkerHost {
 
   constructor(
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
-    private readonly backfillEpisodeTextsPipeline: BackfillEpisodeTextsPipeline,
+    private readonly backfillEpisodeDetailsPipeline: BackfillEpisodeDetailsPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
     private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
     private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
@@ -75,8 +75,8 @@ export class BackfillWorker extends WorkerHost {
           });
           break;
 
-        case IngestionJob.BACKFILL_EPISODE_TEXTS_ITEM:
-          await this.backfillEpisodeTextsPipeline.processItem({
+        case IngestionJob.BACKFILL_EPISODE_DETAILS_ITEM:
+          await this.backfillEpisodeDetailsPipeline.processItem({
             showId: job.data.showId!,
             tmdbId: job.data.tmdbId!,
           });
@@ -102,7 +102,11 @@ export class BackfillWorker extends WorkerHost {
           break;
 
         default:
-          this.logger.warn(`Unknown backfill job type: ${job.name}`);
+          this.logger.warn({
+            message: 'Unknown backfill job type',
+            jobId: job.id,
+            jobName: job.name,
+          });
       }
     } catch (error) {
       const err = toError(error);

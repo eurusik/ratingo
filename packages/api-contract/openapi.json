@@ -6858,10 +6858,10 @@
         ]
       }
     },
-    "/api/ingestion/backfill/episode-texts": {
+    "/api/ingestion/backfill/episode-details": {
       "post": {
-        "description": "Finds shows with episodes that have no Ukrainian title and fetches Ukrainian titles and overviews from TMDB, one request per 20 seasons. No Trakt, OMDb or TVMaze calls. Future syncs keep the texts Ukrainian on their own.",
-        "operationId": "IngestionController_backfillEpisodeTexts",
+        "description": "Finds shows with episodes that lack a Ukrainian title or overview, an air date, a runtime, a still or a rating, and fills them from TMDB, one request per 20 seasons, plus one for English titles when TMDB numbers a season differently. Ukrainian TMDB texts replace English ones; the other fields are filled only where empty. Also dates undated seasons by their first episode. No Trakt, OMDb or TVMaze calls.",
+        "operationId": "IngestionController_backfillEpisodeDetails",
         "parameters": [
           {
             "name": "force",
@@ -6874,7 +6874,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "202": {
             "description": "Backfill job queued",
             "content": {
               "application/json": {
@@ -6945,7 +6945,100 @@
             "bearer": []
           }
         ],
-        "summary": "Backfill Ukrainian episode titles and overviews from TMDB",
+        "summary": "Backfill episode details from TMDB",
+        "tags": [
+          "Admin: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/backfill/episode-titles-repair": {
+      "post": {
+        "description": "One-off repair for seasons where TVMaze and TMDB count episodes differently, so titles once copied by episode number may belong to another episode. Re-pairs each stored episode with TMDB by its English TVMaze title and overwrites title and overview, including Ukrainian ones the pairing does not confirm. Runs on the ingestion queue (TVMaze calls). Rerunning changes nothing.",
+        "operationId": "IngestionController_repairEpisodeTitles",
+        "parameters": [
+          {
+            "name": "force",
+            "required": false,
+            "in": "query",
+            "description": "Bypass daily deduplication (allows re-running within the same UTC day)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Repair job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionJobResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Repair Ukrainian episode titles in renumbered seasons",
         "tags": [
           "Admin: Ingestion"
         ]

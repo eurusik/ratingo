@@ -2,9 +2,8 @@ import type { OnApplicationShutdown } from '@nestjs/common';
 
 import type postgres from 'postgres';
 
-import { connectReportingDatabase } from '../../../../database/reporting-connection';
+import { connectReportingDatabase, kyivDateOf } from '@ratingo/ai-ops-tools';
 import { BASELINE_OFFSET_DAYS, MS_PER_DAY } from '../../digest.constants';
-import { kyivDateOf } from '../../domain/kyiv-day';
 import { measured } from '../../domain/entities/measured';
 import type { ProductStats } from '../../domain/entities/snapshot';
 import type { SourceReading } from '../../domain/entities/source-reading';

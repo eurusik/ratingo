@@ -98,13 +98,19 @@ export const forbiddenTextFound = (
   return forbidden.filter((entry) => text.includes(entry.toLowerCase()));
 };
 
-export const genderedSelfReferences = (answer: VerifiedAnswer): string[] =>
+const genderedClauses = (answer: VerifiedAnswer): { verb: string; clause: string }[] =>
   allTextOf(answer)
     .split(CLAUSE_SEPARATORS)
     .flatMap((clause) => {
       const verb = firstPersonVerbIn(clause);
-      return verb === undefined ? [] : [verb];
+      return verb === undefined ? [] : [{ verb, clause: clause.trim() }];
     });
+
+export const genderedSelfReferences = (answer: VerifiedAnswer): string[] =>
+  genderedClauses(answer).map(({ verb }) => verb);
+
+export const genderedSelfReferenceQuotes = (answer: VerifiedAnswer): string[] =>
+  genderedClauses(answer).map(({ verb, clause }) => `${verb} in «${clause}»`);
 
 const citedPaths = (answer: VerifiedAnswer): Set<string> =>
   new Set(answer.facts.flatMap((fact) => fact.citations.map((citation) => citation.path)));
@@ -115,6 +121,17 @@ export const missingRequiredFiles = (
 ): string[] => {
   const cited = citedPaths(answer);
   return required.filter((path) => !cited.has(path));
+};
+
+const citedEvidenceTools = (answer: VerifiedAnswer): Set<string> =>
+  new Set(answer.facts.flatMap((fact) => fact.evidence.map((evidence) => evidence.tool)));
+
+export const missingRequiredEvidence = (
+  answer: VerifiedAnswer,
+  required: readonly string[],
+): string[] => {
+  const cited = citedEvidenceTools(answer);
+  return required.filter((tool) => !cited.has(tool));
 };
 
 export const fabricatedCitationCount = (answer: VerifiedAnswer): number =>

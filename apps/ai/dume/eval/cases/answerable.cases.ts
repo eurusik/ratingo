@@ -39,11 +39,11 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: "Запис падіння відбувається лише в обробнику події 'failed' воркера.",
-          evidence: [0],
+          codeEvidence: [0],
         },
         {
           text: 'Конвеєр ловить помилку серіалу, логує її і не кидає далі, тож джоба не падає.',
-          evidence: [1],
+          codeEvidence: [1],
         },
       ],
       unknowns: [],
@@ -83,15 +83,15 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: 'Розклад і область оновлення задані в конфігурації планувальника: понеділок 07:00, scope all.',
-          evidence: [0],
+          codeEvidence: [0],
         },
         {
           text: 'У решту днів працює окрема джоба для фільмів, що виходять незабаром.',
-          evidence: [1],
+          codeEvidence: [1],
         },
         {
           text: 'Часовий пояс планувальника береться зі SCHEDULER_TIMEZONE, інакше UTC.',
-          evidence: [2],
+          codeEvidence: [2],
         },
       ],
       unknowns: [],
@@ -149,14 +149,14 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: 'Запит відбирає фільми за датою виходу і за давністю синхронізації.',
-          evidence: [0],
+          codeEvidence: [0],
         },
-        { text: 'Включаються й ніколи не синхронізовані фільми.', evidence: [1] },
+        { text: 'Включаються й ніколи не синхронізовані фільми.', codeEvidence: [1] },
         {
           text: 'Мінімальна давність синхронізації 20 годин, стеля 2000 за запуск.',
-          evidence: [2, 3],
+          codeEvidence: [2, 3],
         },
-        { text: 'Вікно «незабаром» 14 днів.', evidence: [4] },
+        { text: 'Вікно «незабаром» 14 днів.', codeEvidence: [4] },
       ],
       unknowns: [],
     },
@@ -199,9 +199,9 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       answer:
         'Оцінка складається з популярності (TMDB 0,24 і глядачі Trakt 0,16), якості (середній рейтинг 0,25 і довіра за кількістю голосів 0,15) та свіжості (0,20): близько 40%, 40% і 20%. Додається невеликий бонус за поточних глядачів (до 0,03), а для малої кількості голосів діє множник від 0,85 до 1.',
       claims: [
-        { text: 'Ваги задано в конфігурації: 0,24, 0,16, 0,25, 0,15 і 0,20.', evidence: [0] },
-        { text: 'Підсумок складає популярність, якість і свіжість.', evidence: [1] },
-        { text: 'Бонус за поточних глядачів обмежений 0,03.', evidence: [2] },
+        { text: 'Ваги задано в конфігурації: 0,24, 0,16, 0,25, 0,15 і 0,20.', codeEvidence: [0] },
+        { text: 'Підсумок складає популярність, якість і свіжість.', codeEvidence: [1] },
+        { text: 'Бонус за поточних глядачів обмежений 0,03.', codeEvidence: [2] },
       ],
       unknowns: [],
     },
@@ -241,9 +241,9 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       answer:
         'Спершу закривається HTTP-сервер, потім застосунок Nest разом із провайдерами, далі скидаються логи і процес завершується. На все відведено 25 секунд.',
       claims: [
-        { text: 'Спершу закривається адаптер HTTP, потім app.close().', evidence: [0] },
-        { text: 'Загальний таймаут зупинки 25 секунд.', evidence: [1] },
-        { text: 'Після зупинки скидаються логи і процес виходить.', evidence: [2] },
+        { text: 'Спершу закривається адаптер HTTP, потім app.close().', codeEvidence: [0] },
+        { text: 'Загальний таймаут зупинки 25 секунд.', codeEvidence: [1] },
+        { text: 'Після зупинки скидаються логи і процес виходить.', codeEvidence: [2] },
       ],
       unknowns: [],
     },
@@ -281,11 +281,14 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       answer:
         'Воркер спершу закриває воркери BullMQ, щоб поточні джоби завершилися, потім закриває застосунок Nest і наприкінці пул Postgres. HTTP-сервера, який треба закривати першим, тут немає; загальний таймаут теж 25 секунд.',
       claims: [
-        { text: 'Порядок: воркери BullMQ, потім app.close(), потім пул Postgres.', evidence: [0] },
-        { text: 'Таймаут зупинки воркера 25 секунд.', evidence: [1] },
+        {
+          text: 'Порядок: воркери BullMQ, потім app.close(), потім пул Postgres.',
+          codeEvidence: [0],
+        },
+        { text: 'Таймаут зупинки воркера 25 секунд.', codeEvidence: [1] },
         {
           text: 'В api спершу закривається HTTP-адаптер, у воркері такого кроку немає.',
-          evidence: [2],
+          codeEvidence: [2],
         },
       ],
       unknowns: [],
@@ -328,9 +331,9 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: 'Типові параметри джоби: 3 спроби та експоненційна затримка від 2000 мс.',
-          evidence: [0, 1],
+          codeEvidence: [0, 1],
         },
-        { text: 'Черга застосовує ці параметри за замовчуванням.', evidence: [2] },
+        { text: 'Черга застосовує ці параметри за замовчуванням.', codeEvidence: [2] },
       ],
       unknowns: [],
     },
@@ -360,7 +363,7 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: 'Порядок перевірок: назва помилки, статус, код, повідомлення, інакше other.',
-          evidence: [0],
+          codeEvidence: [0],
         },
       ],
       unknowns: [],
@@ -389,7 +392,7 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
     forbiddenText: [],
     reference: {
       answer: 'Записи зберігаються 14 днів, а дні рахуються за часовим поясом Europe/Kyiv.',
-      claims: [{ text: 'Термін зберігання 14 днів, пояс Europe/Kyiv.', evidence: [0, 1] }],
+      claims: [{ text: 'Термін зберігання 14 днів, пояс Europe/Kyiv.', codeEvidence: [0, 1] }],
       unknowns: [],
     },
   },
@@ -420,8 +423,8 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       answer:
         'Фільм, який ще не вийшов, отримує мінімальну свіжість, тобто нижню межу 0,2, а не максимум. Так невипущені тайтли не обганяють тих, що вийшли сьогодні.',
       claims: [
-        { text: 'Для дати в майбутньому повертається нижня межа свіжості.', evidence: [0] },
-        { text: 'Нижня межа налаштована як 0,2.', evidence: [1] },
+        { text: 'Для дати в майбутньому повертається нижня межа свіжості.', codeEvidence: [0] },
+        { text: 'Нижня межа налаштована як 0,2.', codeEvidence: [1] },
       ],
       unknowns: [],
     },
@@ -452,7 +455,10 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
     reference: {
       answer: 'Щодня о 09:00 за київським часом (Europe/Kyiv).',
       claims: [
-        { text: 'Завдання дайджесту має розклад 0 9 * * * і пояс Europe/Kyiv.', evidence: [0, 1] },
+        {
+          text: 'Завдання дайджесту має розклад 0 9 * * * і пояс Europe/Kyiv.',
+          codeEvidence: [0, 1],
+        },
       ],
       unknowns: [],
     },
@@ -487,9 +493,9 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         {
           text: "Список дій, що запускають рев'ю: opened, ready_for_review, reopened.",
-          evidence: [0],
+          codeEvidence: [0],
         },
-        { text: 'Політика відкидає дії поза цим списком.', evidence: [1] },
+        { text: 'Політика відкидає дії поза цим списком.', codeEvidence: [1] },
       ],
       unknowns: [],
     },
@@ -523,7 +529,7 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
     forbiddenText: [],
     reference: {
       answer: 'Одна відповідь у чаті коштує щонайбільше 0,05 долара і має не більше 8 кроків.',
-      claims: [{ text: 'Бюджет на повідомлення 0,05 USD і 8 кроків.', evidence: [0, 1] }],
+      claims: [{ text: 'Бюджет на повідомлення 0,05 USD і 8 кроків.', codeEvidence: [0, 1] }],
       unknowns: [],
     },
   },
