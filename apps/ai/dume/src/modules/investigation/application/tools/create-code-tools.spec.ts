@@ -4,6 +4,7 @@ import { OutputBudgets, SearchLimits } from '../../domain/constants/investigatio
 import { SkipReason } from '../../domain/constants/snapshot.constants';
 import { EvidenceLedger } from '../../domain/policies/evidence-ledger';
 import { inMemorySnapshot } from '../../infrastructure/testing/in-memory-snapshot.testing';
+import { InProcessPatternMatcher } from '../../infrastructure/adapters/in-process.pattern-matcher-adapter';
 import { CodeBrowser } from '../services/code-browser.service';
 import {
   CODE_LIST_TOOL,
@@ -27,7 +28,11 @@ const FILES = {
 const setup = (files: Record<string, string> = FILES) => {
   const snapshot = inMemorySnapshot(files, { 'dist/app.png': SkipReason.BINARY });
   const ledger = new EvidenceLedger();
-  const tools = createCodeTools({ browser: new CodeBrowser(new FixedClock(0)), snapshot, ledger });
+  const tools = createCodeTools({
+    browser: new CodeBrowser(new FixedClock(0), new InProcessPatternMatcher()),
+    snapshot,
+    ledger,
+  });
   let registry: Promise<ToolRegistry> | undefined;
   return {
     ledger,
@@ -149,6 +154,39 @@ describe('code_search', () => {
 
     expect(result.content.startsWith('<untrusted label="repository content">')).toBe(true);
     expect(result.content.match(/<\/untrusted>/g)).toHaveLength(1);
+  });
+});
+
+describe('code_search when the matcher runs out of time', () => {
+  it('stops the search, says so in the coverage and returns no matches', async () => {
+    const snapshot = inMemorySnapshot(FILES);
+    const matcher = {
+      open: () => ({
+        match: () => Promise.resolve({ timedOut: true as const }),
+        close: () => Promise.resolve(),
+      }),
+    };
+    const tools = createCodeTools({
+      browser: new CodeBrowser(new FixedClock(0), matcher),
+      snapshot,
+      ledger: new EvidenceLedger(),
+    });
+    const registry = await ToolRegistry.create(
+      [new NativeToolSource(tools)],
+      tools.map((tool) => tool.name),
+    );
+
+    const result = await registry.execute(
+      { id: 'call', name: CODE_SEARCH_TOOL, input: { pattern: 'a.*b', mode: 'regex' } },
+      { runId: 'run' },
+    );
+    const body = payload(result) as unknown as {
+      matches: unknown[];
+      coverage: { stoppedForTime: boolean };
+    };
+
+    expect(body.matches).toEqual([]);
+    expect(body.coverage.stoppedForTime).toBe(true);
   });
 });
 

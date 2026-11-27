@@ -6,6 +6,10 @@ import { AgentRunner } from '../../../../core/agent-runner.service';
 import { MAX_QUESTION_CHARS } from '../../investigation.constants';
 import { CODE_SNAPSHOT_PORT, type CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import {
+  PATTERN_MATCHER_PORT,
+  type PatternMatcherPort,
+} from '../../domain/ports/pattern-matcher.port';
+import {
   InvestigationStatus,
   type InvestigationOutcome,
 } from '../../domain/entities/investigation-outcome';
@@ -53,10 +57,11 @@ export class InvestigationService {
   constructor(
     @Inject(CODE_SNAPSHOT_PORT) private readonly snapshots: CodeSnapshotPort,
     @Inject(CLOCK_PORT) clock: ClockPort,
+    @Inject(PATTERN_MATCHER_PORT) matcher: PatternMatcherPort,
     private readonly runner: AgentRunner,
     @Inject(AGENT_FOLDER) private readonly folder: AgentFolder,
   ) {
-    this.browser = new CodeBrowser(clock);
+    this.browser = new CodeBrowser(clock, matcher);
   }
 
   async investigate(request: InvestigationRequest): Promise<InvestigationOutcome> {

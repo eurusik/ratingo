@@ -4,7 +4,8 @@ import { ListLimits, SearchLimits } from '../../domain/constants/investigation.c
 import type { CodeSnapshot } from '../../domain/entities/code-snapshot';
 import { listDirectoryLevel, type ListedEntry } from '../../domain/policies/directory-listing';
 import { extensionOf, isUnderDirectory } from '../../domain/policies/repo-path';
-import type { LineMatcher } from '../../domain/policies/search-pattern';
+import type { PatternMatcherPort } from '../../domain/ports/pattern-matcher.port';
+import type { CompiledPattern } from '../../domain/policies/search-pattern';
 
 export interface SearchFilter {
   pathPrefix: string;
@@ -40,11 +41,14 @@ const inScope = (path: string, filter: SearchFilter): boolean =>
   (filter.extensions.length === 0 || filter.extensions.includes(extensionOf(path)));
 
 export class CodeBrowser {
-  constructor(private readonly clock: ClockPort) {}
+  constructor(
+    private readonly clock: ClockPort,
+    private readonly matcher: PatternMatcherPort,
+  ) {}
 
   async search(
     snapshot: CodeSnapshot,
-    matcher: LineMatcher,
+    pattern: CompiledPattern,
     filter: SearchFilter,
   ): Promise<SearchOutcome> {
     const startedMs = this.clock.nowMs();
@@ -57,26 +61,40 @@ export class CodeBrowser {
       stoppedForTime: false,
       longLinesNotChecked: 0,
     };
-    for (const file of scope) {
-      if (this.clock.nowMs() - startedMs > SearchLimits.TIME_BUDGET_MS) {
-        outcome.stoppedForTime = true;
-        break;
-      }
-      const lines = await snapshot.readLines(file.path);
-      if (lines === undefined) continue;
-      outcome.filesSearched += 1;
-      for (const [index, text] of lines.entries()) {
-        if (text.length > matcher.maxLineChars) {
-          outcome.longLinesNotChecked += 1;
-          continue;
+    const session = this.matcher.open(pattern);
+    try {
+      for (const file of scope) {
+        const timeLeftMs = SearchLimits.TIME_BUDGET_MS - (this.clock.nowMs() - startedMs);
+        if (timeLeftMs <= 0) {
+          outcome.stoppedForTime = true;
+          break;
         }
-        if (!matcher.test(text)) continue;
-        outcome.matches.push({ path: file.path, line: index + 1, text });
-        if (outcome.matches.length >= SearchLimits.MAX_MATCHES_COLLECTED) {
-          outcome.matchesCapped = true;
-          return outcome;
+        const lines = await snapshot.readLines(file.path);
+        if (lines === undefined) continue;
+        outcome.filesSearched += 1;
+        const checked = lines.flatMap((text, index) =>
+          text.length > pattern.maxLineChars ? [] : [{ text, index }],
+        );
+        outcome.longLinesNotChecked += lines.length - checked.length;
+        const result = await session.match(
+          checked.map((line) => line.text),
+          Math.min(timeLeftMs, SearchLimits.MATCH_CALL_TIMEOUT_MS),
+        );
+        if (result.timedOut) {
+          outcome.stoppedForTime = true;
+          break;
+        }
+        for (const matched of result.indices) {
+          const line = checked[matched] as { text: string; index: number };
+          outcome.matches.push({ path: file.path, line: line.index + 1, text: line.text });
+          if (outcome.matches.length >= SearchLimits.MAX_MATCHES_COLLECTED) {
+            outcome.matchesCapped = true;
+            return outcome;
+          }
         }
       }
+    } finally {
+      await session.close();
     }
     return outcome;
   }

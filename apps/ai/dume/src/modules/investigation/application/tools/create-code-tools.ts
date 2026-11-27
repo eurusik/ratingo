@@ -33,7 +33,7 @@ const COVERAGE_TEXT =
 const SEARCH_DESCRIPTION = [
   'Search the repository line by line at one commit.',
   COVERAGE_TEXT,
-  'text mode (default) finds the pattern as a substring of one line, ignoring case unless ignoreCase is false. regex mode accepts a safe subset only: literals, ".", character classes, \\d \\w \\s \\b, ^ $, "|", groups without a repeat on the group, repeats * + ? {n,m} with at most two open-ended ones, and it checks only lines up to ' +
+  'text mode (default) finds the pattern as a substring of one line, ignoring case unless ignoreCase is false. regex mode accepts a safe subset only: literals, ".", character classes, \\d \\w \\s \\b, ^ $, "|", groups without a repeat on the group, and repeats * + ? {n,m}, which all count against one small budget (about two open-ended repeats); matching has a time limit, and it checks only lines up to ' +
     `${SearchLimits.MAX_REGEX_LINE_CHARS} characters (the reply counts the longer lines it did not check).`,
   `Returns whole matching lines as {path, line, text}, sorted by path then line, from at most ${SearchLimits.MAX_MATCHES_COLLECTED} matches. \`omitted\` and \`hint\` say how many matches did not fit in the reply and how to narrow the search (pathPrefix, extensions, a more specific pattern); \`coverage\` says how many files were searched.`,
   'An empty `matches` list means that no searched line contains the pattern. It does not prove the code lacks the behaviour: try other spellings or names, a related identifier, or code_list.',
@@ -129,7 +129,7 @@ const createSearchTool = ({ browser, snapshot, ledger }: CodeToolsDependencies):
       if (!compiled.ok) throw invalidInput(CODE_SEARCH_TOOL, compiled.message);
       const prefix = normalizeDirectoryPath(input.pathPrefix);
       if (!prefix.ok) throw invalidInput(CODE_SEARCH_TOOL, `pathPrefix rejected: ${prefix.reason}`);
-      const outcome = await browser.search(snapshot, compiled.matcher, {
+      const outcome = await browser.search(snapshot, compiled.pattern, {
         pathPrefix: prefix.path,
         extensions: input.extensions.map((extension) => extension.replace(/^\./, '').toLowerCase()),
       });

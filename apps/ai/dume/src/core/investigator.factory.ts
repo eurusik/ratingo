@@ -9,6 +9,8 @@ import {
 
 import { InvestigationService } from '../modules/investigation/public';
 import type { CodeSnapshotPort } from '../modules/investigation/domain/ports/code-snapshot.port';
+import type { PatternMatcherPort } from '../modules/investigation/domain/ports/pattern-matcher.port';
+import { WorkerPatternMatcher } from '../modules/investigation/infrastructure/adapters/worker.pattern-matcher-adapter';
 import { AgentRunner } from './agent-runner.service';
 
 export interface InvestigatorParts {
@@ -17,6 +19,7 @@ export interface InvestigatorParts {
   providers: ModelProviders;
   aliases: ModelAliases;
   clock: ClockPort;
+  matcher?: PatternMatcherPort;
   runs?: RunRepository;
 }
 
@@ -28,5 +31,11 @@ export const createInvestigator = (parts: InvestigatorParts): InvestigationServi
     parts.runs ?? new InMemoryRunRepository(),
     parts.clock,
   );
-  return new InvestigationService(parts.snapshots, parts.clock, runner, parts.folder);
+  return new InvestigationService(
+    parts.snapshots,
+    parts.clock,
+    parts.matcher ?? new WorkerPatternMatcher(),
+    runner,
+    parts.folder,
+  );
 };

@@ -4,6 +4,8 @@ import { CLOCK_PORT, type ClockPort } from '@ratingo/ai-core';
 import { SNAPSHOT_CONFIG, type SnapshotConfig } from '../../config/config.constants';
 import { InvestigationService } from './application/services/investigation.service';
 import { CODE_SNAPSHOT_PORT, type CodeSnapshotPort } from './domain/ports/code-snapshot.port';
+import { PATTERN_MATCHER_PORT } from './domain/ports/pattern-matcher.port';
+import { WorkerPatternMatcher } from './infrastructure/adapters/worker.pattern-matcher-adapter';
 import { GithubCodeSnapshotAdapter } from './infrastructure/adapters/github.code-snapshot-adapter';
 import { LocalDirectoryCodeSnapshotAdapter } from './infrastructure/adapters/local-directory.code-snapshot-adapter';
 
@@ -22,6 +24,7 @@ const LOCAL_ADAPTER_EXCLUDED_DIRECTORIES: readonly string[] = ['apps/ai/dume/eva
               excludedDirectories: LOCAL_ADAPTER_EXCLUDED_DIRECTORIES,
             }),
     },
+    { provide: PATTERN_MATCHER_PORT, useClass: WorkerPatternMatcher },
     InvestigationService,
   ],
   exports: [InvestigationService],
