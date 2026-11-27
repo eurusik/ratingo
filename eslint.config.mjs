@@ -80,6 +80,8 @@ const dumeTestFiles = ['apps/ai/dume/src/**/*.spec.ts', 'apps/ai/dume/src/**/*.t
 const dumeDomainFiles = ['apps/ai/dume/src/modules/*/domain/**/*.ts'];
 const dumeModuleFiles = ['apps/ai/dume/src/modules/**/*.ts', 'apps/ai/dume/src/core/**/*.ts'];
 const dumeModules = ['investigation'];
+const dumeEvalFiles = ['apps/ai/dume/eval/**/*.ts'];
+const dumeEvalTestFiles = ['apps/ai/dume/eval/**/*.spec.ts'];
 const heroUiAutoFocusRule = { 'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }] };
 const webCoreTestFiles = ['packages/web-core/src/**/__tests__/**'];
 const tanstackTableFiles = ['apps/web-client/src/modules/admin/components/ui/DataTable.tsx'];
@@ -1556,6 +1558,10 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       'no-console': 'error',
@@ -1591,6 +1597,16 @@ export default [
                 message: `Import from ${m}/public instead of internal files.`,
               },
             ]),
+            {
+              target: './apps/ai/dume/src/!(modules)/**/*',
+              from: './apps/ai/dume/src/modules/*/!(public)/**/*',
+              message: 'Outside the modules, import a module through its public barrel only.',
+            },
+            {
+              target: './apps/ai/dume/src/main.ts',
+              from: './apps/ai/dume/src/modules/*/!(public)/**/*',
+              message: 'The entry point imports a module through its public barrel only.',
+            },
             {
               target: './apps/ai/dume/src/**/*',
               from: './apps/ai/!(dume)/**/*',
@@ -1643,6 +1659,43 @@ export default [
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       'import/no-restricted-paths': 'off',
+    },
+  },
+  {
+    files: dumeEvalFiles,
+    ignores: dumeEvalTestFiles,
+    plugins: { import: importPlugin },
+    languageOptions: { parserOptions: { projectService: true } },
+    settings: {
+      'import/resolver': {
+        typescript: { project: path.join(tsconfigRootDir, 'apps/ai/dume/tsconfig.json') },
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          basePath: tsconfigRootDir,
+          zones: [
+            {
+              target: './apps/ai/dume/eval/**/*',
+              from: './apps/ai/dume/src/modules/*/!(public)/**/*',
+              message: 'The eval imports a module through its public barrel only.',
+            },
+            {
+              target: './apps/ai/dume/eval/**/*',
+              from: './apps/ai/!(dume)/**/*',
+              message: 'Agents never import each other: share through @ratingo/ai-core.',
+            },
+          ],
+        },
+      ],
     },
   },
   ...Object.entries(oversizedWebFilesToSplit).map(([file, currentLines]) => ({

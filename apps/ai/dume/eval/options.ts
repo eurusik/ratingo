@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { InvalidRepeatPolicyError, assertRepeatPolicy, majorityPassAt } from './aggregate';
 
 const DEFAULT_REAL_RUNS = 3;
@@ -8,7 +10,7 @@ const FLAG_PREFIX = '--';
 const FLAG_VALUE_SEPARATOR = '=';
 
 const DEFAULT_JUDGE_MODEL = 'anthropic:claude-sonnet-5-5';
-const DEFAULT_BASELINE_PATH = 'eval/baseline.json';
+const DEFAULT_BASELINE_PATH = path.join(__dirname, 'baseline.json');
 
 export interface EvalOptions {
   runs: number;
@@ -71,6 +73,14 @@ const positiveNumber = (flag: string, raw: string | undefined, fallback: number)
   return parsed;
 };
 
+const positiveInteger = (flag: string, raw: string | undefined, fallback: number): number => {
+  const value = positiveNumber(flag, raw, fallback);
+  if (!Number.isInteger(value)) {
+    throw new InvalidEvalOptionError(`--${flag} needs a whole number, got "${String(raw)}"`);
+  }
+  return value;
+};
+
 const nonEmpty = (raw: string | undefined): string | null =>
   raw === undefined || raw.trim() === '' ? null : raw.trim();
 
@@ -98,7 +108,7 @@ export const parseEvalOptions = (argv: readonly string[], stubModel: boolean): E
   return {
     runs,
     passAt,
-    concurrency: positiveNumber('concurrency', values.concurrency, DEFAULT_CONCURRENCY),
+    concurrency: positiveInteger('concurrency', values.concurrency, DEFAULT_CONCURRENCY),
     maxCostUsd: positiveNumber('max-cost-usd', values['max-cost-usd'], DEFAULT_MAX_COST_USD),
     judgeModel: nonEmpty(values['judge-model']) ?? DEFAULT_JUDGE_MODEL,
     baselinePath: nonEmpty(values.baseline) ?? DEFAULT_BASELINE_PATH,

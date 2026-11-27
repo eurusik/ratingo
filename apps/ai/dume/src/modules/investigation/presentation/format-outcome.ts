@@ -8,6 +8,20 @@ import {
   type InvestigationOutcome,
 } from '../domain/entities/investigation-outcome';
 
+const LAST_C0_CONTROL = 31;
+const FIRST_C1_CONTROL = 127;
+const LAST_C1_CONTROL = 159;
+
+const isControl = (code: number): boolean =>
+  code <= LAST_C0_CONTROL || (code >= FIRST_C1_CONTROL && code <= LAST_C1_CONTROL);
+
+export const plainLine = (text: string): string =>
+  [...text]
+    .map((char) => (isControl(char.charCodeAt(0)) ? ' ' : char))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const citationText = (citation: Citation): string =>
   `${citation.path}:${citation.startLine}${citation.endLine === citation.startLine ? '' : `-${citation.endLine}`}`;
 
@@ -16,14 +30,14 @@ const section = (title: string, lines: readonly string[]): string[] =>
 
 const assumptionLine = (assumption: Assumption, index: number): string =>
   assumption.origin === AssumptionOrigin.UNVERIFIED_CLAIM
-    ? `  ${index + 1}. [unverified claim: ${assumption.problems.map((problem) => problem.failure).join(', ')}] ${assumption.text}`
-    : `  ${index + 1}. ${assumption.text}`;
+    ? `  ${index + 1}. [unverified claim: ${assumption.problems.map((problem) => problem.failure).join(', ')}] ${plainLine(assumption.text)}`
+    : `  ${index + 1}. ${plainLine(assumption.text)}`;
 
 export const formatOutcome = (outcome: InvestigationOutcome): string => {
   const footer = [
     '',
     `commit: ${outcome.commit ?? 'none'} (${outcome.ref})`,
-    `turns: ${outcome.turns}  cost: $${outcome.costUsd.toFixed(4)}  stop: ${outcome.stopReason ?? 'none'}${outcome.stopDetail === null ? '' : ` (${outcome.stopDetail})`}`,
+    `turns: ${outcome.turns}  cost: $${outcome.costUsd.toFixed(4)}  stop: ${outcome.stopReason ?? 'none'}${outcome.stopDetail === null ? '' : ` (${plainLine(outcome.stopDetail)})`}`,
   ];
   if (outcome.status === InvestigationStatus.SNAPSHOT_UNAVAILABLE) {
     return [
@@ -37,18 +51,18 @@ export const formatOutcome = (outcome: InvestigationOutcome): string => {
   }
   const { answer } = outcome;
   return [
-    answer.answer,
+    plainLine(answer.answer),
     ...section(
       'Facts (each citation was read in this run and exists at the commit)',
       answer.facts.flatMap((fact, index) => [
-        `  ${index + 1}. ${fact.text}`,
-        `     ${fact.citations.map(citationText).join(', ')}`,
+        `  ${index + 1}. ${plainLine(fact.text)}`,
+        `     ${fact.citations.map((citation) => plainLine(citationText(citation))).join(', ')}`,
       ]),
     ),
     ...section('Assumptions and unverified claims', answer.assumptions.map(assumptionLine)),
     ...section(
       'Unknowns',
-      answer.unknowns.map((text, index) => `  ${index + 1}. ${text}`),
+      answer.unknowns.map((text, index) => `  ${index + 1}. ${plainLine(text)}`),
     ),
     '',
     `support: ${answer.support}`,

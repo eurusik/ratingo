@@ -1,9 +1,7 @@
 import { ContentPartType, StopReason, formatModelRef, type StubScript } from '@ratingo/ai-core';
 
-import type { CodeSnapshot } from '../src/modules/investigation/domain/entities/code-snapshot';
-import type { Citation } from '../src/modules/investigation/domain/entities/investigation-answer';
-import { CODE_READ_TOOL } from '../src/modules/investigation/application/tools/create-code-tools';
 import type { EvalCase } from './eval-case';
+import { CODE_READ_TOOL, Citation, CodeSnapshot } from '../src/modules/investigation/public';
 
 const READ_LINES_BEFORE = 8;
 const READ_LINES_AFTER = 12;

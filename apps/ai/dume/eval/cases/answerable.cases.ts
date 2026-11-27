@@ -7,7 +7,7 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
     id: 'job-failures-gap',
     kind: CaseKind.ANSWERABLE,
     question:
-      'Чому таблиця падінь джобів (job_failures) ніколи не містить помилок, які джоба сама ловить і пише в лог? Покажи в коді.',
+      'Чому таблиця падінь джобів (job_failures) ніколи не містить помилок, які джоба сама ловить і пише в лог? Покажи в коді, зокрема на прикладі пайплайна оновлення відстежуваних серіалів (tracked-shows.pipeline.ts).',
     evidence: [
       {
         path: `${API}/telemetry/queue-job-metrics.service.ts`,
@@ -108,6 +108,11 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
         verifiedAt: `${API}/modules/ingestion/application/pipelines/upcoming-movies.pipeline.ts:102-113`,
       },
       {
+        path: `${API}/modules/ingestion/infrastructure/repositories/upcoming-movies.repository.ts`,
+        anchor: 'isNull(schema.mediaItems.lastSyncedAt),',
+        verifiedAt: `${API}/modules/ingestion/infrastructure/repositories/upcoming-movies.repository.ts:32-35`,
+      },
+      {
         path: `${API}/modules/ingestion/ingestion.constants.ts`,
         anchor: 'UPCOMING_REFRESH_MIN_SYNC_AGE_HOURS = 20',
         verifiedAt: `${API}/modules/ingestion/ingestion.constants.ts:144`,
@@ -117,29 +122,41 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
         anchor: 'UPCOMING_REFRESH_RUN_CAP = 2_000',
         verifiedAt: `${API}/modules/ingestion/ingestion.constants.ts:146`,
       },
+      {
+        path: `${API}/common/constants.ts`,
+        anchor: 'UPCOMING_MOVIES_SOON_DAYS = 14',
+        verifiedAt: `${API}/common/constants.ts:40`,
+      },
     ],
     requiredFiles: [
       `${API}/modules/ingestion/application/pipelines/upcoming-movies.pipeline.ts`,
-      `${API}/modules/ingestion/ingestion.constants.ts`,
+      `${API}/modules/ingestion/infrastructure/repositories/upcoming-movies.repository.ts`,
     ],
     conveys: [
-      'Only movies that were last synced at least 20 hours ago are refreshed.',
-      'A run handles at most 2000 movies; the rest waits for the next run.',
-      'The soon scope looks only at releases within 14 days of now, while the all scope has no upper release date bound.',
+      'A movie is refreshed when it was never synced, or when it was last synced more than 20 hours ago.',
+      'A run handles at most 2000 movies, those never synced or synced longest ago first; the rest waits for the next run.',
+      'Both scopes take only movies released after 14 days before now. The soon scope also requires a release date no later than 14 days from now, while the all scope has no upper release date bound.',
     ],
     mustNotClaim: [
       'A run handles at most 100 movies.',
+      'Movies that were never synced are skipped.',
       'Every upcoming movie is refreshed on every run regardless of when it was last synced.',
     ],
     forbiddenText: [],
     reference: {
       answer:
-        'Оновлюються лише фільми, які синхронізували щонайменше 20 годин тому. За запуск беруть не більше 2000 фільмів, решта чекає наступного запуску. Для scope soon беруться релізи в межах 14 днів від зараз, для all верхньої межі дати немає.',
+        'Оновлюється фільм, який ще ніколи не синхронізували або синхронізували понад 20 годин тому. За запуск беруть не більше 2000 фільмів, спершу ті, що ніколи не синхронізовані або давно не оновлювались; решта чекає наступного запуску. Обидва режими беруть лише фільми, що вийшли пізніше ніж 14 днів тому; режим soon додатково обмежує дату виходу 14 днями вперед, а в режимі all верхньої межі немає.',
       claims: [
         {
-          text: 'Запит відбирає фільми, синхронізовані раніше ніж 20 годин тому, зі стелею на запуск.',
-          evidence: [0, 1, 2],
+          text: 'Запит відбирає фільми за датою виходу і за давністю синхронізації.',
+          evidence: [0],
         },
+        { text: 'Включаються й ніколи не синхронізовані фільми.', evidence: [1] },
+        {
+          text: 'Мінімальна давність синхронізації 20 годин, стеля 2000 за запуск.',
+          evidence: [2, 3],
+        },
+        { text: 'Вікно «незабаром» 14 днів.', evidence: [4] },
       ],
       unknowns: [],
     },
@@ -234,7 +251,8 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
   {
     id: 'worker-shutdown-order',
     kind: CaseKind.ANSWERABLE,
-    question: 'А як зупиняється worker при SIGTERM і чим це відрізняється від api?',
+    question:
+      'Як зупиняється worker при SIGTERM і чим це відрізняється від зупинки api? Чи є в worker HTTP-сервер, який закривається першим, як в api?',
     evidence: [
       {
         path: `${API}/worker-shutdown.ts`,
@@ -246,11 +264,16 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
         anchor: 'const WORKER_SHUTDOWN_TIMEOUT_MS = 25_000;',
         verifiedAt: `${API}/worker-shutdown.ts:13`,
       },
+      {
+        path: `${API}/http-shutdown.ts`,
+        anchor: 'await app.getHttpAdapter().close();',
+        verifiedAt: `${API}/http-shutdown.ts:11-14`,
+      },
     ],
-    requiredFiles: [`${API}/worker-shutdown.ts`],
+    requiredFiles: [`${API}/worker-shutdown.ts`, `${API}/http-shutdown.ts`],
     conveys: [
       'The worker first closes the BullMQ workers so running jobs can finish, then closes the Nest application, and last ends the Postgres pool.',
-      'The worker has no HTTP server to close first; its overall timeout is 25 seconds as well.',
+      'Unlike the api, which closes its HTTP server first, the worker has no HTTP server step; its overall timeout is 25 seconds as well.',
     ],
     mustNotClaim: ['The Postgres pool is closed before the BullMQ workers.'],
     forbiddenText: [],
@@ -260,6 +283,10 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
       claims: [
         { text: 'Порядок: воркери BullMQ, потім app.close(), потім пул Postgres.', evidence: [0] },
         { text: 'Таймаут зупинки воркера 25 секунд.', evidence: [1] },
+        {
+          text: 'В api спершу закривається HTTP-адаптер, у воркері такого кроку немає.',
+          evidence: [2],
+        },
       ],
       unknowns: [],
     },
@@ -311,7 +338,8 @@ export const ANSWERABLE_CASES: readonly EvalCase[] = [
   {
     id: 'failure-classification-order',
     kind: CaseKind.ANSWERABLE,
-    question: 'Як визначається клас причини падіння джоби: за чим код дивиться насамперед?',
+    question:
+      'Як визначається клас причини падіння джоби: у якому порядку код дивиться на назву помилки, HTTP-статус, код помилки і текст повідомлення, і що вирішує, якщо є і назва помилки бази даних, і HTTP-статус?',
     evidence: [
       {
         path: `${API}/modules/job-failures/domain/policies/classify-job-failure.policy.ts`,

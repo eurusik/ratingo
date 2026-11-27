@@ -7,11 +7,13 @@ import {
   type RunRepository,
 } from '@ratingo/ai-core';
 
-import { InvestigationService } from '../modules/investigation/public';
-import type { CodeSnapshotPort } from '../modules/investigation/domain/ports/code-snapshot.port';
-import type { PatternMatcherPort } from '../modules/investigation/domain/ports/pattern-matcher.port';
-import { WorkerPatternMatcher } from '../modules/investigation/infrastructure/adapters/worker.pattern-matcher-adapter';
 import { AgentRunner } from './agent-runner.service';
+import {
+  CodeSnapshotPort,
+  InvestigationService,
+  PatternMatcherPort,
+  WorkerPatternMatcher,
+} from '../modules/investigation/public';
 
 export interface InvestigatorParts {
   snapshots: CodeSnapshotPort;

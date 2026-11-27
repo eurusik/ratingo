@@ -15,7 +15,7 @@ import { MODEL_PRICES } from '../src/config/models.config';
 import { createInvestigationStubScript } from '../src/core/stub-investigation.script';
 import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
 import { buildBaseline, diffBaseline, type Baseline } from './baseline-diff';
-import { readBaselineFile, writeBaselineFile } from './baseline-file';
+import { InvalidBaselineError, readBaselineFile, writeBaselineFile } from './baseline-file';
 import { EVAL_CASES } from './cases/cases';
 import type { EvalCase } from './eval-case';
 import { runEval, type EvalRun } from './eval-runner';
@@ -109,6 +109,24 @@ const exitCodeAgainstBaseline = (
   return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
 };
 
+const loadBaseline = async (options: EvalOptions): Promise<Baseline | null> => {
+  try {
+    const baseline = await readBaselineFile(options.baselinePath);
+    if (baseline === null && !options.saveBaseline) {
+      throw new Error(
+        `No baseline at ${options.baselinePath}: a real run needs one to compare with. Run with --save-baseline to create it.`,
+      );
+    }
+    return baseline;
+  } catch (error) {
+    if (error instanceof InvalidBaselineError && options.saveBaseline) {
+      write(`${error.message}; it will be replaced`);
+      return null;
+    }
+    throw error;
+  }
+};
+
 async function main(): Promise<number> {
   const modelRef = process.env.AI_MODEL_REVIEW ?? DEFAULT_MODEL;
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -120,6 +138,7 @@ async function main(): Promise<number> {
   }
   const options = parseEvalOptions(process.argv.slice(2), environment.structureOnly);
   const judge = environment.structureOnly ? new ReferenceJudge() : buildModelJudge(options, apiKey);
+  const baseline = environment.structureOnly ? null : await loadBaseline(options);
   const run = await execute(environment, options, judge);
   const summary = summarize(run.outcomes);
   printSummary(environment, options, run, summary);
@@ -129,16 +148,16 @@ async function main(): Promise<number> {
       `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`,
     );
   }
+  if (run.outcomes.length === 0) {
+    write('no case finished, so there is nothing to report');
+    return EXIT_INCOMPLETE;
+  }
   if (environment.structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
   if (run.stoppedForCost || summary.unscorableRuns > 0) {
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(
-    options,
-    await readBaselineFile(options.baselinePath),
-    run,
-  );
+  const exitCode = exitCodeAgainstBaseline(options, baseline, run);
   if (options.saveBaseline) {
     await writeBaselineFile(
       options.baselinePath,

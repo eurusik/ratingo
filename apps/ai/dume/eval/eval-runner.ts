@@ -1,6 +1,5 @@
 import { redactSecrets } from '@ratingo/ai-core';
 
-import type { InvestigationOutcome } from '../src/modules/investigation/domain/entities/investigation-outcome';
 import {
   aggregateCase,
   assertRepeatPolicy,
@@ -11,6 +10,7 @@ import { mapWithLimit } from './concurrency';
 import type { EvalCase } from './eval-case';
 import type { JudgePort } from './judge';
 import { erroredRun, judgeInputOf, scoreRun, type MeaningCheck, type RunVerdict } from './scorer';
+import { InvestigationOutcome } from '../src/modules/investigation/public';
 
 export interface EvalPorts {
   runAgent(testCase: EvalCase): Promise<InvestigationOutcome>;

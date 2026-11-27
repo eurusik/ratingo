@@ -22,7 +22,7 @@ const DEFAULT_CLI_LOG_LEVEL = 'warn';
 const USAGE =
   'Usage: npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]';
 
-process.env.LOG_LEVEL ??= DEFAULT_CLI_LOG_LEVEL;
+process.env.LOG_LEVEL ||= DEFAULT_CLI_LOG_LEVEL;
 const logger = createAppLogger();
 
 const flushTelemetry = async (): Promise<void> => {

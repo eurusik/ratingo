@@ -4,7 +4,7 @@ import * as path from 'node:path';
 
 import { aggregateCase } from './aggregate';
 import { buildBaseline } from './baseline-diff';
-import { readBaselineFile, writeBaselineFile } from './baseline-file';
+import { InvalidBaselineError, readBaselineFile, writeBaselineFile } from './baseline-file';
 import { EVAL_CASES } from './cases/cases';
 import { CaseKind } from './eval-case';
 import type { RunVerdict } from './scorer';
@@ -63,7 +63,28 @@ describe('baseline file', () => {
     const file = path.join(directory, 'old.json');
     await writeFile(file, JSON.stringify({ version: 99, cases: {} }));
 
-    await expect(readBaselineFile(file)).rejects.toThrow('Unsupported baseline version');
+    await expect(readBaselineFile(file)).rejects.toBeInstanceOf(InvalidBaselineError);
+  });
+
+  it('refuses a file that is not JSON or has a malformed case', async () => {
+    const broken = path.join(directory, 'broken.json');
+    await writeFile(broken, '{ not json');
+    const malformed = path.join(directory, 'malformed.json');
+    await writeFile(
+      malformed,
+      JSON.stringify({
+        version: 1,
+        savedAtMs: 1,
+        model: 'm',
+        judgeModel: 'j',
+        runs: 3,
+        passAt: 2,
+        cases: { a: { passes: 'many', runs: 3, passed: true, flaky: false } },
+      }),
+    );
+
+    await expect(readBaselineFile(broken)).rejects.toThrow('not JSON');
+    await expect(readBaselineFile(malformed)).rejects.toThrow('cases.a.passes');
   });
 });
 

@@ -1,7 +1,4 @@
-import {
-  AssumptionOrigin,
-  type VerifiedAnswer,
-} from '../src/modules/investigation/domain/entities/investigation-answer';
+import { AssumptionOrigin, type VerifiedAnswer } from '../src/modules/investigation/public';
 
 const bullets = (items: readonly string[]): string[] => items.map((item) => `- ${item}`);
 

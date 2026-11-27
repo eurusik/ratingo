@@ -15,9 +15,11 @@ import { MODEL_ALIAS_NAMES } from '../src/config/models.config';
 import { AGENT_FOLDER_PATH } from '../src/core/ai-core.module';
 import { createInvestigator } from '../src/core/investigator.factory';
 import { createInvestigationStubScript } from '../src/core/stub-investigation.script';
-import { DEFAULT_REF } from '../src/modules/investigation/domain/constants/snapshot.constants';
-import type { InvestigationOutcome } from '../src/modules/investigation/domain/entities/investigation-outcome';
-import { LocalDirectoryCodeSnapshotAdapter } from '../src/modules/investigation/infrastructure/adapters/local-directory.code-snapshot-adapter';
+import {
+  DEFAULT_REF,
+  LocalDirectoryCodeSnapshotAdapter,
+  type InvestigationOutcome,
+} from '../src/modules/investigation/public';
 import type { EvalCase } from './eval-case';
 import { buildReferenceScript } from './reference-script';
 
