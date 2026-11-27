@@ -24,7 +24,10 @@ describe('listDirectoryLevel', () => {
   });
 
   it('does not mix a directory with a sibling that shares its prefix', () => {
-    expect(listDirectoryLevel(FILES, 'apps/api').map((entry) => entry.name)).toEqual(['app.module.ts', 'main.ts']);
+    expect(listDirectoryLevel(FILES, 'apps/api').map((entry) => entry.name)).toEqual([
+      'app.module.ts',
+      'main.ts',
+    ]);
   });
 
   it('returns nothing for a directory that does not exist or for a file path', () => {

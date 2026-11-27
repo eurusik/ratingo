@@ -34,7 +34,10 @@ const entryOf = (outcome: CaseOutcome): BaselineEntry => ({
   flaky: outcome.flaky,
 });
 
-export const buildBaseline = (outcomes: readonly CaseOutcome[], context: BaselineContext): Baseline => ({
+export const buildBaseline = (
+  outcomes: readonly CaseOutcome[],
+  context: BaselineContext,
+): Baseline => ({
   version: BASELINE_VERSION,
   ...context,
   cases: Object.fromEntries(outcomes.map((outcome) => [outcome.caseId, entryOf(outcome)])),
@@ -71,18 +74,24 @@ const stoppedPassing = (before: BaselineEntry, after: BaselineEntry): boolean =>
   before.passed && !after.passed && (!before.flaky || !after.flaky);
 
 const lostTooManyPasses = (before: BaselineEntry, after: BaselineEntry): boolean =>
-  !before.flaky && before.passes * after.runs - after.passes * before.runs >= MIN_LOST_PASSES * before.runs;
+  !before.flaky &&
+  before.passes * after.runs - after.passes * before.runs >= MIN_LOST_PASSES * before.runs;
 
 const regressionOf = (change: CaseChange): Regression | null => {
   const { before, after } = change;
   if (before === null) {
-    return !after.passed && !after.flaky ? { ...change, reason: RegressionReason.NEW_CASE_FAILS } : null;
+    return !after.passed && !after.flaky
+      ? { ...change, reason: RegressionReason.NEW_CASE_FAILS }
+      : null;
   }
   if (stoppedPassing(before, after)) return { ...change, reason: RegressionReason.STOPPED_PASSING };
-  return lostTooManyPasses(before, after) ? { ...change, reason: RegressionReason.LOST_PASSES } : null;
+  return lostTooManyPasses(before, after)
+    ? { ...change, reason: RegressionReason.LOST_PASSES }
+    : null;
 };
 
-const isKnown = (change: CaseChange): change is CaseChange & { before: BaselineEntry } => change.before !== null;
+const isKnown = (change: CaseChange): change is CaseChange & { before: BaselineEntry } =>
+  change.before !== null;
 
 export const diffBaseline = (
   baseline: Baseline,
@@ -102,15 +111,20 @@ export const diffBaseline = (
     becameFlaky: known.filter((change) => !change.before.flaky && change.after.flaky),
     stoppedBeingFlaky: known.filter((change) => change.before.flaky && !change.after.flaky),
     newCases: changes.filter((change) => change.before === null),
-    removedCases: options.fullRun ? Object.keys(baseline.cases).filter((caseId) => !present.has(caseId)) : [],
-    regressions: changes.map(regressionOf).filter((regression): regression is Regression => regression !== null),
+    removedCases: options.fullRun
+      ? Object.keys(baseline.cases).filter((caseId) => !present.has(caseId))
+      : [],
+    regressions: changes
+      .map(regressionOf)
+      .filter((regression): regression is Regression => regression !== null),
   };
 };
 
 export const readBaselineFile = async (file: string): Promise<Baseline | null> => {
   try {
     const parsed = JSON.parse(await readFile(file, 'utf8')) as Baseline;
-    if (parsed.version !== BASELINE_VERSION) throw new Error(`Unsupported baseline version ${String(parsed.version)} in ${file}`);
+    if (parsed.version !== BASELINE_VERSION)
+      throw new Error(`Unsupported baseline version ${String(parsed.version)} in ${file}`);
     return parsed;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === NOT_FOUND_CODE) return null;

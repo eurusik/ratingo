@@ -1,8 +1,7 @@
 import { SkipReason, SnapshotLimits } from '../constants/snapshot.constants';
 
 export type FileInspection =
-  | { kind: 'text'; lines: readonly string[] }
-  | { kind: 'skipped'; reason: SkipReason };
+  { kind: 'text'; lines: readonly string[] } | { kind: 'skipped'; reason: SkipReason };
 
 const NUL_BYTE = 0;
 const LINE_FEED = '\n';
@@ -10,7 +9,9 @@ const CARRIAGE_RETURN = '\r';
 
 export const splitLines = (text: string): string[] => {
   if (text === '') return [];
-  const lines = text.split(LINE_FEED).map((line) => line.endsWith(CARRIAGE_RETURN) ? line.slice(0, -1) : line);
+  const lines = text
+    .split(LINE_FEED)
+    .map((line) => (line.endsWith(CARRIAGE_RETURN) ? line.slice(0, -1) : line));
   if (text.endsWith(LINE_FEED)) lines.pop();
   return lines;
 };

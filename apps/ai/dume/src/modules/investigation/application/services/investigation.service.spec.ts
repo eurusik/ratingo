@@ -2,10 +2,13 @@ import {
   ContentPartType,
   FixedClock,
   InMemoryRunRepository,
+  ModelError,
+  ModelErrorCategory,
   RunStopReason,
   RunTrigger,
   StopReason,
   StubModelAdapter,
+  ToolChoice,
   formatModelRef,
   loadAgentFolder,
   type ModelRequest,
@@ -17,14 +20,30 @@ import { Logger } from '@nestjs/common';
 import { createInvestigator } from '../../../../core/investigator.factory';
 import { AGENT_FOLDER_PATH } from '../../../../core/ai-core.module';
 import { InvalidQuestionError } from '../../domain/errors/invalid-question.error';
-import { SnapshotFailure, SnapshotUnavailableError } from '../../domain/errors/investigation.errors';
-import { AnswerSupport, AssumptionOrigin, CitationFailure } from '../../domain/entities/investigation-answer';
+import {
+  SnapshotFailure,
+  SnapshotUnavailableError,
+} from '../../domain/errors/investigation.errors';
+import {
+  AnswerSupport,
+  AssumptionOrigin,
+  CitationFailure,
+} from '../../domain/entities/investigation-answer';
 import { InvestigationStatus } from '../../domain/entities/investigation-outcome';
-import { inMemorySnapshot, TEST_SHA } from '../../infrastructure/testing/in-memory-snapshot.testing';
+import {
+  inMemorySnapshot,
+  TEST_SHA,
+} from '../../infrastructure/testing/in-memory-snapshot.testing';
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import { MAX_QUESTION_CHARS } from '../../investigation.constants';
 
-const USAGE = { inputTokens: 10, outputTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 };
+const USAGE = {
+  inputTokens: 10,
+  outputTokens: 5,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  reasoningTokens: 0,
+};
 
 type Step = { tool: string; input: unknown } | { answer: unknown };
 
@@ -37,7 +56,12 @@ const scripted = (steps: readonly Step[]): StubScript => ({
           model,
           stopReason: StopReason.TOOL_USE,
           usage: USAGE,
-          content: [{ type: ContentPartType.TOOL_CALL, call: { id: `call-${callIndex}`, name: step.tool, input: step.input } }],
+          content: [
+            {
+              type: ContentPartType.TOOL_CALL,
+              call: { id: `call-${callIndex}`, name: step.tool, input: step.input },
+            },
+          ],
         }
       : {
           model,
@@ -68,8 +92,16 @@ const build = async (steps: readonly Step[], snapshots?: CodeSnapshotPort) => {
   return { service, model, runs };
 };
 
-const ask = (service: Awaited<ReturnType<typeof build>>['service'], question = 'Why does the worker mark jobs failed?') =>
-  service.investigate({ question, ref: 'main', trigger: RunTrigger.MANUAL, ignoreDailyBudget: true });
+const ask = (
+  service: Awaited<ReturnType<typeof build>>['service'],
+  question = 'Why does the worker mark jobs failed?',
+) =>
+  service.investigate({
+    question,
+    ref: 'main',
+    trigger: RunTrigger.MANUAL,
+    ignoreDailyBudget: true,
+  });
 
 describe('InvestigationService', () => {
   beforeAll(() => {
@@ -82,7 +114,12 @@ describe('InvestigationService', () => {
       {
         answer: {
           answer: 'Воркер позначає збій.',
-          claims: [{ text: 'worker reacts to failed', citations: [{ path: 'apps/api/worker.ts', startLine: 2, endLine: 2 }] }],
+          claims: [
+            {
+              text: 'worker reacts to failed',
+              citations: [{ path: 'apps/api/worker.ts', startLine: 2, endLine: 2 }],
+            },
+          ],
           assumptions: [],
           unknowns: [],
         },
@@ -91,7 +128,12 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
 
-    expect(outcome).toMatchObject({ status: InvestigationStatus.ANSWERED, commit: TEST_SHA, turns: 2, stopReason: RunStopReason.END });
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.ANSWERED,
+      commit: TEST_SHA,
+      turns: 2,
+      stopReason: RunStopReason.END,
+    });
     expect(outcome.answer?.support).toBe(AnswerSupport.SUPPORTED);
     expect(outcome.answer?.facts).toHaveLength(1);
     expect(outcome.pathsRead).toEqual(['apps/api/worker.ts']);
@@ -104,7 +146,12 @@ describe('InvestigationService', () => {
       {
         answer: {
           answer: 'Так.',
-          claims: [{ text: 'line four does things', citations: [{ path: 'apps/api/worker.ts', startLine: 4, endLine: 4 }] }],
+          claims: [
+            {
+              text: 'line four does things',
+              citations: [{ path: 'apps/api/worker.ts', startLine: 4, endLine: 4 }],
+            },
+          ],
           assumptions: [],
           unknowns: [],
         },
@@ -124,7 +171,14 @@ describe('InvestigationService', () => {
   it('accepts an honest unknown with nothing cited', async () => {
     const { service } = await build([
       { tool: 'code_search', input: { pattern: 'nothing like this' } },
-      { answer: { answer: 'У коді цього немає.', claims: [], assumptions: [], unknowns: ['Шукано "nothing like this", збігів немає.'] } },
+      {
+        answer: {
+          answer: 'У коді цього немає.',
+          claims: [],
+          assumptions: [],
+          unknowns: ['Шукано "nothing like this", збігів немає.'],
+        },
+      },
     ]);
 
     const outcome = await ask(service);
@@ -143,7 +197,9 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
     const lastRequest = model.requests[model.requests.length - 1] as ModelRequest;
-    const results = lastRequest.messages.flatMap((message) => message.content).flatMap((part) => (part.type === ContentPartType.TOOL_RESULT ? [part.result.content] : []));
+    const results = lastRequest.messages
+      .flatMap((message) => message.content)
+      .flatMap((part) => (part.type === ContentPartType.TOOL_RESULT ? [part.result.content] : []));
 
     expect(outcome.turns).toBe(3);
     expect(results[1]).toContain('already returned nothing');
@@ -152,7 +208,14 @@ describe('InvestigationService', () => {
   it('turns a failed tool into an answer for the model instead of an exception', async () => {
     const { service } = await build([
       { tool: 'code_read', input: { path: 'apps/api/missing.ts' } },
-      { answer: { answer: 'Файлу немає.', claims: [], assumptions: [], unknowns: ['файл відсутній'] } },
+      {
+        answer: {
+          answer: 'Файлу немає.',
+          claims: [],
+          assumptions: [],
+          unknowns: ['файл відсутній'],
+        },
+      },
     ]);
 
     const outcome = await ask(service);
@@ -165,7 +228,11 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
 
-    expect(outcome).toMatchObject({ status: InvestigationStatus.UNANSWERED, answer: null, stopReason: RunStopReason.INVALID_OUTPUT });
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.UNANSWERED,
+      answer: null,
+      stopReason: RunStopReason.INVALID_OUTPUT,
+    });
   });
 
   it('still ends unanswered when the model keeps calling tools even on the final turn', async () => {
@@ -173,17 +240,30 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
 
-    expect(outcome).toMatchObject({ status: InvestigationStatus.UNANSWERED, stopReason: RunStopReason.MAX_TURNS });
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.UNANSWERED,
+      stopReason: RunStopReason.MAX_TURNS,
+    });
   });
 
   it('gets a partial answer instead of nothing when the model keeps using tools until the last turn', async () => {
     const folder = await loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: ['review'] });
     const model = new StubModelAdapter({
       respond: (request, callIndex) =>
-        request.tools.length > 0
-          ? scripted([{ tool: 'code_list', input: { path: `apps/${callIndex}` } }]).respond(request, callIndex)
+        request.toolChoice !== ToolChoice.NONE
+          ? scripted([{ tool: 'code_list', input: { path: `apps/${callIndex}` } }]).respond(
+              request,
+              callIndex,
+            )
           : scripted([
-              { answer: { answer: 'Частково.', claims: [], assumptions: [], unknowns: ['не встигнуто перевірити решту'] } },
+              {
+                answer: {
+                  answer: 'Частково.',
+                  claims: [],
+                  assumptions: [],
+                  unknowns: ['не встигнуто перевірити решту'],
+                },
+              },
             ]).respond(request, callIndex),
     });
     const service = createInvestigator({
@@ -196,9 +276,50 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
 
-    expect(outcome).toMatchObject({ status: InvestigationStatus.ANSWERED, stopReason: RunStopReason.END, turns: folder.manifest.limits.maxTurns });
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.ANSWERED,
+      stopReason: RunStopReason.END,
+      turns: folder.manifest.limits.maxTurns,
+    });
     expect(outcome.answer?.unknowns).toEqual(['не встигнуто перевірити решту']);
-    expect(model.requests.at(-1)?.tools).toEqual([]);
+    expect(model.requests.at(-1)?.toolChoice).toBe(ToolChoice.NONE);
+    expect(model.requests.at(-1)?.tools.length).toBeGreaterThan(0);
+  });
+
+  it('carries the provider status and error type, never its text, when the model call fails', async () => {
+    const failing = createInvestigator({
+      snapshots: { resolve: () => Promise.resolve(inMemorySnapshot(FILES)) },
+      folder: await loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: ['review'] }),
+      providers: {
+        stub: {
+          capabilities: {
+            promptCaching: false,
+            thinking: false,
+            images: false,
+            structuredOutput: true,
+          },
+          generate: () =>
+            Promise.reject(
+              new ModelError(
+                ModelErrorCategory.CLIENT,
+                'secret question text',
+                400,
+                'invalid_request_error',
+              ),
+            ),
+        },
+      },
+      aliases: { review: ['stub:review'] },
+      clock: new FixedClock(1_000),
+    });
+
+    const outcome = await ask(failing);
+
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.UNANSWERED,
+      stopReason: RunStopReason.MODEL_ERROR,
+      stopDetail: 'client, HTTP 400, invalid_request_error',
+    });
   });
 
   it('reports an unavailable snapshot with its reason and never calls the model', async () => {
@@ -208,7 +329,10 @@ describe('InvestigationService', () => {
 
     const outcome = await ask(service);
 
-    expect(outcome).toMatchObject({ status: InvestigationStatus.SNAPSHOT_UNAVAILABLE, snapshotFailure: SnapshotFailure.RATE_LIMITED });
+    expect(outcome).toMatchObject({
+      status: InvestigationStatus.SNAPSHOT_UNAVAILABLE,
+      snapshotFailure: SnapshotFailure.RATE_LIMITED,
+    });
     expect(model.requests).toHaveLength(0);
   });
 
@@ -216,17 +340,25 @@ describe('InvestigationService', () => {
     const { service, model } = await build([{ answer: {} }]);
 
     await expect(ask(service, '   ')).rejects.toBeInstanceOf(InvalidQuestionError);
-    await expect(ask(service, 'x'.repeat(MAX_QUESTION_CHARS + 1))).rejects.toBeInstanceOf(InvalidQuestionError);
+    await expect(ask(service, 'x'.repeat(MAX_QUESTION_CHARS + 1))).rejects.toBeInstanceOf(
+      InvalidQuestionError,
+    );
     expect(model.requests).toHaveLength(0);
   });
 
   it('offers exactly the three read-only tools and tells the model the commit', async () => {
-    const { service, model } = await build([{ answer: { answer: 'x', claims: [], assumptions: [], unknowns: [] } }]);
+    const { service, model } = await build([
+      { answer: { answer: 'x', claims: [], assumptions: [], unknowns: [] } },
+    ]);
 
     await ask(service);
     const request = model.requests[0] as ModelRequest;
 
-    expect(request.tools.map((tool) => tool.name)).toEqual(['code_search', 'code_read', 'code_list']);
+    expect(request.tools.map((tool) => tool.name)).toEqual([
+      'code_search',
+      'code_read',
+      'code_list',
+    ]);
     expect(JSON.stringify(request.messages)).toContain(TEST_SHA);
     expect(request.system).toContain('<untrusted>');
   });

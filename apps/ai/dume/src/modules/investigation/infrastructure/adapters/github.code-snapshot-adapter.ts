@@ -17,7 +17,10 @@ import {
   SnapshotLimits,
 } from '../../domain/constants/snapshot.constants';
 import type { CodeSnapshot, SnapshotFile } from '../../domain/entities/code-snapshot';
-import { SnapshotFailure, SnapshotUnavailableError } from '../../domain/errors/investigation.errors';
+import {
+  SnapshotFailure,
+  SnapshotUnavailableError,
+} from '../../domain/errors/investigation.errors';
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import { inspectFileBody } from '../../domain/policies/file-inspection';
 import { normalizeFilePath } from '../../domain/policies/repo-path';
@@ -80,7 +83,12 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
     } catch (error) {
       const stale = cached === undefined ? undefined : this.retained.get(cached.sha);
       if (stale === undefined || cached === undefined) throw error;
-      this.logger.warn({ message: 'snapshot.ref_check_failed_using_stale', ref, sha: cached.sha, failure: failureOf(error) });
+      this.logger.warn({
+        message: 'snapshot.ref_check_failed_using_stale',
+        ref,
+        sha: cached.sha,
+        failure: failureOf(error),
+      });
       return this.use(stale);
     }
     this.refs.set(ref, { sha, checkedAtMs: nowMs });
@@ -122,7 +130,10 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
     const response = await this.get(url, SHA_MEDIA_TYPE, SHA_TIMEOUT_MS);
     const sha = (await response.text()).trim();
     if (!COMMIT_SHA_PATTERN.test(sha)) {
-      throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, 'the commit lookup did not return a commit id');
+      throw new SnapshotUnavailableError(
+        SnapshotFailure.DOWNLOAD_FAILED,
+        'the commit lookup did not return a commit id',
+      );
     }
     return sha;
   }
@@ -130,13 +141,21 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
   private async get(url: string, accept: string, timeoutMs: number): Promise<Response> {
     let response: Response;
     try {
-      response = await fetch(url, { headers: this.headers(accept), signal: AbortSignal.timeout(timeoutMs) });
+      response = await fetch(url, {
+        headers: this.headers(accept),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
     } catch (error) {
-      throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, error instanceof Error ? error.name : 'request failed');
+      throw new SnapshotUnavailableError(
+        SnapshotFailure.DOWNLOAD_FAILED,
+        error instanceof Error ? error.name : 'request failed',
+      );
     }
     if (response.ok) return response;
-    if (response.status === 404) throw new SnapshotUnavailableError(SnapshotFailure.REF_NOT_FOUND, `HTTP ${response.status}`);
-    if (RATE_LIMIT_STATUSES.has(response.status)) throw new SnapshotUnavailableError(SnapshotFailure.RATE_LIMITED, `HTTP ${response.status}`);
+    if (response.status === 404)
+      throw new SnapshotUnavailableError(SnapshotFailure.REF_NOT_FOUND, `HTTP ${response.status}`);
+    if (RATE_LIMIT_STATUSES.has(response.status))
+      throw new SnapshotUnavailableError(SnapshotFailure.RATE_LIMITED, `HTTP ${response.status}`);
     throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, `HTTP ${response.status}`);
   }
 
@@ -147,7 +166,13 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
     try {
       const collector = new ArchiveCollector(directory);
       await this.download(sha, collector);
-      const snapshot = new DirectorySnapshot(ref, sha, directory, collector.files, collector.skipped);
+      const snapshot = new DirectorySnapshot(
+        ref,
+        sha,
+        directory,
+        collector.files,
+        collector.skipped,
+      );
       this.retained.set(sha, { snapshot, directory, lastUsedMs: this.clock.nowMs() });
       await this.evictOldest();
       this.logger.log({
@@ -169,12 +194,16 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
   private async download(sha: string, collector: ArchiveCollector): Promise<void> {
     const url = `${this.config.apiUrl}/repos/${this.config.repository}/tarball/${sha}`;
     const response = await this.get(url, ARCHIVE_MEDIA_TYPE, DOWNLOAD_TIMEOUT_MS);
-    if (response.body === null) throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, 'empty response body');
+    if (response.body === null)
+      throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, 'empty response body');
     let downloaded = 0;
-    const source = Readable.fromWeb(response.body as import('node:stream/web').ReadableStream<Uint8Array>);
+    const source = Readable.fromWeb(
+      response.body as import('node:stream/web').ReadableStream<Uint8Array>,
+    );
     source.on('data', (chunk: Buffer) => {
       downloaded += chunk.length;
-      if (downloaded > SnapshotLimits.MAX_ARCHIVE_BYTES) source.destroy(new SnapshotUnavailableError(SnapshotFailure.ARCHIVE_TOO_LARGE));
+      if (downloaded > SnapshotLimits.MAX_ARCHIVE_BYTES)
+        source.destroy(new SnapshotUnavailableError(SnapshotFailure.ARCHIVE_TOO_LARGE));
     });
     const unpacked = source.pipe(createGunzip());
     source.on('error', (error) => unpacked.destroy(error));
@@ -183,10 +212,19 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
     } catch (error) {
       source.destroy();
       if (error instanceof SnapshotUnavailableError) throw error;
-      if (error instanceof InvalidTarError || (error as NodeJS.ErrnoException).code?.startsWith('Z_')) {
-        throw new SnapshotUnavailableError(SnapshotFailure.ARCHIVE_INVALID, error instanceof Error ? error.message : undefined);
+      if (
+        error instanceof InvalidTarError ||
+        (error as NodeJS.ErrnoException).code?.startsWith('Z_')
+      ) {
+        throw new SnapshotUnavailableError(
+          SnapshotFailure.ARCHIVE_INVALID,
+          error instanceof Error ? error.message : undefined,
+        );
       }
-      throw new SnapshotUnavailableError(SnapshotFailure.DOWNLOAD_FAILED, error instanceof Error ? error.name : undefined);
+      throw new SnapshotUnavailableError(
+        SnapshotFailure.DOWNLOAD_FAILED,
+        error instanceof Error ? error.name : undefined,
+      );
     }
   }
 
@@ -209,4 +247,8 @@ export class GithubCodeSnapshotAdapter implements CodeSnapshotPort {
 }
 
 const failureOf = (error: unknown): string =>
-  error instanceof SnapshotUnavailableError ? error.failure : error instanceof Error ? error.name : 'unknown';
+  error instanceof SnapshotUnavailableError
+    ? error.failure
+    : error instanceof Error
+      ? error.name
+      : 'unknown';

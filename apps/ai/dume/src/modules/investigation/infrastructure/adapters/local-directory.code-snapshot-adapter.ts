@@ -5,7 +5,11 @@ import { promisify } from 'node:util';
 
 import { Injectable } from '@nestjs/common';
 
-import { LOCAL_SNAPSHOT_SHA, SkipReason, SnapshotLimits } from '../../domain/constants/snapshot.constants';
+import {
+  LOCAL_SNAPSHOT_SHA,
+  SkipReason,
+  SnapshotLimits,
+} from '../../domain/constants/snapshot.constants';
 import type { CodeSnapshot, SnapshotFile } from '../../domain/entities/code-snapshot';
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import { inspectFileBody } from '../../domain/policies/file-inspection';
@@ -42,7 +46,11 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
     const indexed: Indexed = { files: [], skipped: new Map() };
     const paths = await this.listCandidatePaths(root);
     for (let offset = 0; offset < paths.length; offset += READ_BATCH_SIZE) {
-      await Promise.all(paths.slice(offset, offset + READ_BATCH_SIZE).map((candidate) => this.index(root, candidate, indexed)));
+      await Promise.all(
+        paths
+          .slice(offset, offset + READ_BATCH_SIZE)
+          .map((candidate) => this.index(root, candidate, indexed)),
+      );
     }
     return new DirectorySnapshot(ref, LOCAL_SNAPSHOT_SHA, root, indexed.files, indexed.skipped);
   }
@@ -62,7 +70,12 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
       indexed.skipped.set(candidate, SkipReason.UNSAFE_PATH);
       return;
     }
-    if (this.config.excludedDirectories.some((directory) => isUnderDirectory(normalized.path, directory))) return;
+    if (
+      this.config.excludedDirectories.some((directory) =>
+        isUnderDirectory(normalized.path, directory),
+      )
+    )
+      return;
     const absolute = path.join(root, normalized.path);
     try {
       const stats = await lstat(absolute);
@@ -79,7 +92,11 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
         indexed.skipped.set(normalized.path, inspection.reason);
         return;
       }
-      indexed.files.push({ path: normalized.path, bytes: stats.size, lineCount: inspection.lines.length });
+      indexed.files.push({
+        path: normalized.path,
+        bytes: stats.size,
+        lineCount: inspection.lines.length,
+      });
     } catch {
       indexed.skipped.set(normalized.path, SkipReason.NOT_REGULAR_FILE);
     }

@@ -42,7 +42,11 @@ const inScope = (path: string, filter: SearchFilter): boolean =>
 export class CodeBrowser {
   constructor(private readonly clock: ClockPort) {}
 
-  async search(snapshot: CodeSnapshot, matcher: LineMatcher, filter: SearchFilter): Promise<SearchOutcome> {
+  async search(
+    snapshot: CodeSnapshot,
+    matcher: LineMatcher,
+    filter: SearchFilter,
+  ): Promise<SearchOutcome> {
     const startedMs = this.clock.nowMs();
     const scope = snapshot.files().filter((file) => inScope(file.path, filter));
     const outcome: SearchOutcome = {
@@ -84,6 +88,9 @@ export class CodeBrowser {
 
   list(snapshot: CodeSnapshot, directory: string): ListOutcome {
     const entries = listDirectoryLevel(snapshot.files(), directory);
-    return { entries: entries.slice(0, ListLimits.MAX_ENTRIES), tooMany: entries.length > ListLimits.MAX_ENTRIES };
+    return {
+      entries: entries.slice(0, ListLimits.MAX_ENTRIES),
+      tooMany: entries.length > ListLimits.MAX_ENTRIES,
+    };
   }
 }

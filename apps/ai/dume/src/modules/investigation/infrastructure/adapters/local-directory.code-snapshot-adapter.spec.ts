@@ -26,7 +26,10 @@ describe('LocalDirectoryCodeSnapshotAdapter', () => {
   afterAll(() => rmSync(root, { recursive: true, force: true }));
 
   it('serves tracked and untracked files except ignored, excluded and non-regular ones', async () => {
-    const snapshot = await new LocalDirectoryCodeSnapshotAdapter({ root, excludedDirectories: ['eval'] }).resolve('main');
+    const snapshot = await new LocalDirectoryCodeSnapshotAdapter({
+      root,
+      excludedDirectories: ['eval'],
+    }).resolve('main');
 
     expect(snapshot.sha).toBe(LOCAL_SNAPSHOT_SHA);
     expect(snapshot.files().map((file) => file.path)).toEqual(['.gitignore', 'src/a.ts']);

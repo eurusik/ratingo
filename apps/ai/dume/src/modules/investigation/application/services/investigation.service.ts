@@ -37,6 +37,7 @@ const emptyOutcome = (ref: string): InvestigationOutcome => ({
   answer: null,
   runId: null,
   stopReason: null,
+  stopDetail: null,
   turns: 0,
   costUsd: 0,
   toolCalls: {},
@@ -62,20 +63,32 @@ export class InvestigationService {
     const question = request.question.trim();
     if (question === '') throw new InvalidQuestionError('the question is empty');
     if (question.length > MAX_QUESTION_CHARS) {
-      throw new InvalidQuestionError(`the question is longer than ${MAX_QUESTION_CHARS} characters`);
+      throw new InvalidQuestionError(
+        `the question is longer than ${MAX_QUESTION_CHARS} characters`,
+      );
     }
     const system = this.folder.prompts[PROMPT_NAME];
     const finalAnswerPrompt = this.folder.prompts[FINAL_ANSWER_PROMPT_NAME];
     if (system === undefined || finalAnswerPrompt === undefined) {
-      throw new Error(`The agent folder needs the ${PROMPT_NAME} and ${FINAL_ANSWER_PROMPT_NAME} prompts`);
+      throw new Error(
+        `The agent folder needs the ${PROMPT_NAME} and ${FINAL_ANSWER_PROMPT_NAME} prompts`,
+      );
     }
     let snapshot;
     try {
       snapshot = await this.snapshots.resolve(request.ref);
     } catch (error) {
       if (error instanceof SnapshotUnavailableError) {
-        this.logger.warn({ message: 'investigation.snapshot_unavailable', ref: request.ref, failure: error.failure });
-        return { ...emptyOutcome(request.ref), status: InvestigationStatus.SNAPSHOT_UNAVAILABLE, snapshotFailure: error.failure };
+        this.logger.warn({
+          message: 'investigation.snapshot_unavailable',
+          ref: request.ref,
+          failure: error.failure,
+        });
+        return {
+          ...emptyOutcome(request.ref),
+          status: InvestigationStatus.SNAPSHOT_UNAVAILABLE,
+          snapshotFailure: error.failure,
+        };
       }
       throw error;
     }
@@ -88,7 +101,9 @@ export class InvestigationService {
       responseSchema: investigationDraftSchema,
       tools: createCodeTools({ browser: this.browser, snapshot, ledger }),
       ...(request.budgetUsd === undefined ? {} : { budgetUsd: request.budgetUsd }),
-      ...(request.ignoreDailyBudget === undefined ? {} : { ignoreDailyBudget: request.ignoreDailyBudget }),
+      ...(request.ignoreDailyBudget === undefined
+        ? {}
+        : { ignoreDailyBudget: request.ignoreDailyBudget }),
     });
     const draft = result.value as InvestigationDraft | undefined;
     const answer = draft === undefined ? null : verifyAnswer(draft, snapshot, ledger);
@@ -99,6 +114,7 @@ export class InvestigationService {
       answer,
       runId: result.run.id,
       stopReason: result.run.stopReason ?? null,
+      stopDetail: result.run.stopDetail ?? null,
       turns: result.run.turns,
       costUsd: result.run.costUsd,
       toolCalls: result.run.toolCalls,
@@ -111,8 +127,11 @@ export class InvestigationService {
       status: outcome.status,
       support: answer?.support ?? null,
       facts: answer?.facts.length ?? 0,
-      unverifiedClaims: answer?.assumptions.filter((entry) => entry.origin === AssumptionOrigin.UNVERIFIED_CLAIM).length ?? 0,
+      unverifiedClaims:
+        answer?.assumptions.filter((entry) => entry.origin === AssumptionOrigin.UNVERIFIED_CLAIM)
+          .length ?? 0,
       stopReason: outcome.stopReason,
+      stopDetail: outcome.stopDetail,
       turns: outcome.turns,
       costUsd: outcome.costUsd,
     });

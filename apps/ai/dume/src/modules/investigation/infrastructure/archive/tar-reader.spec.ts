@@ -1,7 +1,11 @@
 import { InvalidTarError, TarEntryType, readTarStream, type TarEntry } from './tar-reader';
 import { buildTar, chunked, paxRecords, tarEntry } from '../testing/tar-builder.testing';
 
-const collect = async (archive: Buffer, chunkSize: number, skip: (entry: TarEntry) => boolean = () => false) => {
+const collect = async (
+  archive: Buffer,
+  chunkSize: number,
+  skip: (entry: TarEntry) => boolean = () => false,
+) => {
   const received: { path: string; body: string }[] = [];
   const decided: TarEntry[] = [];
   await readTarStream(chunked(archive, chunkSize), {
@@ -26,13 +30,20 @@ describe('readTarStream', () => {
     tarEntry({ name: 'b.txt', prefix: 'root/deep', body: 'x'.repeat(1300) }),
   ]);
 
-  it.each([1, 7, 512, 513, 100_000])('reads regular files whatever the chunk size (%i)', async (chunkSize) => {
-    const { received } = await collect(archive, chunkSize);
+  it.each([1, 7, 512, 513, 100_000])(
+    'reads regular files whatever the chunk size (%i)',
+    async (chunkSize) => {
+      const { received } = await collect(archive, chunkSize);
 
-    expect(received.map((file) => file.path)).toEqual(['root/a.txt', 'root/empty.txt', 'root/deep/b.txt']);
-    expect(received[0]?.body).toBe('hello\nworld\n');
-    expect(received[2]?.body).toHaveLength(1300);
-  });
+      expect(received.map((file) => file.path)).toEqual([
+        'root/a.txt',
+        'root/empty.txt',
+        'root/deep/b.txt',
+      ]);
+      expect(received[0]?.body).toBe('hello\nworld\n');
+      expect(received[2]?.body).toHaveLength(1300);
+    },
+  );
 
   it('asks the visitor only about regular files', async () => {
     const { decided } = await collect(archive, 4096);
@@ -58,7 +69,9 @@ describe('readTarStream', () => {
   });
 
   it('does not buffer a body the visitor skipped', async () => {
-    const { received, decided } = await collect(archive, 64, (entry) => entry.path.endsWith('a.txt'));
+    const { received, decided } = await collect(archive, 64, (entry) =>
+      entry.path.endsWith('a.txt'),
+    );
 
     expect(decided).toHaveLength(3);
     expect(received.map((file) => file.path)).toEqual(['root/empty.txt', 'root/deep/b.txt']);

@@ -44,7 +44,11 @@ describe('the investigation eval on the stub model', () => {
         expect(testCase.reference.unknowns.length).toBeGreaterThan(0);
       } else {
         expect(testCase.requiredFiles.length).toBeGreaterThan(0);
-        expect(testCase.requiredFiles.every((file) => testCase.evidence.some((entry) => entry.path === file))).toBe(true);
+        expect(
+          testCase.requiredFiles.every((file) =>
+            testCase.evidence.some((entry) => entry.path === file),
+          ),
+        ).toBe(true);
       }
     }
   });
@@ -57,17 +61,33 @@ describe('the investigation eval on the stub model', () => {
     );
 
     const summary = summarize(run.outcomes);
-    expect(run.outcomes.filter((outcome) => !outcome.passed).map((outcome) => outcome.runs.flatMap((entry) => entry.failures))).toEqual([]);
-    expect(summary).toMatchObject({ passedCases: EVAL_CASES.length, fabricatedCitations: 0, unscorableRuns: 0, honestUnknownRate: 1 });
+    expect(
+      run.outcomes
+        .filter((outcome) => !outcome.passed)
+        .map((outcome) => outcome.runs.flatMap((entry) => entry.failures)),
+    ).toEqual([]);
+    expect(summary).toMatchObject({
+      passedCases: EVAL_CASES.length,
+      fabricatedCitations: 0,
+      unscorableRuns: 0,
+      honestUnknownRate: 1,
+    });
   });
 
   it('fails a case whose answer differs from what the judge expects', async () => {
     const [first] = ANSWERABLE_CASES as readonly EvalCase[];
-    const changed: EvalCase = { ...(first as EvalCase), reference: { ...(first as EvalCase).reference, answer: 'a different answer' } };
+    const changed: EvalCase = {
+      ...(first as EvalCase),
+      reference: { ...(first as EvalCase).reference, answer: 'a different answer' },
+    };
     const run = await runEval(
       [changed],
       {
-        runAgent: (testCase) => runCase({ ...testCase, reference: { ...testCase.reference, answer: 'what the agent says' } }, environment),
+        runAgent: (testCase) =>
+          runCase(
+            { ...testCase, reference: { ...testCase.reference, answer: 'what the agent says' } },
+            environment,
+          ),
         judge: new ReferenceJudge(),
       },
       { repeat: { runs: 1, passAt: 1 }, concurrency: 1, maxCostUsd: 1 },
@@ -80,7 +100,13 @@ describe('the investigation eval on the stub model', () => {
     const [first] = ANSWERABLE_CASES as readonly EvalCase[];
     const stale: EvalCase = {
       ...(first as EvalCase),
-      evidence: [{ path: (first as EvalCase).evidence[0]?.path ?? '', anchor: 'this text is nowhere in the file', verifiedAt: '' }],
+      evidence: [
+        {
+          path: (first as EvalCase).evidence[0]?.path ?? '',
+          anchor: 'this text is nowhere in the file',
+          verifiedAt: '',
+        },
+      ],
     };
 
     await expect(runCase(stale, environment)).rejects.toBeInstanceOf(StaleCaseError);

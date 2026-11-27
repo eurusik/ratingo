@@ -12,8 +12,18 @@ describe('EvidenceLedger', () => {
       fc.property(fc.array(range, { maxLength: 8 }), range, (recorded, asked) => {
         const ledger = new EvidenceLedger();
         recorded.forEach((entry) => ledger.record('a.ts', entry.start, entry.end));
-        const lines = new Set(recorded.flatMap((entry) => Array.from({ length: entry.end - entry.start + 1 }, (_, offset) => entry.start + offset)));
-        const expected = Array.from({ length: asked.end - asked.start + 1 }, (_, offset) => asked.start + offset).every((line) => lines.has(line));
+        const lines = new Set(
+          recorded.flatMap((entry) =>
+            Array.from(
+              { length: entry.end - entry.start + 1 },
+              (_, offset) => entry.start + offset,
+            ),
+          ),
+        );
+        const expected = Array.from(
+          { length: asked.end - asked.start + 1 },
+          (_, offset) => asked.start + offset,
+        ).every((line) => lines.has(line));
         expect(ledger.covers('a.ts', asked.start, asked.end)).toBe(expected);
       }),
       { numRuns: 500 },

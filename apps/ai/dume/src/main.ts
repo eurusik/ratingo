@@ -19,7 +19,8 @@ import { createAppLogger } from './telemetry/app-logger';
 const FAILURE_EXIT_CODE = 1;
 const SIGNAL_EXIT_CODES: Readonly<Record<string, number>> = { SIGINT: 130, SIGTERM: 143 };
 const DEFAULT_CLI_LOG_LEVEL = 'warn';
-const USAGE = 'Usage: npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]';
+const USAGE =
+  'Usage: npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]';
 
 process.env.LOG_LEVEL ??= DEFAULT_CLI_LOG_LEVEL;
 const logger = createAppLogger();
@@ -35,7 +36,9 @@ async function main(): Promise<number> {
     process.stderr.write(`${parsed.message}\n${USAGE}\n`);
     return FAILURE_EXIT_CODE;
   }
-  @Module({ imports: [ConfigModule.forEnvironment(process.env), AiCoreModule, InvestigationModule] })
+  @Module({
+    imports: [ConfigModule.forEnvironment(process.env), AiCoreModule, InvestigationModule],
+  })
   class CliModule {}
   const app = await NestFactory.createApplicationContext(CliModule, { logger });
   const stop = async (signal: string): Promise<void> => {
@@ -67,7 +70,9 @@ main()
       error instanceof Error ? error.message : 'Investigation failed',
       error instanceof Error ? error.stack : undefined,
     );
-    process.stderr.write(`${error instanceof Error ? `${error.name}: ${error.message}` : 'Investigation failed'}\n`);
+    process.stderr.write(
+      `${error instanceof Error ? `${error.name}: ${error.message}` : 'Investigation failed'}\n`,
+    );
     await flushTelemetry();
     process.exitCode = FAILURE_EXIT_CODE;
   });

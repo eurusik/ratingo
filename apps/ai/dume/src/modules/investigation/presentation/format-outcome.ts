@@ -1,5 +1,12 @@
-import { AssumptionOrigin, type Assumption, type Citation } from '../domain/entities/investigation-answer';
-import { InvestigationStatus, type InvestigationOutcome } from '../domain/entities/investigation-outcome';
+import {
+  AssumptionOrigin,
+  type Assumption,
+  type Citation,
+} from '../domain/entities/investigation-answer';
+import {
+  InvestigationStatus,
+  type InvestigationOutcome,
+} from '../domain/entities/investigation-outcome';
 
 const citationText = (citation: Citation): string =>
   `${citation.path}:${citation.startLine}${citation.endLine === citation.startLine ? '' : `-${citation.endLine}`}`;
@@ -16,10 +23,14 @@ export const formatOutcome = (outcome: InvestigationOutcome): string => {
   const footer = [
     '',
     `commit: ${outcome.commit ?? 'none'} (${outcome.ref})`,
-    `turns: ${outcome.turns}  cost: $${outcome.costUsd.toFixed(4)}  stop: ${outcome.stopReason ?? 'none'}`,
+    `turns: ${outcome.turns}  cost: $${outcome.costUsd.toFixed(4)}  stop: ${outcome.stopReason ?? 'none'}${outcome.stopDetail === null ? '' : ` (${outcome.stopDetail})`}`,
   ];
   if (outcome.status === InvestigationStatus.SNAPSHOT_UNAVAILABLE) {
-    return ['The code could not be fetched.', `reason: ${outcome.snapshotFailure ?? 'unknown'}`, ...footer].join('\n');
+    return [
+      'The code could not be fetched.',
+      `reason: ${outcome.snapshotFailure ?? 'unknown'}`,
+      ...footer,
+    ].join('\n');
   }
   if (outcome.answer === null) {
     return ['No answer: the run ended before a valid answer was given.', ...footer].join('\n');
@@ -35,7 +46,10 @@ export const formatOutcome = (outcome: InvestigationOutcome): string => {
       ]),
     ),
     ...section('Assumptions and unverified claims', answer.assumptions.map(assumptionLine)),
-    ...section('Unknowns', answer.unknowns.map((text, index) => `  ${index + 1}. ${text}`)),
+    ...section(
+      'Unknowns',
+      answer.unknowns.map((text, index) => `  ${index + 1}. ${text}`),
+    ),
     '',
     `support: ${answer.support}`,
     ...footer,

@@ -8,11 +8,19 @@ import type { EvalCase } from './eval-case';
 const READ_LINES_BEFORE = 8;
 const READ_LINES_AFTER = 12;
 const CITE_LINES_AROUND = 4;
-const STUB_USAGE = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, reasoningTokens: 0 };
+const STUB_USAGE = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  reasoningTokens: 0,
+};
 
 export class StaleCaseError extends Error {
   constructor(caseId: string, path: string, anchor: string) {
-    super(`Case "${caseId}" is stale: "${anchor}" is no longer in ${path}. Update its evidence from the current code.`);
+    super(
+      `Case "${caseId}" is stale: "${anchor}" is no longer in ${path}. Update its evidence from the current code.`,
+    );
     this.name = 'StaleCaseError';
   }
 }
@@ -27,10 +35,15 @@ const locate = async (testCase: EvalCase, snapshot: CodeSnapshot): Promise<Locat
     testCase.evidence.map(async (evidence) => {
       const lines = await snapshot.readLines(evidence.path);
       const index = lines?.findIndex((line) => line.includes(evidence.anchor)) ?? -1;
-      if (lines === undefined || index === -1) throw new StaleCaseError(testCase.id, evidence.path, evidence.anchor);
+      if (lines === undefined || index === -1)
+        throw new StaleCaseError(testCase.id, evidence.path, evidence.anchor);
       const line = index + 1;
       return {
-        read: { path: evidence.path, startLine: Math.max(1, line - READ_LINES_BEFORE), endLine: Math.min(lines.length, line + READ_LINES_AFTER) },
+        read: {
+          path: evidence.path,
+          startLine: Math.max(1, line - READ_LINES_BEFORE),
+          endLine: Math.min(lines.length, line + READ_LINES_AFTER),
+        },
         citation: {
           path: evidence.path,
           startLine: Math.max(1, line - CITE_LINES_AROUND),
@@ -40,7 +53,10 @@ const locate = async (testCase: EvalCase, snapshot: CodeSnapshot): Promise<Locat
     }),
   );
 
-export const buildReferenceScript = async (testCase: EvalCase, snapshot: CodeSnapshot): Promise<StubScript> => {
+export const buildReferenceScript = async (
+  testCase: EvalCase,
+  snapshot: CodeSnapshot,
+): Promise<StubScript> => {
   const located = await locate(testCase, snapshot);
   const answer = {
     answer: testCase.reference.answer,
@@ -65,7 +81,12 @@ export const buildReferenceScript = async (testCase: EvalCase, snapshot: CodeSna
           })),
         };
       }
-      return { model, stopReason: StopReason.END, usage: STUB_USAGE, content: [{ type: ContentPartType.TEXT, text: JSON.stringify(answer) }] };
+      return {
+        model,
+        stopReason: StopReason.END,
+        usage: STUB_USAGE,
+        content: [{ type: ContentPartType.TEXT, text: JSON.stringify(answer) }],
+      };
     },
   };
 };

@@ -133,7 +133,13 @@ export const readTarStream = async (
 ): Promise<void> => {
   const queue = new ByteQueue();
   let pending: PendingOverrides = {};
-  let current: { entry: TarEntry; flag: string; remaining: number; keep: boolean; chunks: Buffer[] } | null = null;
+  let current: {
+    entry: TarEntry;
+    flag: string;
+    remaining: number;
+    keep: boolean;
+    chunks: Buffer[];
+  } | null = null;
   let skipping = 0;
   let sawEnd = false;
 
@@ -150,10 +156,17 @@ export const readTarStream = async (
       if (parsedSize !== undefined && !(Number.isSafeInteger(parsedSize) && parsedSize >= 0)) {
         throw new InvalidTarError('a pax size is not a whole number');
       }
-      pending = { ...pending, ...(path === undefined ? {} : { path }), ...(parsedSize === undefined ? {} : { size: parsedSize }) };
+      pending = {
+        ...pending,
+        ...(path === undefined ? {} : { path }),
+        ...(parsedSize === undefined ? {} : { size: parsedSize }),
+      };
     } else if (finished.flag === 'L') {
       pending = { ...pending, path: textOf(body, 0, body.length) };
-    } else if (finished.keep && (finished.flag === '0' || finished.flag === NUL || finished.flag === '')) {
+    } else if (
+      finished.keep &&
+      (finished.flag === '0' || finished.flag === NUL || finished.flag === '')
+    ) {
       await visitor.receive(finished.entry, body);
     }
     skipping = padding(finished.entry.size);
@@ -177,7 +190,8 @@ export const readTarStream = async (
       type: entryTypeOf(flag),
     };
     if (isMetadata) {
-      if (headerSize > MAX_METADATA_BYTES) throw new InvalidTarError('a metadata record is too large');
+      if (headerSize > MAX_METADATA_BYTES)
+        throw new InvalidTarError('a metadata record is too large');
       const keep = flag === 'x' || flag === 'L';
       current = { entry, flag, remaining: headerSize, keep, chunks: [] };
     } else {
@@ -217,5 +231,6 @@ export const readTarStream = async (
     await pump();
     if (sawEnd) return;
   }
-  if (current !== null || skipping > 0) throw new InvalidTarError('the archive ends in the middle of an entry');
+  if (current !== null || skipping > 0)
+    throw new InvalidTarError('the archive ends in the middle of an entry');
 };

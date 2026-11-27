@@ -16,10 +16,16 @@ describe('splitLines', () => {
 
   it('gives one line per newline-terminated line', () => {
     fc.assert(
-      fc.property(fc.array(fc.string({ maxLength: 20 }).map((line) => line.replace(/[\r\n]/g, '')), { maxLength: 30 }), (lines) => {
-        const text = lines.map((line) => `${line}\n`).join('');
-        expect(splitLines(text)).toEqual(lines);
-      }),
+      fc.property(
+        fc.array(
+          fc.string({ maxLength: 20 }).map((line) => line.replace(/[\r\n]/g, '')),
+          { maxLength: 30 },
+        ),
+        (lines) => {
+          const text = lines.map((line) => `${line}\n`).join('');
+          expect(splitLines(text)).toEqual(lines);
+        },
+      ),
     );
   });
 });
@@ -30,12 +36,18 @@ describe('inspectFileBody', () => {
   });
 
   it('skips a binary file, an oversized file, invalid UTF-8 and minified lines', () => {
-    expect(inspectFileBody(new Uint8Array([1, 2, 0, 3]))).toEqual({ kind: 'skipped', reason: SkipReason.BINARY });
+    expect(inspectFileBody(new Uint8Array([1, 2, 0, 3]))).toEqual({
+      kind: 'skipped',
+      reason: SkipReason.BINARY,
+    });
     expect(inspectFileBody(new Uint8Array(SnapshotLimits.MAX_FILE_BYTES + 1).fill(97))).toEqual({
       kind: 'skipped',
       reason: SkipReason.TOO_LARGE,
     });
-    expect(inspectFileBody(new Uint8Array([0xff, 0xfe, 0xfd]))).toEqual({ kind: 'skipped', reason: SkipReason.NOT_UTF8 });
+    expect(inspectFileBody(new Uint8Array([0xff, 0xfe, 0xfd]))).toEqual({
+      kind: 'skipped',
+      reason: SkipReason.NOT_UTF8,
+    });
     expect(inspectFileBody(bytes('x'.repeat(SnapshotLimits.MAX_LINE_CHARS + 1)))).toEqual({
       kind: 'skipped',
       reason: SkipReason.LONG_LINES,

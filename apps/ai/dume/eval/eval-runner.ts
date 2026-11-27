@@ -1,7 +1,12 @@
 import { redactSecrets } from '@ratingo/ai-core';
 
 import type { InvestigationOutcome } from '../src/modules/investigation/domain/entities/investigation-outcome';
-import { aggregateCase, assertRepeatPolicy, type CaseOutcome, type RepeatPolicy } from './aggregate';
+import {
+  aggregateCase,
+  assertRepeatPolicy,
+  type CaseOutcome,
+  type RepeatPolicy,
+} from './aggregate';
 import { mapWithLimit } from './concurrency';
 import type { EvalCase } from './eval-case';
 import type { JudgePort } from './judge';
@@ -34,7 +39,11 @@ interface Task {
 const describeError = (error: unknown): string =>
   redactSecrets(error instanceof Error ? `${error.name}: ${error.message}` : 'unknown error');
 
-const judgeAnswer = async (testCase: EvalCase, outcome: InvestigationOutcome, judge: JudgePort): Promise<MeaningCheck> => {
+const judgeAnswer = async (
+  testCase: EvalCase,
+  outcome: InvestigationOutcome,
+  judge: JudgePort,
+): Promise<MeaningCheck> => {
   if (outcome.answer === null) return { status: 'skipped' };
   try {
     return { status: 'judged', judgement: await judge.judge(judgeInputOf(testCase, outcome)) };
@@ -54,30 +63,44 @@ const executeRun = async (testCase: EvalCase, ports: EvalPorts): Promise<RunVerd
 };
 
 const tasksOf = (caseCount: number, runs: number): Task[] =>
-  Array.from({ length: caseCount }, (_, caseIndex) => Array.from({ length: runs }, (__, runIndex) => ({ caseIndex, runIndex }))).flat();
+  Array.from({ length: caseCount }, (_, caseIndex) =>
+    Array.from({ length: runs }, (__, runIndex) => ({ caseIndex, runIndex })),
+  ).flat();
 
-export const runEval = async (cases: readonly EvalCase[], ports: EvalPorts, config: EvalRunnerConfig): Promise<EvalRun> => {
+export const runEval = async (
+  cases: readonly EvalCase[],
+  ports: EvalPorts,
+  config: EvalRunnerConfig,
+): Promise<EvalRun> => {
   assertRepeatPolicy(config.repeat);
-  const verdicts = cases.map(() => new Array<RunVerdict | undefined>(config.repeat.runs).fill(undefined));
+  const verdicts = cases.map(() =>
+    new Array<RunVerdict | undefined>(config.repeat.runs).fill(undefined),
+  );
   const outcomes = new Array<CaseOutcome | undefined>(cases.length).fill(undefined);
   const spent = { agent: 0, judge: 0, stopped: false };
-  await mapWithLimit(tasksOf(cases.length, config.repeat.runs), config.concurrency, async ({ caseIndex, runIndex }) => {
-    if (spent.agent + spent.judge >= config.maxCostUsd) {
-      spent.stopped = true;
-      return;
-    }
-    const testCase = cases[caseIndex] as EvalCase;
-    const verdict = await executeRun(testCase, ports);
-    spent.agent += verdict.costUsd;
-    spent.judge += verdict.judgeCostUsd;
-    (verdicts[caseIndex] as (RunVerdict | undefined)[])[runIndex] = verdict;
-    const finished = (verdicts[caseIndex] as (RunVerdict | undefined)[]).filter((entry): entry is RunVerdict => entry !== undefined);
-    if (finished.length === config.repeat.runs) {
-      const outcome = aggregateCase(testCase.id, testCase.kind, finished, config.repeat);
-      outcomes[caseIndex] = outcome;
-      config.onCaseFinished?.(outcome);
-    }
-  });
+  await mapWithLimit(
+    tasksOf(cases.length, config.repeat.runs),
+    config.concurrency,
+    async ({ caseIndex, runIndex }) => {
+      if (spent.agent + spent.judge >= config.maxCostUsd) {
+        spent.stopped = true;
+        return;
+      }
+      const testCase = cases[caseIndex] as EvalCase;
+      const verdict = await executeRun(testCase, ports);
+      spent.agent += verdict.costUsd;
+      spent.judge += verdict.judgeCostUsd;
+      (verdicts[caseIndex] as (RunVerdict | undefined)[])[runIndex] = verdict;
+      const finished = (verdicts[caseIndex] as (RunVerdict | undefined)[]).filter(
+        (entry): entry is RunVerdict => entry !== undefined,
+      );
+      if (finished.length === config.repeat.runs) {
+        const outcome = aggregateCase(testCase.id, testCase.kind, finished, config.repeat);
+        outcomes[caseIndex] = outcome;
+        config.onCaseFinished?.(outcome);
+      }
+    },
+  );
   return {
     outcomes: outcomes.filter((outcome): outcome is CaseOutcome => outcome !== undefined),
     agentCostUsd: spent.agent,

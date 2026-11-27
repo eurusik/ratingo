@@ -63,10 +63,18 @@ export interface CodeToolsDependencies {
 }
 
 const searchSchema = z.object({
-  pattern: z.string().min(1).max(SearchLimits.MAX_PATTERN_CHARS).describe('Text to find, or a regex in regex mode'),
+  pattern: z
+    .string()
+    .min(1)
+    .max(SearchLimits.MAX_PATTERN_CHARS)
+    .describe('Text to find, or a regex in regex mode'),
   mode: z.enum([SearchMode.TEXT, SearchMode.REGEX]).default(SearchMode.TEXT),
   ignoreCase: z.boolean().default(true),
-  pathPrefix: z.string().max(SnapshotLimits.MAX_PATH_CHARS).default('').describe('Only files under this directory, for example "apps/api/src"'),
+  pathPrefix: z
+    .string()
+    .max(SnapshotLimits.MAX_PATH_CHARS)
+    .default('')
+    .describe('Only files under this directory, for example "apps/api/src"'),
   extensions: z
     .array(z.string().min(1).max(SearchLimits.MAX_EXTENSION_CHARS))
     .max(8)
@@ -84,7 +92,8 @@ const listSchema = z.object({
   path: z.string().max(SnapshotLimits.MAX_PATH_CHARS).default(''),
 });
 
-const invalidInput = (tool: string, message: string): ToolInputError => new ToolInputError(tool, message);
+const invalidInput = (tool: string, message: string): ToolInputError =>
+  new ToolInputError(tool, message);
 
 const similarPaths = (snapshot: CodeSnapshot, path: string): string[] => {
   const name = path.slice(path.lastIndexOf('/') + 1).toLowerCase();
@@ -97,7 +106,8 @@ const similarPaths = (snapshot: CodeSnapshot, path: string): string[] => {
 
 const missingFileMessage = (snapshot: CodeSnapshot, path: string): string => {
   const skipped = snapshot.skippedReasonOf(path);
-  if (skipped !== undefined) return `"${path}" exists in commit ${snapshot.sha} but is not readable here: ${skipped}`;
+  if (skipped !== undefined)
+    return `"${path}" exists in commit ${snapshot.sha} but is not readable here: ${skipped}`;
   const similar = similarPaths(snapshot, path);
   return `"${path}" is not in commit ${snapshot.sha}.${similar.length > 0 ? ` Files with the same name: ${similar.join(', ')}.` : ' Use code_search or code_list to find the path.'}`;
 };
@@ -111,7 +121,11 @@ const createSearchTool = ({ browser, snapshot, ledger }: CodeToolsDependencies):
     maxOutputChars: OutputBudgets.SEARCH_CHARS,
     untrustedLabel: UNTRUSTED_CODE_LABEL,
     async handler(input) {
-      const compiled = compileSearchPattern({ pattern: input.pattern, mode: input.mode, ignoreCase: input.ignoreCase });
+      const compiled = compileSearchPattern({
+        pattern: input.pattern,
+        mode: input.mode,
+        ignoreCase: input.ignoreCase,
+      });
       if (!compiled.ok) throw invalidInput(CODE_SEARCH_TOOL, compiled.message);
       const prefix = normalizeDirectoryPath(input.pathPrefix);
       if (!prefix.ok) throw invalidInput(CODE_SEARCH_TOOL, `pathPrefix rejected: ${prefix.reason}`);
@@ -134,7 +148,8 @@ const createSearchTool = ({ browser, snapshot, ledger }: CodeToolsDependencies):
         ...omission,
       }));
       const shown = countRowsThatFit(list, OutputBudgets.SEARCH_CHARS - untrustedOverhead);
-      for (const match of outcome.matches.slice(0, shown)) ledger.record(match.path, match.line, match.line);
+      for (const match of outcome.matches.slice(0, shown))
+        ledger.record(match.path, match.line, match.line);
       return list;
     },
   });
@@ -178,15 +193,33 @@ const createReadTool = ({ browser, snapshot, ledger }: CodeToolsDependencies): T
       const path = normalizeFilePath(input.path);
       if (!path.ok) throw invalidInput(CODE_READ_TOOL, `path rejected: ${path.reason}`);
       const file = snapshot.fileAt(path.path);
-      if (file === undefined) throw invalidInput(CODE_READ_TOOL, missingFileMessage(snapshot, path.path));
-      const range = resolveLineRange({ startLine: input.startLine, endLine: input.endLine }, file.lineCount);
-      if (!range.ok) throw invalidInput(CODE_READ_TOOL, `${path.path} has ${file.lineCount} lines: ${range.reason}`);
+      if (file === undefined)
+        throw invalidInput(CODE_READ_TOOL, missingFileMessage(snapshot, path.path));
+      const range = resolveLineRange(
+        { startLine: input.startLine, endLine: input.endLine },
+        file.lineCount,
+      );
+      if (!range.ok)
+        throw invalidInput(
+          CODE_READ_TOOL,
+          `${path.path} has ${file.lineCount} lines: ${range.reason}`,
+        );
       const read = await browser.read(snapshot, path.path);
-      if (read === undefined) throw invalidInput(CODE_READ_TOOL, `${path.path} could not be read from commit ${snapshot.sha}`);
+      if (read === undefined)
+        throw invalidInput(
+          CODE_READ_TOOL,
+          `${path.path} could not be read from commit ${snapshot.sha}`,
+        );
       const list = RowList.of<string>(
         numberedLines(read.lines, range.startLine, range.endLine),
         '',
-        readFrame({ snapshot, path: path.path, totalLines: file.lineCount, startLine: range.startLine, cappedByLimit: range.cappedByLimit }),
+        readFrame({
+          snapshot,
+          path: path.path,
+          totalLines: file.lineCount,
+          startLine: range.startLine,
+          cappedByLimit: range.cappedByLimit,
+        }),
       );
       const shown = countRowsThatFit(list, OutputBudgets.READ_CHARS - untrustedOverhead);
       if (shown > 0) ledger.record(path.path, range.startLine, range.startLine + shown - 1);
@@ -207,8 +240,14 @@ const createListTool = ({ browser, snapshot }: CodeToolsDependencies): Tool =>
       if (!directory.ok) throw invalidInput(CODE_LIST_TOOL, `path rejected: ${directory.reason}`);
       const listing = browser.list(snapshot, directory.path);
       if (listing.entries.length === 0) {
-        const reason = snapshot.fileAt(directory.path) === undefined ? 'not a directory with readable files' : 'a file, not a directory';
-        throw invalidInput(CODE_LIST_TOOL, `"${directory.path}" is ${reason} in commit ${snapshot.sha}. List its parent to see what exists.`);
+        const reason =
+          snapshot.fileAt(directory.path) === undefined
+            ? 'not a directory with readable files'
+            : 'a file, not a directory';
+        throw invalidInput(
+          CODE_LIST_TOOL,
+          `"${directory.path}" is ${reason} in commit ${snapshot.sha}. List its parent to see what exists.`,
+        );
       }
       return Promise.resolve(
         RowList.of(listing.entries, 'Use a deeper path to see the rest.', (rows, omission) => ({

@@ -29,19 +29,32 @@ export class InvalidEvalOptionError extends Error {
   }
 }
 
-const VALUE_FLAGS = ['runs', 'pass-at', 'concurrency', 'max-cost-usd', 'judge-model', 'baseline', 'only', 'dump'] as const;
+const VALUE_FLAGS = [
+  'runs',
+  'pass-at',
+  'concurrency',
+  'max-cost-usd',
+  'judge-model',
+  'baseline',
+  'only',
+  'dump',
+] as const;
 const SWITCH_FLAGS = ['save-baseline'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 type SwitchFlag = (typeof SWITCH_FLAGS)[number];
 
 const isValueFlag = (name: string): name is ValueFlag => VALUE_FLAGS.some((flag) => flag === name);
-const isSwitchFlag = (name: string): name is SwitchFlag => SWITCH_FLAGS.some((flag) => flag === name);
+const isSwitchFlag = (name: string): name is SwitchFlag =>
+  SWITCH_FLAGS.some((flag) => flag === name);
 
-const readFlags = (argv: readonly string[]): { values: Partial<Record<ValueFlag, string>>; switches: ReadonlySet<SwitchFlag> } => {
+const readFlags = (
+  argv: readonly string[],
+): { values: Partial<Record<ValueFlag, string>>; switches: ReadonlySet<SwitchFlag> } => {
   const values: Partial<Record<ValueFlag, string>> = {};
   const switches = new Set<SwitchFlag>();
   for (const argument of argv) {
-    if (!argument.startsWith(FLAG_PREFIX)) throw new InvalidEvalOptionError(`unexpected "${argument}"`);
+    if (!argument.startsWith(FLAG_PREFIX))
+      throw new InvalidEvalOptionError(`unexpected "${argument}"`);
     const [name, ...rest] = argument.slice(FLAG_PREFIX.length).split(FLAG_VALUE_SEPARATOR);
     if (isSwitchFlag(name) && rest.length === 0) switches.add(name);
     else if (isValueFlag(name) && rest.length > 0) values[name] = rest.join(FLAG_VALUE_SEPARATOR);
@@ -53,15 +66,21 @@ const readFlags = (argv: readonly string[]): { values: Partial<Record<ValueFlag,
 const positiveNumber = (flag: string, raw: string | undefined, fallback: number): number => {
   if (raw === undefined) return fallback;
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) throw new InvalidEvalOptionError(`--${flag} needs a positive number, got "${raw}"`);
+  if (!Number.isFinite(parsed) || parsed <= 0)
+    throw new InvalidEvalOptionError(`--${flag} needs a positive number, got "${raw}"`);
   return parsed;
 };
 
-const nonEmpty = (raw: string | undefined): string | null => (raw === undefined || raw.trim() === '' ? null : raw.trim());
+const nonEmpty = (raw: string | undefined): string | null =>
+  raw === undefined || raw.trim() === '' ? null : raw.trim();
 
 export const parseEvalOptions = (argv: readonly string[], stubModel: boolean): EvalOptions => {
   const { values, switches } = readFlags(argv);
-  const runs = positiveNumber('runs', values.runs, stubModel ? DEFAULT_STUB_RUNS : DEFAULT_REAL_RUNS);
+  const runs = positiveNumber(
+    'runs',
+    values.runs,
+    stubModel ? DEFAULT_STUB_RUNS : DEFAULT_REAL_RUNS,
+  );
   const passAt = positiveNumber('pass-at', values['pass-at'], majorityPassAt(runs));
   try {
     assertRepeatPolicy({ runs, passAt });
@@ -69,9 +88,13 @@ export const parseEvalOptions = (argv: readonly string[], stubModel: boolean): E
     if (error instanceof InvalidRepeatPolicyError) throw new InvalidEvalOptionError(error.message);
     throw error;
   }
-  const only = nonEmpty(values.only)?.split(',').map((id) => id.trim()) ?? null;
+  const only =
+    nonEmpty(values.only)
+      ?.split(',')
+      .map((id) => id.trim()) ?? null;
   const saveBaseline = switches.has('save-baseline');
-  if (saveBaseline && only !== null) throw new InvalidEvalOptionError('--save-baseline cannot be combined with --only');
+  if (saveBaseline && only !== null)
+    throw new InvalidEvalOptionError('--save-baseline cannot be combined with --only');
   return {
     runs,
     passAt,

@@ -58,8 +58,16 @@ export const expectationsOf = (testCase: {
   conveys: readonly string[];
   mustNotClaim: readonly string[];
 }): Expectation[] => [
-  ...testCase.conveys.map((text, index) => ({ id: `C${index + 1}`, kind: ExpectationKind.CONVEYS, text })),
-  ...testCase.mustNotClaim.map((text, index) => ({ id: `N${index + 1}`, kind: ExpectationKind.MUST_NOT_CLAIM, text })),
+  ...testCase.conveys.map((text, index) => ({
+    id: `C${index + 1}`,
+    kind: ExpectationKind.CONVEYS,
+    text,
+  })),
+  ...testCase.mustNotClaim.map((text, index) => ({
+    id: `N${index + 1}`,
+    kind: ExpectationKind.MUST_NOT_CLAIM,
+    text,
+  })),
 ];
 
 const isSatisfied = (kind: ExpectationKind, holds: boolean): boolean =>
@@ -73,7 +81,11 @@ export const verdictsFromRaw = (
     const given = raw.find((entry) => entry.id === expectation.id);
     return given === undefined
       ? { ...expectation, satisfied: false, reason: MISSING_VERDICT_REASON }
-      : { ...expectation, satisfied: isSatisfied(expectation.kind, given.holds), reason: given.reason };
+      : {
+          ...expectation,
+          satisfied: isSatisfied(expectation.kind, given.holds),
+          reason: given.reason,
+        };
   });
 
 const JUDGE_SYSTEM_PROMPT = [
@@ -123,7 +135,8 @@ const JUDGE_RESPONSE_NAME = 'statement_verdicts';
 const JUDGE_MAX_TOKENS = 1_500;
 const JUDGE_TIMEOUT_MS = 60_000;
 const JSON_FENCE = /^```(?:json)?\s*([\s\S]*?)\s*```$/;
-const REPAIR_PROMPT = 'Your previous reply was not valid JSON for the required schema. Reply again with only the JSON object.';
+const REPAIR_PROMPT =
+  'Your previous reply was not valid JSON for the required schema. Reply again with only the JSON object.';
 
 const responseSchema = z.object({
   verdicts: z.array(z.object({ id: z.string(), holds: z.boolean(), reason: z.string() })),
@@ -132,7 +145,10 @@ const responseSchema = z.object({
 type JudgeResponse = z.infer<typeof responseSchema>;
 
 const RESPONSE_JSON_SCHEMA = (() => {
-  const { $schema: _schemaUri, ...schema } = z.toJSONSchema(responseSchema) as Record<string, unknown>;
+  const { $schema: _schemaUri, ...schema } = z.toJSONSchema(responseSchema) as Record<
+    string,
+    unknown
+  >;
   return schema;
 })();
 
@@ -164,7 +180,8 @@ export class ModelJudge implements JudgePort {
       textMessage(MessageRole.USER, REPAIR_PROMPT),
     ]);
     const secondResponse = parseResponse(second.text);
-    if (secondResponse !== null) return this.judgement(input, secondResponse, addUsage(first.usage, second.usage));
+    if (secondResponse !== null)
+      return this.judgement(input, secondResponse, addUsage(first.usage, second.usage));
     throw new JudgeUnavailableError('the reply was not valid JSON after one repair attempt');
   }
 
@@ -175,7 +192,9 @@ export class ModelJudge implements JudgePort {
     };
   }
 
-  private async ask(messages: readonly ChatMessage[]): Promise<{ text: string; usage: ModelUsage }> {
+  private async ask(
+    messages: readonly ChatMessage[],
+  ): Promise<{ text: string; usage: ModelUsage }> {
     try {
       const response = await this.model.generate({
         model: this.modelName,
@@ -200,7 +219,9 @@ export class ReferenceJudge implements JudgePort {
       verdicts: input.expectations.map((entry) => ({
         ...entry,
         satisfied: isSatisfied(entry.kind, entry.kind === ExpectationKind.CONVEYS ? holds : false),
-        reason: holds ? 'the answer contains the reference answer' : 'the answer differs from the reference answer',
+        reason: holds
+          ? 'the answer contains the reference answer'
+          : 'the answer differs from the reference answer',
       })),
       costUsd: 0,
     });

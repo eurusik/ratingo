@@ -34,7 +34,12 @@ const checkCitation = (
   const file = snapshot.fileAt(normalized.path);
   if (file === undefined) return { citation, failure: CitationFailure.FILE_NOT_IN_SNAPSHOT };
   const { startLine, endLine } = citation;
-  if (!isWholeLineNumber(startLine) || !isWholeLineNumber(endLine) || endLine < startLine || endLine > file.lineCount) {
+  if (
+    !isWholeLineNumber(startLine) ||
+    !isWholeLineNumber(endLine) ||
+    endLine < startLine ||
+    endLine > file.lineCount
+  ) {
     return { citation, failure: CitationFailure.LINES_OUT_OF_RANGE };
   }
   if (endLine - startLine + 1 > CitationLimits.MAX_LINES_PER_CITATION) {

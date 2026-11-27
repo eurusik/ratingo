@@ -1,6 +1,12 @@
 import fc from 'fast-check';
 
-import { InvalidRepeatPolicyError, aggregateCase, assertRepeatPolicy, majorityPassAt, summarize } from './aggregate';
+import {
+  InvalidRepeatPolicyError,
+  aggregateCase,
+  assertRepeatPolicy,
+  majorityPassAt,
+  summarize,
+} from './aggregate';
 import { CaseKind } from './eval-case';
 import type { RunVerdict } from './scorer';
 
@@ -30,7 +36,12 @@ describe('majorityPassAt', () => {
 describe('assertRepeatPolicy', () => {
   it('accepts whole numbers with 1 <= passAt <= runs and rejects the rest', () => {
     expect(() => assertRepeatPolicy(policy)).not.toThrow();
-    for (const bad of [{ runs: 3, passAt: 4 }, { runs: 3, passAt: 0 }, { runs: 2.5, passAt: 1 }, { runs: 0, passAt: 0 }]) {
+    for (const bad of [
+      { runs: 3, passAt: 4 },
+      { runs: 3, passAt: 0 },
+      { runs: 2.5, passAt: 1 },
+      { runs: 0, passAt: 0 },
+    ]) {
       expect(() => assertRepeatPolicy(bad)).toThrow(InvalidRepeatPolicyError);
     }
   });
@@ -38,16 +49,29 @@ describe('assertRepeatPolicy', () => {
 
 describe('aggregateCase', () => {
   it('passes at the threshold and marks disagreement as flaky', () => {
-    expect(aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(true), run(false)], policy)).toMatchObject({ passes: 2, passed: true, flaky: true });
-    expect(aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(false), run(false)], policy)).toMatchObject({ passed: false, flaky: true });
-    expect(aggregateCase('a', CaseKind.ANSWERABLE, [run(false), run(false), run(false)], policy)).toMatchObject({ passed: false, flaky: false });
-    expect(aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(true), run(true)], policy)).toMatchObject({ passed: true, flaky: false });
+    expect(
+      aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(true), run(false)], policy),
+    ).toMatchObject({ passes: 2, passed: true, flaky: true });
+    expect(
+      aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(false), run(false)], policy),
+    ).toMatchObject({ passed: false, flaky: true });
+    expect(
+      aggregateCase('a', CaseKind.ANSWERABLE, [run(false), run(false), run(false)], policy),
+    ).toMatchObject({ passed: false, flaky: false });
+    expect(
+      aggregateCase('a', CaseKind.ANSWERABLE, [run(true), run(true), run(true)], policy),
+    ).toMatchObject({ passed: true, flaky: false });
   });
 
   it('counts passes exactly for any mix of runs', () => {
     fc.assert(
       fc.property(fc.array(fc.boolean(), { minLength: 1, maxLength: 7 }), (results) => {
-        const outcome = aggregateCase('a', CaseKind.ANSWERABLE, results.map((passed) => run(passed)), { runs: results.length, passAt: 1 });
+        const outcome = aggregateCase(
+          'a',
+          CaseKind.ANSWERABLE,
+          results.map((passed) => run(passed)),
+          { runs: results.length, passAt: 1 },
+        );
         expect(outcome.passes).toBe(results.filter(Boolean).length);
         expect(outcome.flaky).toBe(outcome.passes > 0 && outcome.passes < results.length);
       }),
@@ -59,8 +83,22 @@ describe('summarize', () => {
   it('reports pass rate, flaky cases, average and maximum cost and turns', () => {
     const outcomes = [
       aggregateCase('stable', CaseKind.ANSWERABLE, [run(true), run(true), run(true)], policy),
-      aggregateCase('flaky', CaseKind.ANSWERABLE, [run(true, { costUsd: 0.4, turns: 10 }), run(true), run(false)], policy),
-      aggregateCase('broken', CaseKind.UNKNOWN, [run(false, { answeredHonestlyUnknown: false }), run(false, { answeredHonestlyUnknown: true }), run(false, { problem: 'judge' })], policy),
+      aggregateCase(
+        'flaky',
+        CaseKind.ANSWERABLE,
+        [run(true, { costUsd: 0.4, turns: 10 }), run(true), run(false)],
+        policy,
+      ),
+      aggregateCase(
+        'broken',
+        CaseKind.UNKNOWN,
+        [
+          run(false, { answeredHonestlyUnknown: false }),
+          run(false, { answeredHonestlyUnknown: true }),
+          run(false, { problem: 'judge' }),
+        ],
+        policy,
+      ),
     ];
 
     const summary = summarize(outcomes);

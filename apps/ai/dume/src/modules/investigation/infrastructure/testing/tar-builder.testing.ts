@@ -6,7 +6,8 @@ const field = (text: string, length: number): Buffer => {
   return buffer;
 };
 
-const octal = (value: number, length: number): Buffer => field(`${value.toString(8).padStart(length - 1, '0')}`, length);
+const octal = (value: number, length: number): Buffer =>
+  field(`${value.toString(8).padStart(length - 1, '0')}`, length);
 
 export interface BuiltEntry {
   name: string;

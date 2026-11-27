@@ -11,9 +11,7 @@ export const PathRejection = {
 } as const;
 export type PathRejection = (typeof PathRejection)[keyof typeof PathRejection];
 
-export type RepoPathResult =
-  | { ok: true; path: string }
-  | { ok: false; reason: PathRejection };
+export type RepoPathResult = { ok: true; path: string } | { ok: false; reason: PathRejection };
 
 const SEPARATOR = '/';
 const CURRENT_SEGMENT = '.';

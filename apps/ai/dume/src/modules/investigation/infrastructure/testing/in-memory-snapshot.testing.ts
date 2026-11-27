@@ -10,7 +10,11 @@ export const inMemorySnapshot = (
 ): CodeSnapshot => {
   const lines = new Map(Object.entries(files).map(([path, text]) => [path, splitLines(text)]));
   const entries: SnapshotFile[] = [...lines.entries()]
-    .map(([path, content]) => ({ path, bytes: files[path]?.length ?? 0, lineCount: content.length }))
+    .map(([path, content]) => ({
+      path,
+      bytes: files[path]?.length ?? 0,
+      lineCount: content.length,
+    }))
     .sort((left, right) => (left.path < right.path ? -1 : 1));
   return {
     ref: 'main',

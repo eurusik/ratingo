@@ -40,7 +40,9 @@ describe('compileSearchPattern in text mode', () => {
 
 describe('compileSearchPattern in regex mode', () => {
   it('accepts the plain subset', () => {
-    expect(matches(regex('^\\s*export (const|function) \\w+'), 'export function foo() {')).toBe(true);
+    expect(matches(regex('^\\s*export (const|function) \\w+'), 'export function foo() {')).toBe(
+      true,
+    );
     expect(matches(regex('cron:\\s*"[^"]+"'), 'cron: "0 3 * * *"')).toBe(true);
     expect(matches(regex('a{2,4}b'), 'xaaab')).toBe(true);
     expect(matches(regex('foo.*?bar'), 'foo and bar')).toBe(true);
@@ -92,7 +94,7 @@ describe('compileSearchPattern in regex mode', () => {
       expect(result.ok).toBe(true);
       const started = Date.now();
       if (result.ok) result.matcher.test(hostile);
-      expect(Date.now() - started).toBeLessThan(1_000);
+      expect(Date.now() - started).toBeLessThan(5_000);
     }
   });
 

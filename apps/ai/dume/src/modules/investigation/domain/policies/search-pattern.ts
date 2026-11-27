@@ -64,12 +64,17 @@ const scanBraces = (pattern: string, from: number, state: ScanState): number | s
   const body = pattern.slice(from + 1, close);
   const parts = body.split(',');
   const [low, high] = parts;
-  if (parts.length > 2 || !DIGITS.test(low ?? '') || (parts.length === 2 && high !== '' && !DIGITS.test(high ?? ''))) {
+  if (
+    parts.length > 2 ||
+    !DIGITS.test(low ?? '') ||
+    (parts.length === 2 && high !== '' && !DIGITS.test(high ?? ''))
+  ) {
     return 'malformed {n,m} repeat';
   }
   const upper = parts.length === 1 ? Number(low) : high === '' ? Infinity : Number(high);
   if (upper === Infinity) state.unbounded += 1;
-  else if (upper > SearchLimits.MAX_BOUNDED_REPEAT) return `a repeat count above ${SearchLimits.MAX_BOUNDED_REPEAT} is not allowed`;
+  else if (upper > SearchLimits.MAX_BOUNDED_REPEAT)
+    return `a repeat count above ${SearchLimits.MAX_BOUNDED_REPEAT} is not allowed`;
   return close;
 };
 
@@ -108,7 +113,8 @@ const checkEscape = (pattern: string, state: ScanState): string | undefined => {
 
 const checkGroupStart = (pattern: string, state: ScanState): string | undefined => {
   if (pattern[state.index + 1] === '?') {
-    if (pattern.slice(state.index, state.index + 3) !== '(?:') return 'lookaheads, lookbehinds and named groups are not supported';
+    if (pattern.slice(state.index, state.index + 3) !== '(?:')
+      return 'lookaheads, lookbehinds and named groups are not supported';
     state.index += 3;
   } else {
     state.index += 1;
@@ -182,7 +188,10 @@ export const compileSearchPattern = (request: SearchPatternRequest): PatternResu
     const expression = new RegExp(request.pattern, request.ignoreCase ? 'i' : '');
     return {
       ok: true,
-      matcher: { maxLineChars: SearchLimits.MAX_REGEX_LINE_CHARS, test: (line) => expression.test(line) },
+      matcher: {
+        maxLineChars: SearchLimits.MAX_REGEX_LINE_CHARS,
+        test: (line) => expression.test(line),
+      },
     };
   } catch {
     return invalid('regex rejected: the pattern does not compile');

@@ -44,7 +44,10 @@ export const createEvalEnvironment = async (
 ): Promise<EvalEnvironment> => ({
   modelRef,
   structureOnly: isStubModel(modelRef),
-  snapshots: new LocalDirectoryCodeSnapshotAdapter({ root: checkoutRoot, excludedDirectories: EVAL_EXCLUDED_DIRECTORIES }),
+  snapshots: new LocalDirectoryCodeSnapshotAdapter({
+    root: checkoutRoot,
+    excludedDirectories: EVAL_EXCLUDED_DIRECTORIES,
+  }),
   folder: await loadAgentFolder(AGENT_FOLDER_PATH, { knownModelAliases: MODEL_ALIAS_NAMES }),
   providers: createModelProviders({
     stub: new StubModelAdapter(createInvestigationStubScript()),
@@ -54,9 +57,16 @@ export const createEvalEnvironment = async (
   clock: new SystemClock(),
 });
 
-export const runCase = async (testCase: EvalCase, environment: EvalEnvironment): Promise<InvestigationOutcome> => {
+export const runCase = async (
+  testCase: EvalCase,
+  environment: EvalEnvironment,
+): Promise<InvestigationOutcome> => {
   const providers: ModelProviders = environment.structureOnly
-    ? { [STUB_PROVIDER]: new StubModelAdapter(await buildReferenceScript(testCase, await environment.snapshots.resolve(DEFAULT_REF))) }
+    ? {
+        [STUB_PROVIDER]: new StubModelAdapter(
+          await buildReferenceScript(testCase, await environment.snapshots.resolve(DEFAULT_REF)),
+        ),
+      }
     : environment.providers;
   const investigator = createInvestigator({
     snapshots: environment.snapshots,

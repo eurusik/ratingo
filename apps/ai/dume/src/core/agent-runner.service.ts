@@ -88,7 +88,9 @@ export class AgentRunner {
         perDayUsd: request.ignoreDailyBudget === true ? Infinity : manifest.budgets.perDayUsd,
       },
       priorSpend: await this.priorSpend(),
-      ...(request.finalAnswerPrompt === undefined ? {} : { finalAnswer: { prompt: request.finalAnswerPrompt } }),
+      ...(request.finalAnswerPrompt === undefined
+        ? {}
+        : { finalAnswer: { prompt: request.finalAnswerPrompt } }),
       limits: manifest.limits,
     });
   }

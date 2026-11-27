@@ -14,7 +14,13 @@ import {
 import { MODEL_PRICES } from '../src/config/models.config';
 import { createInvestigationStubScript } from '../src/core/stub-investigation.script';
 import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
-import { buildBaseline, diffBaseline, readBaselineFile, writeBaselineFile, type Baseline } from './baseline';
+import {
+  buildBaseline,
+  diffBaseline,
+  readBaselineFile,
+  writeBaselineFile,
+  type Baseline,
+} from './baseline';
 import { EVAL_CASES } from './cases/cases';
 import type { EvalCase } from './eval-case';
 import { runEval, type EvalRun } from './eval-runner';
@@ -45,7 +51,8 @@ const selectCases = (only: readonly string[] | null): readonly EvalCase[] => {
 
 const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): JudgePort => {
   const ref = parseModelRef(options.judgeModel);
-  if (ref.provider !== ANTHROPIC_PROVIDER) throw new Error(`The judge must be an Anthropic model, got "${options.judgeModel}"`);
+  if (ref.provider !== ANTHROPIC_PROVIDER)
+    throw new Error(`The judge must be an Anthropic model, got "${options.judgeModel}"`);
   const providers = createModelProviders({
     stub: new StubModelAdapter(createInvestigationStubScript()),
     anthropicApiKey: apiKey,
@@ -56,7 +63,11 @@ const buildModelJudge = (options: EvalOptions, apiKey: string | undefined): Judg
   return new ModelJudge(port, ref.model, priceFor(MODEL_PRICES, options.judgeModel));
 };
 
-const execute = (environment: EvalEnvironment, options: EvalOptions, judge: JudgePort): Promise<EvalRun> =>
+const execute = (
+  environment: EvalEnvironment,
+  options: EvalOptions,
+  judge: JudgePort,
+): Promise<EvalRun> =>
   runEval(
     selectCases(options.only),
     { runAgent: (testCase) => runCase(testCase, environment), judge },
@@ -68,11 +79,18 @@ const execute = (environment: EvalEnvironment, options: EvalOptions, judge: Judg
     },
   );
 
-const printSummary = (environment: EvalEnvironment, options: EvalOptions, run: EvalRun, summary: EvalSummary): void =>
+const printSummary = (
+  environment: EvalEnvironment,
+  options: EvalOptions,
+  run: EvalRun,
+  summary: EvalSummary,
+): void =>
   write(
     `\n${renderSummary(summary, {
       model: environment.modelRef,
-      judgeModel: environment.structureOnly ? 'reference comparison (no model)' : options.judgeModel,
+      judgeModel: environment.structureOnly
+        ? 'reference comparison (no model)'
+        : options.judgeModel,
       runs: options.runs,
       passAt: options.passAt,
       agentCostUsd: run.agentCostUsd,
@@ -82,7 +100,11 @@ const printSummary = (environment: EvalEnvironment, options: EvalOptions, run: E
     })}`,
   );
 
-const exitCodeAgainstBaseline = (options: EvalOptions, baseline: Baseline | null, run: EvalRun): number => {
+const exitCodeAgainstBaseline = (
+  options: EvalOptions,
+  baseline: Baseline | null,
+  run: EvalRun,
+): number => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
     return 0;
@@ -97,7 +119,9 @@ async function main(): Promise<number> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const environment = await createEvalEnvironment(modelRef, apiKey);
   if (!environment.structureOnly && (apiKey ?? '').trim() === '') {
-    throw new Error(`AI_MODEL_REVIEW=${modelRef} needs ANTHROPIC_API_KEY in this process environment`);
+    throw new Error(
+      `AI_MODEL_REVIEW=${modelRef} needs ANTHROPIC_API_KEY in this process environment`,
+    );
   }
   const options = parseEvalOptions(process.argv.slice(2), environment.structureOnly);
   const judge = environment.structureOnly ? new ReferenceJudge() : buildModelJudge(options, apiKey);
@@ -105,14 +129,21 @@ async function main(): Promise<number> {
   const summary = summarize(run.outcomes);
   printSummary(environment, options, run, summary);
   if (options.dumpPath !== null) {
-    await writeFile(options.dumpPath, `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`);
+    await writeFile(
+      options.dumpPath,
+      `${JSON.stringify({ summary, cases: run.outcomes }, null, JSON_INDENT)}\n`,
+    );
   }
   if (environment.structureOnly) return summary.failedCases.length > 0 ? EXIT_REGRESSION : 0;
   if (run.stoppedForCost || summary.unscorableRuns > 0) {
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(options, await readBaselineFile(options.baselinePath), run);
+  const exitCode = exitCodeAgainstBaseline(
+    options,
+    await readBaselineFile(options.baselinePath),
+    run,
+  );
   if (options.saveBaseline) {
     await writeBaselineFile(
       options.baselinePath,

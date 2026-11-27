@@ -21,7 +21,10 @@ export class ArchiveCollector {
   decide(entry: TarEntry): 'read' | 'skip' {
     const relative = stripArchiveRoot(entry.path);
     if (relative === undefined) return 'skip';
-    if (this.fileCount >= SnapshotLimits.MAX_FILES || this.unpackedBytes + entry.size > SnapshotLimits.MAX_UNPACKED_BYTES) {
+    if (
+      this.fileCount >= SnapshotLimits.MAX_FILES ||
+      this.unpackedBytes + entry.size > SnapshotLimits.MAX_UNPACKED_BYTES
+    ) {
       this.skipped.set(relative, SkipReason.LIMIT_REACHED);
       return 'skip';
     }
@@ -59,7 +62,11 @@ export class ArchiveCollector {
     }
     this.fileCount += 1;
     this.unpackedBytes += body.byteLength;
-    this.files.push({ path: normalized.path, bytes: body.byteLength, lineCount: inspection.lines.length });
+    this.files.push({
+      path: normalized.path,
+      bytes: body.byteLength,
+      lineCount: inspection.lines.length,
+    });
   }
 }
 

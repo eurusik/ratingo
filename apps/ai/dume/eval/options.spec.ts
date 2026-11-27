@@ -7,7 +7,12 @@ describe('parseEvalOptions', () => {
   });
 
   it('reads flags and a case list', () => {
-    expect(parseEvalOptions(['--runs=5', '--pass-at=3', '--only=a,b', '--max-cost-usd=2', '--dump=out.json'], false)).toMatchObject({
+    expect(
+      parseEvalOptions(
+        ['--runs=5', '--pass-at=3', '--only=a,b', '--max-cost-usd=2', '--dump=out.json'],
+        false,
+      ),
+    ).toMatchObject({
       runs: 5,
       passAt: 3,
       only: ['a', 'b'],

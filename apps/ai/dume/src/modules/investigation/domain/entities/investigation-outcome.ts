@@ -15,6 +15,7 @@ export interface InvestigationOutcome {
   answer: VerifiedAnswer | null;
   runId: string | null;
   stopReason: string | null;
+  stopDetail: string | null;
   turns: number;
   costUsd: number;
   toolCalls: Readonly<Record<string, number>>;

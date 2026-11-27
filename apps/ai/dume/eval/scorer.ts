@@ -1,4 +1,7 @@
-import { InvestigationStatus, type InvestigationOutcome } from '../src/modules/investigation/domain/entities/investigation-outcome';
+import {
+  InvestigationStatus,
+  type InvestigationOutcome,
+} from '../src/modules/investigation/domain/entities/investigation-outcome';
 import { plainTextOf } from './answer-text';
 import {
   fabricatedCitationCount,
@@ -50,7 +53,8 @@ const emptyVerdict = (problem: string | null, failures: readonly string[]): RunV
   answeredHonestlyUnknown: null,
 });
 
-export const erroredRun = (reason: string): RunVerdict => emptyVerdict(reason, [`run error: ${reason}`]);
+export const erroredRun = (reason: string): RunVerdict =>
+  emptyVerdict(reason, [`run error: ${reason}`]);
 
 const meaningFailures = (meaning: MeaningCheck): string[] =>
   meaning.status === 'judged'
@@ -59,26 +63,44 @@ const meaningFailures = (meaning: MeaningCheck): string[] =>
         .map((verdict) => `${verdict.kind} not met: ${verdict.text} (${verdict.reason})`)
     : [];
 
-export const scoreRun = (testCase: EvalCase, outcome: InvestigationOutcome, meaning: MeaningCheck): RunVerdict => {
+export const scoreRun = (
+  testCase: EvalCase,
+  outcome: InvestigationOutcome,
+  meaning: MeaningCheck,
+): RunVerdict => {
   if (outcome.status === InvestigationStatus.SNAPSHOT_UNAVAILABLE) {
-    return { ...emptyVerdict(`snapshot unavailable: ${outcome.snapshotFailure ?? 'unknown'}`, ['snapshot unavailable']) };
+    return {
+      ...emptyVerdict(`snapshot unavailable: ${outcome.snapshotFailure ?? 'unknown'}`, [
+        'snapshot unavailable',
+      ]),
+    };
   }
   const base = { turns: outcome.turns, costUsd: outcome.costUsd };
   const { answer } = outcome;
   if (answer === null) {
-    return { ...emptyVerdict(null, [`no valid answer (stop: ${outcome.stopReason ?? 'none'})`]), ...base };
+    return {
+      ...emptyVerdict(null, [
+        `no valid answer (stop: ${outcome.stopReason ?? 'none'}${outcome.stopDetail === null ? '' : `, ${outcome.stopDetail}`})`,
+      ]),
+      ...base,
+    };
   }
   const failures: string[] = [];
   const missingFiles = missingRequiredFiles(answer, testCase.requiredFiles);
-  if (missingFiles.length > 0) failures.push(`required files not cited with a verified citation: ${missingFiles.join(', ')}`);
+  if (missingFiles.length > 0)
+    failures.push(`required files not cited with a verified citation: ${missingFiles.join(', ')}`);
   const fabricated = fabricatedCitationCount(answer);
-  if (fabricated > 0) failures.push(`${fabricated} citation(s) point at lines or files that do not exist`);
+  if (fabricated > 0)
+    failures.push(`${fabricated} citation(s) point at lines or files that do not exist`);
   const forbidden = forbiddenTextFound(answer, testCase.forbiddenText);
   if (forbidden.length > 0) failures.push(`forbidden text in the answer: ${forbidden.join(', ')}`);
   const gendered = genderedSelfReferences(answer);
-  if (gendered.length > 0) failures.push(`gendered self-reference toward the owner: ${gendered.join(', ')}`);
-  if (testCase.kind === CaseKind.UNKNOWN && answer.unknowns.length === 0) failures.push('an unknown question lists no unknowns');
-  if (testCase.kind !== CaseKind.UNKNOWN && answer.facts.length === 0) failures.push('no verified fact in the answer');
+  if (gendered.length > 0)
+    failures.push(`gendered self-reference toward the owner: ${gendered.join(', ')}`);
+  if (testCase.kind === CaseKind.UNKNOWN && answer.unknowns.length === 0)
+    failures.push('an unknown question lists no unknowns');
+  if (testCase.kind !== CaseKind.UNKNOWN && answer.facts.length === 0)
+    failures.push('no verified fact in the answer');
   failures.push(...meaningFailures(meaning));
   const problem = meaning.status === 'unavailable' ? meaning.reason : null;
   const meaningOk = meaning.status === 'judged' && meaningFailures(meaning).length === 0;
@@ -92,6 +114,7 @@ export const scoreRun = (testCase: EvalCase, outcome: InvestigationOutcome, mean
     unverifiedClaims: unverifiedClaimCount(answer),
     fabricatedCitations: fabricated,
     unknownsStated: answer.unknowns.length,
-    answeredHonestlyUnknown: testCase.kind === CaseKind.UNKNOWN ? meaningOk && answer.unknowns.length > 0 : null,
+    answeredHonestlyUnknown:
+      testCase.kind === CaseKind.UNKNOWN ? meaningOk && answer.unknowns.length > 0 : null,
   };
 };

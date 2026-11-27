@@ -6,8 +6,17 @@ import { gzipSync } from 'node:zlib';
 import { Logger } from '@nestjs/common';
 import { FixedClock } from '@ratingo/ai-core';
 
-import { MAX_RETAINED_SNAPSHOTS, REF_CHECK_INTERVAL_MS, SNAPSHOT_IN_USE_MS, SkipReason, SnapshotLimits } from '../../domain/constants/snapshot.constants';
-import { SnapshotFailure, SnapshotUnavailableError } from '../../domain/errors/investigation.errors';
+import {
+  MAX_RETAINED_SNAPSHOTS,
+  REF_CHECK_INTERVAL_MS,
+  SNAPSHOT_IN_USE_MS,
+  SkipReason,
+  SnapshotLimits,
+} from '../../domain/constants/snapshot.constants';
+import {
+  SnapshotFailure,
+  SnapshotUnavailableError,
+} from '../../domain/errors/investigation.errors';
 import { buildTar, tarEntry } from '../testing/tar-builder.testing';
 import { GithubCodeSnapshotAdapter } from './github.code-snapshot-adapter';
 
@@ -28,7 +37,10 @@ const startFakeGithub = async (): Promise<FakeGithub> => {
   const state = {
     sha: SHA_ONE,
     commitStatus: 200,
-    archive: archiveOf([tarEntry({ name: 'repo-root/', flag: '5' }), tarEntry({ name: 'repo-root/readme.md', body: 'hello\nworld\n' })]),
+    archive: archiveOf([
+      tarEntry({ name: 'repo-root/', flag: '5' }),
+      tarEntry({ name: 'repo-root/readme.md', body: 'hello\nworld\n' }),
+    ]),
   };
   const requests: string[] = [];
   const headers: FakeGithub['headers'] = [];
@@ -60,7 +72,10 @@ describe('GithubCodeSnapshotAdapter', () => {
   let adapter: GithubCodeSnapshotAdapter;
 
   const adapterFor = (token?: string) =>
-    new GithubCodeSnapshotAdapter({ repository: 'owner/repo', apiUrl: github.url, ...(token === undefined ? {} : { token }) }, clock);
+    new GithubCodeSnapshotAdapter(
+      { repository: 'owner/repo', apiUrl: github.url, ...(token === undefined ? {} : { token }) },
+      clock,
+    );
 
   beforeEach(async () => {
     github = await startFakeGithub();
@@ -121,13 +136,17 @@ describe('GithubCodeSnapshotAdapter', () => {
   });
 
   it('refuses a ref that is not on the allowlist before any request', async () => {
-    await expect(adapter.resolve('feature/x')).rejects.toMatchObject({ failure: SnapshotFailure.REF_NOT_ALLOWED });
+    await expect(adapter.resolve('feature/x')).rejects.toMatchObject({
+      failure: SnapshotFailure.REF_NOT_ALLOWED,
+    });
     expect(github.requests).toEqual([]);
   });
 
   it('reports a missing ref and rate limiting as failures with a reason', async () => {
     github.state.commitStatus = 404;
-    await expect(adapter.resolve('main')).rejects.toMatchObject({ failure: SnapshotFailure.REF_NOT_FOUND });
+    await expect(adapter.resolve('main')).rejects.toMatchObject({
+      failure: SnapshotFailure.REF_NOT_FOUND,
+    });
     github.state.commitStatus = 429;
     await expect(adapter.resolve('main')).rejects.toBeInstanceOf(SnapshotUnavailableError);
   });
@@ -139,7 +158,9 @@ describe('GithubCodeSnapshotAdapter', () => {
     const withToken = adapterFor('test-token-value');
     github.state.sha = SHA_TWO;
     await withToken.resolve('development');
-    expect(github.headers.some((entry) => entry.authorization === 'Bearer test-token-value')).toBe(true);
+    expect(github.headers.some((entry) => entry.authorization === 'Bearer test-token-value')).toBe(
+      true,
+    );
     await withToken.dispose();
   });
 
@@ -153,7 +174,10 @@ describe('GithubCodeSnapshotAdapter', () => {
       tarEntry({ name: 'repo-root/link.ts', flag: '2' }),
       tarEntry({ name: 'repo-root/image.png', body: Buffer.from([1, 0, 2, 0]) }),
       tarEntry({ name: 'repo-root/big.txt', body: 'a'.repeat(SnapshotLimits.MAX_FILE_BYTES + 1) }),
-      tarEntry({ name: 'repo-root/minified.js', body: 'x'.repeat(SnapshotLimits.MAX_LINE_CHARS + 1) }),
+      tarEntry({
+        name: 'repo-root/minified.js',
+        body: 'x'.repeat(SnapshotLimits.MAX_LINE_CHARS + 1),
+      }),
     ]);
 
     const snapshot = await adapter.resolve('main');
@@ -167,13 +191,19 @@ describe('GithubCodeSnapshotAdapter', () => {
   });
 
   it('rejects a corrupt archive with a reason and leaves no snapshot behind', async () => {
-    github.state.archive = gzipSync(Buffer.from('this is not a tar archive at all, just text'.repeat(40)));
+    github.state.archive = gzipSync(
+      Buffer.from('this is not a tar archive at all, just text'.repeat(40)),
+    );
 
-    await expect(adapter.resolve('main')).rejects.toMatchObject({ failure: SnapshotFailure.ARCHIVE_INVALID });
+    await expect(adapter.resolve('main')).rejects.toMatchObject({
+      failure: SnapshotFailure.ARCHIVE_INVALID,
+    });
   });
 
   it('does not delete a snapshot that a run may still be reading, and trims once it has been idle', async () => {
-    const [sha1, sha2, sha3, sha4, sha5] = ['1', '2', '3', '4', '5'].map((digit) => digit.repeat(40)) as [string, string, string, string, string];
+    const [sha1, sha2, sha3, sha4, sha5] = ['1', '2', '3', '4', '5'].map((digit) =>
+      digit.repeat(40),
+    ) as [string, string, string, string, string];
     const resolveAt = async (ref: string, sha: string) => {
       github.state.sha = sha;
       return adapter.resolve(ref);

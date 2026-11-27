@@ -3,8 +3,7 @@ import { ALLOWED_REFS, DEFAULT_REF } from '../modules/investigation/public';
 const REF_FLAG = '--ref=';
 
 export type CliArguments =
-  | { ok: true; question: string; ref: string }
-  | { ok: false; message: string };
+  { ok: true; question: string; ref: string } | { ok: false; message: string };
 
 export const parseCliArguments = (argv: readonly string[]): CliArguments => {
   let ref: string = DEFAULT_REF;
@@ -18,5 +17,7 @@ export const parseCliArguments = (argv: readonly string[]): CliArguments => {
     return { ok: false, message: `The ref must be one of: ${ALLOWED_REFS.join(', ')}` };
   }
   const question = words.join(' ').trim();
-  return question === '' ? { ok: false, message: 'A question is required.' } : { ok: true, question, ref };
+  return question === ''
+    ? { ok: false, message: 'A question is required.' }
+    : { ok: true, question, ref };
 };

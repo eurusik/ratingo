@@ -14,7 +14,11 @@ export class SnapshotUnavailableError extends Error {
     readonly failure: SnapshotFailure,
     detail?: string,
   ) {
-    super(detail === undefined ? `Code snapshot unavailable: ${failure}` : `Code snapshot unavailable: ${failure} (${detail})`);
+    super(
+      detail === undefined
+        ? `Code snapshot unavailable: ${failure}`
+        : `Code snapshot unavailable: ${failure} (${detail})`,
+    );
     this.name = 'SnapshotUnavailableError';
   }
 }

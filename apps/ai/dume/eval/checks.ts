@@ -1,5 +1,8 @@
 import type { VerifiedAnswer } from '../src/modules/investigation/domain/entities/investigation-answer';
-import { AssumptionOrigin, CitationFailure } from '../src/modules/investigation/domain/entities/investigation-answer';
+import {
+  AssumptionOrigin,
+  CitationFailure,
+} from '../src/modules/investigation/domain/entities/investigation-answer';
 import { allTextOf } from './answer-text';
 
 const GENDERED_VERBS = [
@@ -21,10 +24,8 @@ const GENDERED_VERBS = [
   'побачила',
 ];
 
-const FIRST_PERSON_POSITION = '(?:^|[.!?:;]\\s*|(?<![\\p{L}])я\\s+)';
-
 const GENDERED_SELF_REFERENCE = new RegExp(
-  `${FIRST_PERSON_POSITION}(?:${GENDERED_VERBS.join('|')})(?![\\p{L}])`,
+  `(?<![\\p{L}])(?:${GENDERED_VERBS.join('|')})(?![\\p{L}])`,
   'iu',
 );
 
@@ -34,7 +35,10 @@ const FABRICATED = new Set<CitationFailure>([
   CitationFailure.INVALID_PATH,
 ]);
 
-export const forbiddenTextFound = (answer: VerifiedAnswer, forbidden: readonly string[]): string[] => {
+export const forbiddenTextFound = (
+  answer: VerifiedAnswer,
+  forbidden: readonly string[],
+): string[] => {
   const text = allTextOf(answer).toLowerCase();
   return forbidden.filter((entry) => text.includes(entry.toLowerCase()));
 };
@@ -50,7 +54,10 @@ export const genderedSelfReferences = (answer: VerifiedAnswer): string[] =>
 const citedPaths = (answer: VerifiedAnswer): Set<string> =>
   new Set(answer.facts.flatMap((fact) => fact.citations.map((citation) => citation.path)));
 
-export const missingRequiredFiles = (answer: VerifiedAnswer, required: readonly string[]): string[] => {
+export const missingRequiredFiles = (
+  answer: VerifiedAnswer,
+  required: readonly string[],
+): string[] => {
   const cited = citedPaths(answer);
   return required.filter((path) => !cited.has(path));
 };
