@@ -27,6 +27,10 @@ export class RowList<T = unknown> {
     return new RowList(this.rows, this.hint, (rows, omission) => outer(this.frame(rows, omission)));
   }
 
+  mapRows<U>(map: (row: T, index: number) => U): RowList<U> {
+    return new RowList(this.rows.map(map), this.hint, this.frame as unknown as RowFrame<U>);
+  }
+
   withFirst(count: number): unknown {
     const omitted = this.rows.length - count;
     return this.frame(

@@ -67,7 +67,13 @@ export { RowList, countRowsThatFit, fitRowList } from './tools/row-list';
 export type { ToolSource } from './tools/tool-source.port';
 export { TOOL_SOURCE_PORT } from './tools/tool-source.port';
 export { NativeToolSource } from './tools/sources/native.tool-source';
-export { DuplicateToolError, ToolRegistry, UnknownToolError } from './tools/tool-registry';
+export {
+  DuplicateToolError,
+  TRUNCATION_MARKER,
+  ToolRegistry,
+  UnknownToolError,
+  sanitizeToolOutput,
+} from './tools/tool-registry';
 export { redactSecrets } from './tools/redact';
 
 export type {

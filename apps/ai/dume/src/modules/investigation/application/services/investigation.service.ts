@@ -23,7 +23,7 @@ import { EvidenceLedger } from '../../domain/policies/evidence-ledger';
 import { RuntimeEvidenceLedger } from '../../domain/policies/runtime-evidence-ledger';
 import { investigationDraftSchema } from '../schemas/investigation-draft.schema';
 import { createCodeTools } from '../tools/create-code-tools';
-import { createRuntimeEvidenceDecorator } from '../tools/runtime-evidence.decorator';
+import { createRuntimeEvidenceRecorder } from '../tools/runtime-evidence.recorder';
 import { CodeBrowser } from './code-browser.service';
 
 const PROMPT_NAME = 'investigate';
@@ -103,8 +103,9 @@ export class InvestigationService {
     }
     const ledger = new EvidenceLedger();
     const runtime = new RuntimeEvidenceLedger();
+    const evidence = createRuntimeEvidenceRecorder(runtime);
     const { metricsQuery, jobFailures, logsSearch } = createOpsTools(this.ops, {
-      decorate: createRuntimeEvidenceDecorator(runtime),
+      decorate: evidence.decorate,
     });
     const result = await this.runner.run({
       trigger: request.trigger,
@@ -114,9 +115,9 @@ export class InvestigationService {
       responseSchema: investigationDraftSchema,
       tools: [
         ...createCodeTools({ browser: this.browser, snapshot, ledger }),
-        metricsQuery,
-        jobFailures,
-        logsSearch,
+        evidence.observe(metricsQuery),
+        evidence.observe(jobFailures),
+        evidence.observe(logsSearch),
       ],
       ...(request.budgetUsd === undefined ? {} : { budgetUsd: request.budgetUsd }),
       ...(request.ignoreDailyBudget === undefined

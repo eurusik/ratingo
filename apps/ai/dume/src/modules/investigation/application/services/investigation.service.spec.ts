@@ -338,6 +338,7 @@ describe('InvestigationService', () => {
           }),
         },
         new FixedClock(NOW_MS),
+        { warn: () => undefined },
       );
       return {
         ...unavailableOps(new FixedClock(NOW_MS)),
