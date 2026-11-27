@@ -143,6 +143,7 @@ packages/ai-core/
     ├── runs/
     │   ├── run.ts                      # Run aggregate
     │   ├── run.repository.ts           # RUN_REPOSITORY port
+    │   ├── create-run-repository.ts    # the one way an agent builds its repository: base store, durable spend, telemetry
     │   └── telemetry.run-repository.ts # metrics and logs only
     ├── manifest/
     │   ├── agent-manifest.schema.ts
@@ -150,8 +151,11 @@ packages/ai-core/
     │   └── agent-folder.loader.ts      # reads agent/, validates, fails fast
     ├── clock/
     │   └── clock.port.ts
+    ├── http/
+    │   └── internal-access.ts          # decideInternalAccess: the check behind every internal endpoint
     └── telemetry/
-        └── ai-metric-names.ts          # app.ai.*
+        ├── ai-metric-names.ts          # app.ai.*
+        └── agent-budget-gauge.ts       # app.ai.agent.budget.day from the manifest
 ```
 
 ### `packages/ai-ops-tools`
@@ -339,11 +343,11 @@ Guards: every path is normalized by the pure `normalizeFilePath` (no absolute pa
 
 **Tools** (read-only, in-process, no shell; output is wrapped as untrusted data and cut by whole rows with `RowList`):
 
-| Tool          | Does                                                                                                                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tool          | Does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `code_search` | Text or safe-regex search per line, optional path prefix and extensions. Returns `{path, line, text}` rows, `omitted` and a hint, and a coverage block. Regex mode refuses nested or group repeats, lookarounds, backreferences, unicode escapes and a pattern whose repeats (`*`, `+`, `?`, `{n,m}` all count) could multiply past a fixed budget, about two open-ended repeats; it checks only lines up to 300 characters, and the matching runs in a worker thread that is killed after 3 seconds per file, so a pattern that backtracks badly stops the search (`stoppedForTime`) instead of the process |
-| `code_read`   | Numbered whole lines of one file, 150 by default, 400 at most, cut by whole lines to fit the output budget with `nextStartLine`; a missing or skipped path is an error that says why and lists files with the same name                  |
-| `code_list`   | One directory level: subdirectories with file counts, then files with line counts                                                                                                                                                     |
+| `code_read`   | Numbered whole lines of one file, 150 by default, 400 at most, cut by whole lines to fit the output budget with `nextStartLine`; a missing or skipped path is an error that says why and lists files with the same name                                                                                                                                                                                                                                                                                                                                                                                      |
+| `code_list`   | One directory level: subdirectories with file counts, then files with line counts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Each description states what the tool covers (only the tracked text files of one commit, no history, nothing generated or ignored), what it does not, and that an empty result does not prove the code lacks the behaviour. The handlers record in an `EvidenceLedger` exactly the lines the model was shown (using `countRowsThatFit`, so the ledger and the reply never disagree).
 
@@ -361,7 +365,7 @@ Each description states what the tool covers (only the tracked text files of one
 
 **CLI.** `npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]` prints the answer, the facts with their citations, assumptions and unverified claims, unknowns, `support`, the commit, turns and cost. The exit code is 1 when there is no answer.
 
-**What was left in the agents.** `AgentRunner`, the run repository factory, `NestRunLogger` and the OpenTelemetry bootstrap are now written three times (Veronica, Happy, DUM-E). Step 2 did not touch them, so they are still the first candidates for ai-core.
+**What was left in the agents.** `AgentRunner`, `NestRunLogger` and the OpenTelemetry bootstrap are written three times (Veronica, Happy, DUM-E) and are still the first candidates for ai-core. The run repository is no longer one of them: every agent builds it with `createRunRepository`.
 
 The watchdog reads Happy's and DUM-E's spend and failed runs from Prometheus (see Watchdog); the metrics are the only cross-service data.
 
@@ -369,16 +373,19 @@ The watchdog reads Happy's and DUM-E's spend and failed runs from Prometheus (se
 
 `src/server.ts` runs the same `InvestigationService` behind an internal HTTP API; the CLI is unchanged. The service side lives in `modules/investigation-requests`.
 
-| Request                                  | Result                                                                                                                                                                                           |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `POST /internal/investigations`          | body `{requestId, question, ref?}`; `accepted` (`created` true or false, with the request), `rejected` with a reason (HTTP 429), `conflict` (409: the id was used for another question), 400 for a bad body |
+| Request                                   | Result                                                                                                                                                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /internal/investigations`           | body `{requestId, question, ref?}`; `accepted` (`created` true or false, with the request), `rejected` with a reason (HTTP 429), `conflict` (409: the id was used for another question), 400 for a bad body                                                              |
 | `GET /internal/investigations/:requestId` | `not_found`, or `found` with the request: `state`, `reason` for a failure, times, and for an answer the verified result (answer, facts with citations and runtime rows, assumptions, unknowns, `support`, commit, repository, turns, cost). The question is not returned |
-| `GET /health`                            | `{status: "ok"}`, no token                                                                                                                                                                       |
+| `GET /health`                             | `{status: "ok"}`, no token                                                                                                                                                                                                                                               |
 
 - **Auth** is the shared `decideInternalAccess` of ai-core: `Authorization: Bearer <DUME_SERVICE_TOKEN>` compared in constant time on hashes; no token configured, or a public proxy header on the request, answers 404; a wrong token is 401. There is no public domain.
 - **Input:** `requestId` matches `^[A-Za-z0-9_-]{8,64}$`; `question` is 1 to 1000 characters with no control characters except newline and tab; `ref` is `main` or `development` (default `main`); unknown fields are refused; the body is limited to 8 KB.
 - **Idempotency:** the record is created with `SET NX` under the request id. The same id with the same question and ref returns the stored request and adds no job and no count; the same id with another question is a conflict.
 - **Queue:** BullMQ queue `investigations` with its own prefix `ai-dume`, one worker with concurrency 1, `attempts: 1` (a paid run is never repeated silently) and `maxStalledCount: 0` (a job whose process was killed fails instead of running again). State keys are `ai-dume-state:*`, outside any queue namespace.
+- **Reading never writes.** `GET` computes the `interrupted` view of an overdue request but does not store it, and the worker finishes a request with a compare-and-set script that never replaces an `answered` record, so a late read cannot destroy an answer. An overdue `running` request is one older than the run timeout plus 5 minutes (the snapshot download runs before the loop timeout starts); a `queued` one is older than the longest possible wait.
+- **Replays and saves:** a replay of a `queued` request, or of one that failed with `internal_error` before it started, queues it again (the job id keeps that idempotent). The final save is retried three times with backoff before the job fails, and its failure is logged with the run id and the cost. Stored records are validated (version and fields) when read; the record keeps the run id.
+- **Shutdown:** on SIGTERM the service closes the worker (it waits for the running investigation), then the queue, then the app (tools and Redis), then the telemetry SDK, then flushes the logs and exits 0 (`src/shutdown.ts`). `railway.json` sets `drainingSeconds` to 300, longer than the run timeout, so Railway waits for it. The BullMQ lock and stalled interval are 5 minutes.
 - **Result store:** Redis, `ai-dume-state:investigation:<requestId>`, a JSON record kept for 3 days. States: `queued`, `running`, `answered`, `failed`; a failure carries a reason: `budget_stop`, `timeout`, `model_error`, `no_valid_answer`, `code_unavailable`, `day_budget`, `interrupted`, `internal_error`. A `running` record that is older than the run timeout plus a minute, or a `queued` one older than the longest possible wait, is read as `failed: interrupted`, so a killed process never leaves a request in flight forever.
 - **Limits:** at most 2 requests waiting behind the running one (`queue_full`), `DUME_MAX_INVESTIGATIONS_PER_DAY` accepted requests per UTC day, default 10 (`daily_count_cap`), and the day budget from `agent.yaml` (`day_budget`), checked when a request is accepted and again before it starts. A repeated request is never counted twice. The caller gets `rejected` with the reason.
 - **Env** (`serviceEnvSchema`, besides the variables above): `PORT` (3006), `DUME_SERVICE_TOKEN`, `DUME_MAX_INVESTIGATIONS_PER_DAY`; `REDIS_URL` is required. In production the model key, the token and a model that is not a stub are required too.
@@ -389,11 +396,12 @@ The watchdog reads Happy's and DUM-E's spend and failed runs from Prometheus (se
 
 Veronica hands a "why" question that needs the code and the data together to DUM-E and relays the verified answer as its own message; the owner keeps one entry point. Veronica's side lives in `modules/chat`.
 
-- **Starting.** `ask_dume` (a model decision) or `/why <question>` and «DUM-E, …» (plain code, no model). The tool description carries the rule: use it only for a "why" or "how does it work" question that other tools cannot settle, never for state, counts, lists, schedules, recent errors or what Happy said, at most once per message. It returns at once with a status (`started`, `already_started`, `already_running`, `rejected`, `unavailable`) and an `ownerNotice` written by code, which the model repeats in one line without guessing the cause.
+- **Starting.** `ask_dume` (a model decision) or `/why <question>` and «DUM-E, …» (plain code, no model). The tool description carries the rule: use it only for a "why" or "how does it work" question that other tools cannot settle, never for state, counts, lists, schedules, recent errors or what Happy said, at most once per message. It returns at once with a status (`started`, `already_started`, `already_running`, `rejected`, `unavailable`, `unconfirmed`, `untracked`) and an `ownerNotice` written by code, which the model repeats in one line without guessing the cause.
 - **No duplicates.** The request id is `tg<update_id>`, so a Telegram retry or a retried chat job reaches DUM-E as the same request. A chat has one investigation in flight (`ai-veronica:dume-inflight:<chatId>`, released on delivery); a second question meanwhile gets `already_running`.
+- **Never silent.** The delivery claim has three states (`claimed`, `sending`, `sent`): while a send is in progress a retry waits and tries again after the claim's 2 minute lifetime, the number of messages already sent is stored so a retry resumes after them, and only `sent` is a duplicate. When Telegram refuses the formatted message for good, the same text is sent as plain text, and if that is refused too, one short line says the answer could not be delivered. When a follow-up job fails for the last time, the owner gets that line and the chat is freed. A submit that fails in a way that may have reached DUM-E (timeout, 5xx, unexpected reply) keeps the chat locked, schedules the follow-up anyway and tells the owner the start is unconfirmed; a follow-up that cannot be scheduled after three tries is reported as untracked.
 - **Answering.** A delayed `dume-follow-up` job in the `chat` queue polls DUM-E every 30 seconds until 15 minutes after the request was created, then sends the result: the verified answer, or one short line for a failure, a limit, an interrupted run, a missing request or the deadline. The message is built by code from the stored result, never by the model. Delivery is claimed in Redis (`ai-veronica:dume-delivered:<requestId>`): held 45 seconds while sending, three days once sent, so a retried job cannot send twice and a crash during sending is retried.
 - **Format.** The short answer, then the verified facts, each with its code citations as GitHub links to the exact lines of the commit (built by code from the repository, the 40-character commit and a strictly checked path; any citation that cannot be linked is plain text) and the stored summary of each runtime row, then the assumptions with the reason they are unverified, the unknowns, and a footer with the support level, commit, turns and cost. Model text is stripped of links and escaped. At most three messages of 4000 characters, packed by whole blocks; when facts do not fit, facts are dropped first and the assumptions, unknowns and footer stay.
-- **Sanitizer.** The Telegram HTML sanitizer drops every link except one whose address is exactly a GitHub `blob/<40 hex>/<path>#L<n>[-L<m>]` URL.
+- **Sanitizer.** The Telegram HTML sanitizer drops every link except one whose address is exactly a GitHub `blob/<40 hex>/<path>#L<n>[-L<m>]` URL of the configured repository; paths are percent-encoded by code. DUM-E's client reads values it does not know (a new state, reason, support level or rejection reason) as safe ones, so a newer DUM-E cannot break polling.
 - **Failure of the service itself.** DUM-E not configured, down, or answering with an unexpected shape makes the tool answer `unavailable` with the reason; the model tells the owner that the investigation was not started. A client never retries (10 second timeout); polling is the retry.
 - **Env (Veronica):** `DUME_INTERNAL_URL` (`http://dume.railway.internal:<port>`) and `DUME_SERVICE_TOKEN`, both optional.
 
@@ -436,22 +444,22 @@ They reference each other only by id. Happy keeps its review state on GitHub and
 
 ### Ports
 
-| Port                      | Owner             | First adapter                                       |
-| ------------------------- | ----------------- | --------------------------------------------------- |
-| `MODEL_PORT`              | core              | Stub, Anthropic                                     |
-| `TOOL_SOURCE_PORT`        | core              | Native tools, MCP gateway, skills                   |
-| `MCP_TRANSPORT_PORT`      | core              | stdio (official SDK client, explicit env)           |
-| `MCP_TELEMETRY_PORT`      | core              | OpenTelemetry `app.ai.mcp.*`                        |
-| `RUN_REPOSITORY`          | core              | Postgres (`ai` schema); telemetry-only for Happy    |
-| `CLOCK_PORT`              | core              | System clock; fixed clock in tests                  |
-| `METRICS_PORT`            | Veronica `digest` | Grafana Cloud Prometheus (`ai-ops-tools`)             |
-| `ANALYTICS_PORT`          | Veronica `digest` | GA4 Data API                                        |
-| `PRODUCT_STATS_PORT`      | Veronica `digest` | Postgres `reporting` views                          |
-| `LOGS_PORT`               | Veronica `chat`   | Grafana Cloud Loki `query_range` (`ai-ops-tools`)             |
-| `NOTIFIER_PORT`           | Veronica `notify` | Telegram                                            |
-| `CONVERSATION_REPOSITORY` | Veronica `chat`   | Redis                                               |
-| `AGENT_GATEWAY_PORT`      | Veronica `chat`   | HTTP to other agent services                        |
-| `CODE_HOST_PORT`          | Happy `review`    | GitHub App: diff, files at a ref, review, check run |
+| Port                      | Owner                 | First adapter                                                |
+| ------------------------- | --------------------- | ------------------------------------------------------------ |
+| `MODEL_PORT`              | core                  | Stub, Anthropic                                              |
+| `TOOL_SOURCE_PORT`        | core                  | Native tools, MCP gateway, skills                            |
+| `MCP_TRANSPORT_PORT`      | core                  | stdio (official SDK client, explicit env)                    |
+| `MCP_TELEMETRY_PORT`      | core                  | OpenTelemetry `app.ai.mcp.*`                                 |
+| `RUN_REPOSITORY`          | core                  | Postgres (`ai` schema); telemetry-only for Happy             |
+| `CLOCK_PORT`              | core                  | System clock; fixed clock in tests                           |
+| `METRICS_PORT`            | Veronica `digest`     | Grafana Cloud Prometheus (`ai-ops-tools`)                    |
+| `ANALYTICS_PORT`          | Veronica `digest`     | GA4 Data API                                                 |
+| `PRODUCT_STATS_PORT`      | Veronica `digest`     | Postgres `reporting` views                                   |
+| `LOGS_PORT`               | Veronica `chat`       | Grafana Cloud Loki `query_range` (`ai-ops-tools`)            |
+| `NOTIFIER_PORT`           | Veronica `notify`     | Telegram                                                     |
+| `CONVERSATION_REPOSITORY` | Veronica `chat`       | Redis                                                        |
+| `AGENT_GATEWAY_PORT`      | Veronica `chat`       | HTTP to other agent services                                 |
+| `CODE_HOST_PORT`          | Happy `review`        | GitHub App: diff, files at a ref, review, check run          |
 | `CODE_SNAPSHOT_PORT`      | DUM-E `investigation` | GitHub tarball of one commit; a local directory for the eval |
 
 Investigation tools wrap the digest ports; they never open their own clients.
@@ -727,7 +735,7 @@ Routing table (first match wins, all plain code):
 | «Хеппі, глянь 470», a PR link of the configured repository                                                                              | Happy, that PR                                                                                                                                                                              |
 | a review verb and a PR word with a number: «а глянь 469 пр», «переглянь PR 470», «рев'ю #470», «check pr 470», «шо там по мру 469»      | Happy, that PR                                                                                                                                                                              |
 | a review request without a number: «зроби ревью», «проревʼюй», «глянь шо там по мру», «глянь мр»                                        | Happy, pick the PR: one open PR is taken and named («Беру PR №471 «…»»), several open PRs are listed (five at most, with author and age) and the owner is asked for a number, none: says so |
-| «Veronica, …», a free-form question («що Хеппі сказав про 470?», «скільки PR злили за тиждень?», «глянь по коду де може бути проблема») | investigation agent; it can read Happy's result with `ask_happy` and hand a deep "why" question about the code to DUM-E with `ask_dume`                                                                                  |
+| «Veronica, …», a free-form question («що Хеппі сказав про 470?», «скільки PR злили за тиждень?», «глянь по коду де може бути проблема») | investigation agent; it can read Happy's result with `ask_happy` and hand a deep "why" question about the code to DUM-E with `ask_dume`                                                     |
 
 Verbs: глянь, переглянь, подивись, перевір, рев'ю / ревʼю / ревью / ревю, review, check, «шо/що там по», «зроби ревью», «проревʼюй». PR words: PR, пр, мр (мру, мрку), MR, пулл, пулреквест, пул-реквест, pull request, merge request. A verb with only a number («глянь 469») or only a PR word is not enough, and a paid review starts only once the target is unambiguous. A bare number in answer to the list is not recognised; the reply suggests «глянь #471».
 
@@ -844,11 +852,11 @@ Model: `review` alias. A cheap first pass on `fast` can mark risky files so the 
 ### Watchdog (`modules/watchdog`)
 
 - A BullMQ scheduler `watchdog-tick` (queue `watchdog`, prefix `ai-veronica`) fires every 5 minutes. A scheduler produces one job per interval bucket, so a restart or a second replica never doubles a tick.
-- Pure domain rules evaluate five alert keys: `happy_down` (`GET {HAPPY_INTERNAL_URL}/health` failed on 2 consecutive checks; skipped when the URL is unset), `digest_missing` (no `sent` row in `ai.digest_deliveries` for today's Kyiv date at or after 09:30 Europe/Kyiv, by the injected clock), `budget_agent` and `budget_chat` (spend over the rolling day window ≥ 80% of the agent's `perDayUsd` and of the chat's daily cap, read through the same `RunRepository.spentUsd` the budgets use) and `failed_runs` (≥ 3 `failed` runs of this agent in the last hour).
+- Pure domain rules evaluate five alert keys for Veronica herself (nine in all with the four below): `happy_down` (`GET {HAPPY_INTERNAL_URL}/health` failed on 2 consecutive checks; skipped when the URL is unset), `digest_missing` (no `sent` row in `ai.digest_deliveries` for today's Kyiv date at or after 09:30 Europe/Kyiv, by the injected clock), `budget_agent` and `budget_chat` (spend over the rolling day window ≥ 80% of the agent's `perDayUsd` and of the chat's daily cap, read through the same `RunRepository.spentUsd` the budgets use) and `failed_runs` (≥ 3 `failed` runs of this agent in the last hour).
 - Alerts fire on change only. The active keys live in Redis (`ai-veronica:watchdog-state:active`, 7 days TTL, refreshed every tick); a key that was not active and fails now sends one alert, a key that was active and is healthy now sends one «✅ відновилось». A check that cannot run (database or Redis error) is logged and leaves that key's state as it was, so an outage of the probe never counts as recovery. If Telegram fails, state is not saved and the next tick retries.
 - Redis keys never live under a BullMQ queue namespace `<prefix>:<queue>:` (for example `ai-veronica:watchdog:`): BullMQ owns every key there. Watchdog state uses `ai-veronica:watchdog-state:*`, and a spec checks every key the app builds against all its queues.
 - Before 09:30 a missing digest is «not evaluated», so an alert that was raised yesterday stays active across midnight until today's digest is sent.
-- **Happy and DUM-E from Prometheus.** Four more alert keys, `budget_happy`, `budget_dume`, `failed_runs_happy` and `failed_runs_dume`, use the same Redis state and the same fire-on-change and recovery logic. One read per tick asks Prometheus for `sum by (agent) (increase(app_ai_run_cost_USD_sum[24h]))`, `sum by (agent) (increase(app_ai_runs_total{outcome=~"model_error|unexpected_error"}[1h]))` and the daily budget each agent publishes as `app_ai_agent_budget_day_USD` from its own manifest, so no budget is written twice. Spend at or above 80% of that budget, or 3 failed runs in the last hour, alerts. A Prometheus error, or an agent that spent money but publishes no budget, leaves that key's state as it was and is logged with the reason; an agent with no series counts as having spent nothing.
+- **Happy and DUM-E from Prometheus.** Four more alert keys, `budget_happy`, `budget_dume`, `failed_runs_happy` and `failed_runs_dume`, use the same Redis state and the same fire-on-change and recovery logic. One read per tick asks Prometheus for `sum by (agent) (increase(app_ai_run_cost_USD_sum[24h]))`, `sum by (agent) (increase(app_ai_runs_total{outcome=~"model_error|unexpected_error"}[1h]))` and the daily budget each agent publishes as `app_ai_agent_budget_day_USD` (read with `last_over_time` over a day) from its own manifest, so no budget is written twice. Spend at or above 80% of that budget, or 3 failed runs in the last hour, alerts. The spend window is rolling (24 hours) while DUM-E enforces its budget per UTC day, so the alert is an early warning and not the enforcement point. The alert texts name the Railway service (`happy`, `dume`). A Prometheus error, or an agent that spent money but publishes no budget, leaves that key's state as it was and is logged with the reason; an agent with no series counts as having spent nothing.
 - **Known gaps.** A run killed before it ends records nothing in `app_ai_*` (its spend is still in Redis and its request is `failed: interrupted`). `increase()` extrapolates and misses the first sample of a new series, so thresholds are approximate, which is why failed runs are rounded. Veronica's own budget and failed-run checks stay on her Postgres table, so nothing alerts twice.
 
 ---
