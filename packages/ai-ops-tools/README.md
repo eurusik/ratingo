@@ -31,4 +31,5 @@ The tests of the database tools run against a real Postgres when `EXPLORER_TEST_
 - A port that is not configured is an `Unconfigured*` adapter. Its tool stays offered and answers with an error that names the reason (`logs_search is unavailable: not_configured`), so a missing key is an answer, not a crash.
 - Every failure of a port is an `...UnavailableError` with a reason; the log executor also writes the reason to the logger it was given.
 - An empty result says what it does and does not cover (`nothingRecordedNote`, the descriptions' sentences about empty lists).
+- `db_schema` and `db_query` have short descriptions on purpose (every chat turn carries them); the SQL guidance (exact counts, UTC and the Kyiv day, soft deletes, cut values, untrusted row text) is the `queryNotes` field, given once per run with the first `db_schema` result or, without it, the first `db_query` result.
 - Veronica's tool definitions and outputs are pinned by `ops-tools.golden.spec.ts` in her chat module. Change a description or an output only together with that snapshot, on purpose.

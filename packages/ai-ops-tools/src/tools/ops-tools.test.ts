@@ -1,10 +1,12 @@
-import type { ToolContext } from '@ratingo/ai-core';
+import { RowList, type ToolContext } from '@ratingo/ai-core';
 
 import {
   DB_QUERY_TIMEOUT_LIMIT_STATUS,
   DB_QUERY_TIMEOUTS_PER_RUN,
   QueryRefusal,
 } from '../database/database.constants';
+
+import { QUERY_NOTES } from '../database/query-notes';
 
 import { createOpsTools, type OpsExecutors } from './ops-tools';
 
@@ -65,5 +67,61 @@ describe('db_query timeouts in one run', () => {
     await second.ask();
 
     expect(second.callsToDatabase()).toBe(1);
+  });
+});
+
+describe('query notes', () => {
+  const toolsAnswering = () => {
+    const executors = {
+      dbSchema: async () => ({ tables: [] }),
+      dbQuery: async () => RowList.of([{ n: 1 }], 'narrow it', (rows) => ({ rows })),
+    } as unknown as OpsExecutors;
+    return createOpsTools(executors);
+  };
+
+  it('gives the notes once, with the first db_schema result, and not with the next db_query', async () => {
+    const { dbSchema, dbQuery } = toolsAnswering();
+
+    const schema = await dbSchema.run({}, CONTEXT);
+    const query = await dbQuery.run({ sql: 'select 1 as n' }, CONTEXT);
+
+    expect(schema).toContain(QUERY_NOTES.slice(0, 40));
+    expect(query).not.toContain('queryNotes');
+  });
+
+  it('gives the notes with the first db_query result when db_schema was not called', async () => {
+    const { dbQuery } = toolsAnswering();
+
+    const first = await dbQuery.run({ sql: 'select 1 as n' }, CONTEXT);
+    const second = await dbQuery.run({ sql: 'select 1 as n' }, CONTEXT);
+
+    expect(first).toContain('queryNotes');
+    expect(first).toContain('count(*)::int');
+    expect(second).not.toContain('queryNotes');
+  });
+
+  it('keeps every part of the guidance that left the descriptions', () => {
+    for (const fragment of [
+      'count(*)::int',
+      'lose precision',
+      'its own name',
+      'cut',
+      'Europe/Kyiv',
+      'soft-deleted',
+      'not that nothing exists',
+      'time limit',
+      'untrusted',
+      'anonymous id',
+    ]) {
+      expect(QUERY_NOTES).toContain(fragment);
+    }
+  });
+
+  it('starts again with the next set of tools, which is the next run', async () => {
+    await toolsAnswering().dbSchema.run({}, CONTEXT);
+
+    const next = await toolsAnswering().dbSchema.run({}, CONTEXT);
+
+    expect(next).toContain('queryNotes');
   });
 });

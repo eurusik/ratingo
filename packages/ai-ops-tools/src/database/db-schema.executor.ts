@@ -18,7 +18,7 @@ const TOOL = 'db_schema';
 const TABLE_FILTER = /^[A-Za-z0-9_]+$/;
 
 const CAVEATS =
-  'Row counts are planner estimates, not exact counts. A column that exists but is private is not listed; privateColumns only counts them. privateTables are whole tables the database does not let you read: say that data is private, never that it does not exist. timestamp columns without time zone hold UTC. Rows with deleted_at or is_deleted set are soft-deleted and still present.';
+  'Row counts are planner estimates, not exact counts. A column that exists but is private is not listed; privateColumns only counts them. privateTables are whole tables the database does not let you read: say that data is private, never that it does not exist.';
 
 const compactColumn = (column: SchemaColumn): string =>
   column.enumValues === undefined ? column.name : `${column.name}{${column.enumValues.join('|')}}`;
