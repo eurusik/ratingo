@@ -1530,7 +1530,8 @@ export default [
             {
               target: './apps/ai/veronica/src/**/*',
               from: './apps/ai/!(veronica)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1630,7 +1631,8 @@ export default [
             {
               target: './apps/ai/happy/src/**/*',
               from: './apps/ai/!(happy)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1744,7 +1746,8 @@ export default [
             {
               target: './apps/ai/dume/src/**/*',
               from: './apps/ai/!(dume)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
@@ -1825,7 +1828,8 @@ export default [
             {
               target: './apps/ai/dume/eval/**/*',
               from: './apps/ai/!(dume)/**/*',
-              message: 'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
+              message:
+                'Agents never import each other: share through @ratingo/ai-core or @ratingo/ai-ops-tools.',
             },
           ],
         },
