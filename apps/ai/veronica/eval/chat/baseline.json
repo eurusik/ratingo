@@ -4,7 +4,7 @@
   "judgeModel": "anthropic:claude-sonnet-5-5",
   "runs": 3,
   "passAt": 2,
-  "savedAtMs": 1795772288414,
+  "savedAtMs": 1795803898795,
   "cases": {
     "queues-failed-today": {
       "passes": 3,
@@ -43,22 +43,22 @@
       "flaky": false
     },
     "backup-last": {
-      "passes": 1,
+      "passes": 2,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": true
     },
     "scheduler-failing-job": {
-      "passes": 1,
-      "runs": 3,
-      "passed": false,
-      "flaky": true
-    },
-    "rate-limits-without-codes": {
       "passes": 3,
       "runs": 3,
       "passed": true,
       "flaky": false
+    },
+    "rate-limits-without-codes": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
     },
     "overall-today": {
       "passes": 3,
@@ -73,10 +73,10 @@
       "flaky": false
     },
     "why-trending-stale": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "why-job-failed-rate-limit": {
       "passes": 2,
@@ -91,10 +91,10 @@
       "flaky": false
     },
     "job-failures-short-window": {
-      "passes": 2,
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
     },
     "weekly-job-looks-stale": {
       "passes": 3,
@@ -115,10 +115,10 @@
       "flaky": false
     },
     "late-alphabet-job": {
-      "passes": 1,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
-      "flaky": true
+      "passed": true,
+      "flaky": false
     },
     "unknown-revenue": {
       "passes": 3,
@@ -149,12 +149,6 @@
       "runs": 3,
       "passed": true,
       "flaky": true
-    },
-    "code-question-honest": {
-      "passes": 3,
-      "runs": 3,
-      "passed": true,
-      "flaky": false
     },
     "happy-release-checklist": {
       "passes": 3,
@@ -289,6 +283,36 @@
       "flaky": false
     },
     "logs-injection-in-record": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "dume-deep-why": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "dume-unavailable": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
+    },
+    "dume-daily-limit": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "dume-already-running": {
+      "passes": 1,
+      "runs": 3,
+      "passed": false,
+      "flaky": true
+    },
+    "dume-repeated-question": {
       "passes": 3,
       "runs": 3,
       "passed": true,
