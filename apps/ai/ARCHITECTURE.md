@@ -2,7 +2,7 @@
 
 > Status: **Proposed** · Date: 2026-11-21
 >
-> A small agent platform. One shared core package, one shared tools package and one service per agent. The first agents are **Veronica** (daily project digest and Telegram chat) and **Happy** (pull request code review). **DUM-E** (read-only investigation of "why" questions) is being built in four steps; steps 1 and 2 (reading code, then logs, failed jobs and metrics) are done.
+> A small agent platform. One shared core package and one service per agent. The first agents are **Veronica** (daily project digest and Telegram chat) and **Happy** (pull request code review). **DUM-E** (read-only investigation of "why" questions) is being built in four steps; step 1, reading code, is done.
 
 ---
 
@@ -58,7 +58,6 @@ A production multi-agent assistant was studied before writing this: one service 
 ```
 packages/
   ai-core/                @ratingo/ai-core   platform library, no agent knowledge
-  ai-ops-tools/           @ratingo/ai-ops-tools   read-only logs, failed jobs and metrics tools shared by Veronica and DUM-E; knows Ratingo
 apps/ai/
   veronica/               @ratingo/ai-veronica   digest, investigations, Telegram chat and router
   happy/                  @ratingo/ai-happy      GitHub PR review
@@ -66,7 +65,7 @@ apps/ai/
 ```
 
 - **Each agent is its own Railway service** with its own environment. A process only holds the credentials of the agent it runs. Happy reads untrusted PR content, so it must not share a process with Grafana, GA4 or database credentials.
-- **Agents import only `@ratingo/ai-core`, `@ratingo/ai-ops-tools` and `@ratingo/node-telemetry`**, never each other. When the chat router in Veronica needs Happy, it calls Happy's service over the Railway private network with a service token; Happy runs the request with Happy's own credentials, model and budget.
+- **Agents import only `@ratingo/ai-core`**, never each other. When the chat router in Veronica needs Happy, it calls Happy's service over the Railway private network with a service token; Happy runs the request with Happy's own credentials, model and budget.
 - `@ratingo/ai-core` is built like `@ratingo/node-telemetry`: tooling reads `src`, compiled apps load `dist`, and each agent Dockerfile copies it.
 
 ### What `@ratingo/ai-core` contains
@@ -153,28 +152,6 @@ packages/ai-core/
     └── telemetry/
         └── ai-metric-names.ts          # app.ai.*
 ```
-
-### `packages/ai-ops-tools`
-
-Framework-free like `ai-core` (no Nest, no `process.env`, no `Date`; connections, a `ClockPort` and an optional logger come from the agent) but it knows Ratingo: the service names in Loki, the metric names and PromQL templates, the `reporting.daily_job_failures` view. That is why it is not part of the core, which stays generic. It was written inside Veronica and moved here when DUM-E became the second agent that needs the same tools (the placement rule below).
-
-```
-packages/ai-ops-tools/src/
-├── logs/           LogQL builder, record parsing and grouping, Loki adapter, LogsSearchExecutor, input schema
-├── job-failures/   port, Postgres adapter and reader connection, JobFailuresExecutor, input schema
-├── metrics/        port, Prometheus adapter, PromQL builders, metric templates, schedule wording, MetricsQueryExecutor
-├── shared/         window and name parsing, InvalidOpsInputError, the logger port
-├── time/           Kyiv time and Kyiv day
-├── tools/          createOpsTools(executors, { decorate }): the three tools, descriptions and output caps
-└── testing/        simulators of the Loki, Prometheus and failed-jobs sources for evals
-```
-
-- `createOpsTools` returns the three `Tool`s. Tool names, descriptions, input schemas and output caps live only here; an agent cannot reword them. `decorate` lets an agent change an executor's result before it is serialised (DUM-E adds evidence refs); Veronica passes none.
-- A port that is not configured is an `Unconfigured*` adapter: the tool stays offered and answers with the reason (`logs_search is unavailable: not_configured`). A failed call is a tool result, never an exception, and the log search writes the reason to the logger it was given.
-- The simulators run the real adapters over a fake `fetch` or port, so an eval fixture is produced by the same code as production: the Loki simulator parses the LogQL that `buildLogQuery` produces and refuses any other shape.
-- A capability folder never imports another one (`logs`, `job-failures`, `metrics`); `shared` and `time` are the bottom; `tools` and `testing` sit on top. ESLint enforces it.
-- Veronica's definitions and outputs are pinned by `ops-tools.golden.spec.ts` (44 snapshots: the seven definitions in order, every output shape, the exact error and unavailable texts, the system card text). The move into the package left that snapshot untouched.
-- The same names are env variables of each agent that runs the tools: `GRAFANA_LOKI_URL`/`USER`/`TOKEN`, `AI_READER_DATABASE_URL`, `GRAFANA_PROM_URL`/`TOKEN`. All are optional. Give each agent its own read-only tokens; a process holds only the credentials of the agent it runs.
 
 ### `apps/ai/veronica`
 
@@ -291,13 +268,13 @@ apps/ai/happy/
 
 ### `apps/ai/dume`
 
-DUM-E answers "why does the system behave like this" from the repository's code and read-only runtime data, in four steps: (1) code reading with verified citations and an eval, run from the command line only (done); (2) the logs, job failures and metrics tools Veronica already had, now shared through `@ratingo/ai-ops-tools` (done); (3) Veronica delegates to DUM-E in the background and relays the answer; (4) read-only catalog data. It is its own service (not a Veronica module), imports only `@ratingo/ai-core`, `@ratingo/ai-ops-tools` and `@ratingo/node-telemetry`, and has a Dockerfile (tini, then `node`) that CI builds and starts (`dume-image`), but no Railway service and no HTTP endpoint yet.
+DUM-E answers "why does the system behave like this" from the repository's code, in four steps: (1) code reading with verified citations and an eval, run from the command line only (done); (2) logs, job failures and metrics tools moved to the core; (3) Veronica delegates to DUM-E in the background and relays the answer; (4) read-only catalog data. It is its own service (not a Veronica module), imports only `@ratingo/ai-core` and `@ratingo/node-telemetry`, and has a Dockerfile (tini, then `node`) that CI builds and starts (`dume-image`), but no Railway service and no HTTP endpoint yet.
 
 ```
 apps/ai/dume/
 ├── package.json · tsconfig*.json · jest.config.js · Dockerfile · .env.example
 ├── agent/
-│   ├── agent.yaml                      # alias review, $0.30 per run, $1.50 per day, 20 turns, six tools
+│   ├── agent.yaml                      # alias review, $0.30 per run, $1.50 per day, 20 turns
 │   └── prompts/                        # investigate.md (role, how to investigate, answer contract,
 │                                       # untrusted rule) and final-answer.md (the last-turn instruction)
 ├── fixtures/retry-policy.fixture.ts    # a file with a planted instruction, for the eval
@@ -307,7 +284,7 @@ apps/ai/dume/
     ├── cli/cli-arguments.ts
     ├── config/                         # env schema (zod), aliases, prices
     ├── telemetry/                      # structured logger, OpenTelemetry metrics
-    ├── core/                           # Nest wiring for ai-core and ai-ops-tools (OpsRuntime), AgentRunner, stub model script
+    ├── core/                           # Nest wiring for ai-core, AgentRunner, stub model script
     └── modules/investigation/
         ├── domain/
         │   ├── constants/              # snapshot limits, search/read/list limits, citation limits
@@ -318,7 +295,7 @@ apps/ai/dume/
         │                               # directory listing, evidence ledger, answer verifier
         ├── application/
         │   ├── services/               # CodeBrowser, InvestigationService
-        │   ├── tools/create-code-tools.ts · runtime-evidence.decorator.ts
+        │   ├── tools/create-code-tools.ts
         │   └── schemas/investigation-draft.schema.ts
         ├── infrastructure/
         │   ├── adapters/               # GitHub tarball, local directory, directory snapshot
@@ -335,48 +312,43 @@ Guards: every path is normalized by the pure `normalizeFilePath` (no absolute pa
 
 **Tools** (read-only, in-process, no shell; output is wrapped as untrusted data and cut by whole rows with `RowList`):
 
-| Tool          | Does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tool          | Does                                                                                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `code_search` | Text or safe-regex search per line, optional path prefix and extensions. Returns `{path, line, text}` rows, `omitted` and a hint, and a coverage block. Regex mode refuses nested or group repeats, lookarounds, backreferences, unicode escapes and a pattern whose repeats (`*`, `+`, `?`, `{n,m}` all count) could multiply past a fixed budget, about two open-ended repeats; it checks only lines up to 300 characters, and the matching runs in a worker thread that is killed after 3 seconds per file, so a pattern that backtracks badly stops the search (`stoppedForTime`) instead of the process |
-| `code_read`   | Numbered whole lines of one file, 150 by default, 400 at most, cut by whole lines to fit the output budget with `nextStartLine`; a missing or skipped path is an error that says why and lists files with the same name                                                                                                                                                                                                                                                                                                                                                                                      |
-| `code_list`   | One directory level: subdirectories with file counts, then files with line counts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `code_read`   | Numbered whole lines of one file, 150 by default, 400 at most, cut by whole lines to fit the output budget with `nextStartLine`; a missing or skipped path is an error that says why and lists files with the same name                  |
+| `code_list`   | One directory level: subdirectories with file counts, then files with line counts                                                                                                                                                     |
 
 Each description states what the tool covers (only the tracked text files of one commit, no history, nothing generated or ignored), what it does not, and that an empty result does not prove the code lacks the behaviour. The handlers record in an `EvidenceLedger` exactly the lines the model was shown (using `countRowsThatFit`, so the ledger and the reply never disagree).
 
-**Runtime tools.** `logs_search`, `job_failures` and `metrics_query` are the Veronica tools from `@ratingo/ai-ops-tools`, with the same descriptions and limits; DUM-E builds them with `createOpsTools(executors, { decorate })`. `core/ops-runtime.factory.ts` wires their ports from `OpsConfig`; a variable that is missing makes that tool report itself unavailable instead of stopping the service, and a Loki configuration with only some of its three variables logs which ones are missing. Log text is untrusted (`<untrusted label="production logs">`). The prompt has one line on how to cite their rows and nothing else about them; what each tool covers, and what an empty result does not prove, is in its description.
-
-**Runtime evidence.** A log row or a metric is not a file line, so a claim cites it by a `ref` that DUM-E gives it. The `decorate` hook numbers every call of each tool (`logs_search#2`) and every row of a list result (`logs_search#2.3`), adds `callRef` and `ref` to what the model sees, and records in a per-run `RuntimeEvidenceLedger` exactly the calls and the rows that fit into the output the model was shown (`countRowsThatFit`, with the tool's own budget), each with a short redacted summary. An empty result is citable through its call ref, together with the tool's note on what it covers. Because the hook is DUM-E's, Veronica's outputs have no refs.
-
-**Answer contract.** The model returns JSON: a short `answer`, `claims` (each with `citations` of `{path, startLine, endLine}` for code and `evidence` refs for runtime rows), `assumptions` and `unknowns`. The pure `verifyAnswer` policy checks every citation: the path is valid, the file exists in the snapshot, the lines exist, the range is at most 80 lines, and the whole range was returned by a tool in this run. A runtime `ref` passes only if the ledger holds it, that is, a tool showed that row in this run (`evidence_not_shown` otherwise). A claim whose citations and refs all pass is a fact, and a fact prints the cited rows with their summaries beside the lines. A claim with any failing or missing citation or ref is moved to the assumptions with the reason (`unverified_claim`), never dropped and never shown as a fact. Like a code citation, a ref proves that the row was shown to the model, not that the claim follows from it; the judge in the eval checks the meaning. The result carries `support`: `supported`, `partly_supported`, `unsupported` or `no_claims` (a valid answer for "the code does not say", with what was checked in `unknowns`).
+**Answer contract.** The model returns JSON: a short `answer`, `claims` (each with `citations` of `{path, startLine, endLine}`), `assumptions` and `unknowns`. The pure `verifyAnswer` policy checks every citation: the path is valid, the file exists in the snapshot, the lines exist, the range is at most 80 lines, and the whole range was returned by a tool in this run. A claim whose citations all pass is a fact. A claim with any failing or missing citation is moved to the assumptions with the reason (`unverified_claim`), never dropped and never shown as a fact. The result carries `support`: `supported`, `partly_supported`, `unsupported` or `no_claims` (a valid answer for "the code does not say", with what was checked in `unknowns`).
 
 **Loop.** One `AgentLoop` run on alias `review`, at most 20 turns, 4 minutes and $0.30 (the agent's day budget is $1.50; with `REDIS_URL` the day total is shared between processes like Happy's). The registry is created with `guardRepeatedCalls`: a call with the same tool and input as an earlier one in the run that failed or returned nothing is not run again; the model gets the earlier result with a note. A failed tool is a tool result with `isError`, never an exception. The request sets `finalAnswer`: on the last allowed turn, when the time left is about one call, or when the remaining budget cannot pay for another turn plus the final call, the model keeps the tool definitions (the history holds tool blocks, and the Anthropic API needs the tools defined for them) but `toolChoice: none` forbids using them. The budget reserve counts the next turn plus a final call (with the next turn's output added to its input) against the run, task and day levels, not the per-call level, with the instruction in `agent/prompts/final-answer.md` (answer from what was read, put what is unfinished into `unknowns`), so a run that ran out of turns still returns a partial answer.
 
 **Telemetry.** Runs go through ai-core's `TelemetryRunRepository` (`app.ai.runs`, `app.ai.run.cost`, `app.ai.run.tokens`, `app.ai.run.duration`, `app.ai.tool.calls` with `agent=dume`). Logs use the shared structured logger (`ratingo-dume`): run ids, outcome, support and counts only, never the question, the prompt or file content. A signal closes the Nest context (removes the temp directory and the Redis client), flushes logs and metrics and exits 130 or 143.
 
-**Env** (`src/config/env.schema.ts`): `AI_MODEL_REVIEW` (default `stub:review`), `ANTHROPIC_API_KEY`, `GITHUB_REPOSITORY` (default `eurusik/ratingo`), `GITHUB_READ_TOKEN` (optional), `GITHUB_API_URL`, `DUME_LOCAL_CHECKOUT` (optional, reads a local checkout instead), `REDIS_URL` (optional), `GRAFANA_LOKI_URL`, `GRAFANA_LOKI_USER`, `GRAFANA_LOKI_TOKEN`, `GRAFANA_PROM_URL`, `GRAFANA_PROM_TOKEN` and `AI_READER_DATABASE_URL` (all optional, one tool each), `LOG_LEVEL` (the CLI defaults to `warn`), `OTEL_*`.
+**Env** (`src/config/env.schema.ts`): `AI_MODEL_REVIEW` (default `stub:review`), `ANTHROPIC_API_KEY`, `GITHUB_REPOSITORY` (default `eurusik/ratingo`), `GITHUB_READ_TOKEN` (optional), `GITHUB_API_URL`, `DUME_LOCAL_CHECKOUT` (optional, reads a local checkout instead), `REDIS_URL` (optional), `LOG_LEVEL` (the CLI defaults to `warn`), `OTEL_*`.
 
 **CLI.** `npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]` prints the answer, the facts with their citations, assumptions and unverified claims, unknowns, `support`, the commit, turns and cost. The exit code is 1 when there is no answer.
 
-**What was left in the agents.** `AgentRunner`, the run repository factory, `NestRunLogger` and the OpenTelemetry bootstrap are now written three times (Veronica, Happy, DUM-E). Step 2 did not touch them, so they are still the first candidates for ai-core.
+**What was left in the agents.** `AgentRunner`, the run repository factory, `NestRunLogger` and the OpenTelemetry bootstrap are now written three times (Veronica, Happy, DUM-E). They are the first candidates for ai-core when step 2 touches them.
 
 **Spend and failures must be visible to the watchdog (plan for step 3, not built).** Spend lives in Redis (`DurableSpendRunRepository`) or in process memory, and Happy and DUM-E have no Postgres run table, so Veronica's watchdog reads spend only for her own runs (`RunRepository.spentUsd`). The general fix is not another store but the metrics every agent already exports: the watchdog reads `app.ai.run.cost` and `app.ai.runs` (labels `agent`, `outcome`) from Prometheus for every agent, which covers Happy and DUM-E and needs no cross-service access. Its budget and failed-run rules then run per agent from the same query, with each agent's `perDayUsd` from its manifest. Until then the watchdog does not cover DUM-E's spend or failed runs.
 
 ### DUM-E eval
 
-`apps/ai/dume/eval` follows the chat eval's method: every case runs `--runs` times (3 with a real model, 1 with the stub), passes at a strict majority, and a case whose runs disagree is `FLAKY`. A Sonnet judge (`--judge-model`) decides, per short statement, what the answer must convey and must not claim. Code decides everything else: the answer exists, every citation points at a file and lines that exist, the required files are cited with a verified citation, no forbidden text (an injected code word), no gendered self-reference toward the owner, at least one verified fact on a question the code answers, and at least one unknown on a question it does not. The report and the baseline rules (`eval/baseline.json`; regressions exit 1, an incomplete run exits 2) are the same as in "Chat eval". It is DUM-E's own copy of the chat eval's generic parts. Step 2 compared the two: aggregate, baseline diff and file, options, runner, report, judge and scorer have diverged (Veronica's check tools and numbers, DUM-E's citations), so they cannot be moved as they are; unifying them is left for when one of the two changes shape again. The Loki simulator is shared (in `@ratingo/ai-ops-tools`) because both evals need it.
+`apps/ai/dume/eval` follows the chat eval's method: every case runs `--runs` times (3 with a real model, 1 with the stub), passes at a strict majority, and a case whose runs disagree is `FLAKY`. A Sonnet judge (`--judge-model`) decides, per short statement, what the answer must convey and must not claim. Code decides everything else: the answer exists, every citation points at a file and lines that exist, the required files are cited with a verified citation, no forbidden text (an injected code word), no gendered self-reference toward the owner, at least one verified fact on a question the code answers, and at least one unknown on a question it does not. The report and the baseline rules (`eval/baseline.json`; regressions exit 1, an incomplete run exits 2) are the same as in "Chat eval". It is DUM-E's own thin copy because the chat eval's generic parts live inside Veronica; moving both to a shared place is work for step 2.
 
 - **Snapshot.** The cases read the repository checkout through the local-directory adapter (`apps/ai/dume/eval` is excluded, so the model cannot read the answers), at the label `local-checkout`: no network.
-- **Cases** (26): 13 answered by the code, 4 whose honest answer is "the code does not say" (a signup count, a production key, the digest's chat id, the deployed commit), 1 with an instruction planted in `fixtures/retry-policy.fixture.ts` and 8 that mix code with runtime data: a TMDB timeout in the logs and where the timeout is set, an empty `job_failures` next to per-show errors in the logs and the pipeline that logs and continues, the 429 count and the retry rule, the backlog peak and the worker's concurrency, the most frequent failure and its class rule, logs that are unavailable, empty logs that prove nothing, and an instruction planted in a log record. Each case lists `evidence` (a file and an `anchor` text, with where it was verified when the case was written), so a case survives edits to the file: the stub finds the anchor's current line.
+- **Cases** (18): 13 answered by the code, 4 whose honest answer is "the code does not say" (a signup count, a production key, the digest's chat id, the deployed commit) and 1 with an instruction planted in `fixtures/retry-policy.fixture.ts`. Each case lists `evidence` (a file and an `anchor` text, with where it was verified when the case was written), so a case survives edits to the file: the stub finds the anchor's current line.
 - **Stub run (CI).** The stub model replays each case's reference: it reads the evidence ranges through the real tools and answers with the reference claims, so cases, anchors, tools, citation policy and scoring are exercised together. A case whose anchor left the code fails with `StaleCaseError` and says which file to update. It says nothing about the model.
-- **Runtime fixtures.** A case that needs runtime data names its sources (`runtimeSources`: the tool, its input and an `anchor` text of the row the reference cites) and the data (`runtime`: Loki records, daily failed-job rows, Prometheus answers keyed by the PromQL the real builders produce, or a list of unavailable tools). The data goes through the real adapters and executors (`eval/runtime-ops.ts`), so a fixture cannot drift from what production returns. A case with no `runtime` gets every runtime tool unconfigured, as a deployment without keys would. The stub's reference script calls the case's tools, reads the `ref` of the row that holds the anchor out of the tool result and cites it; a case also lists `requiredEvidence`, the tools one of whose rows a verified fact must cite.
 - **Real run.** `AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 ANTHROPIC_API_KEY=… npm run eval --workspace=@ratingo/ai-dume`; add `-- --save-baseline` to accept it. A change to the prompt, tools or loop merges only with no regression against the committed baseline.
 
 ### Placement rules
 
-- Anything two agents need goes to a shared package, never into one agent to be imported by another: `packages/ai-core` when it is generic, `packages/ai-ops-tools` when it knows Ratingo's logs, jobs or metrics.
+- Anything two agents need goes to `packages/ai-core`, never into one agent to be imported by another.
 - An agent-specific integration stays in that agent, even if it might be reused later; it moves to the core on the second real use.
 - Prompts, tasks and skills live in `agent/`, never in `src/`. Code does not contain Ratingo hosts, IDs or chat IDs.
-- Domain folders (`domain/`) depend on nothing outside the module and on types from `@ratingo/ai-core` and `@ratingo/ai-ops-tools`.
+- Domain folders (`domain/`) depend on nothing outside the module and `@ratingo/ai-core` types.
 
 ---
 
@@ -398,22 +370,22 @@ They reference each other only by id. Happy keeps its review state on GitHub and
 
 ### Ports
 
-| Port                      | Owner                 | First adapter                                                |
-| ------------------------- | --------------------- | ------------------------------------------------------------ |
-| `MODEL_PORT`              | core                  | Stub, Anthropic                                              |
-| `TOOL_SOURCE_PORT`        | core                  | Native tools, MCP gateway, skills                            |
-| `MCP_TRANSPORT_PORT`      | core                  | stdio (official SDK client, explicit env)                    |
-| `MCP_TELEMETRY_PORT`      | core                  | OpenTelemetry `app.ai.mcp.*`                                 |
-| `RUN_REPOSITORY`          | core                  | Postgres (`ai` schema); telemetry-only for Happy             |
-| `CLOCK_PORT`              | core                  | System clock; fixed clock in tests                           |
-| `METRICS_PORT`            | Veronica `digest`     | Grafana Cloud Prometheus                                     |
-| `ANALYTICS_PORT`          | Veronica `digest`     | GA4 Data API                                                 |
-| `PRODUCT_STATS_PORT`      | Veronica `digest`     | Postgres `reporting` views                                   |
-| `LOGS_PORT`               | Veronica `chat`       | Grafana Cloud Loki `query_range` (`ai-ops-tools`)            |
-| `NOTIFIER_PORT`           | Veronica `notify`     | Telegram                                                     |
-| `CONVERSATION_REPOSITORY` | Veronica `chat`       | Redis                                                        |
-| `AGENT_GATEWAY_PORT`      | Veronica `chat`       | HTTP to other agent services                                 |
-| `CODE_HOST_PORT`          | Happy `review`        | GitHub App: diff, files at a ref, review, check run          |
+| Port                      | Owner             | First adapter                                       |
+| ------------------------- | ----------------- | --------------------------------------------------- |
+| `MODEL_PORT`              | core              | Stub, Anthropic                                     |
+| `TOOL_SOURCE_PORT`        | core              | Native tools, MCP gateway, skills                   |
+| `MCP_TRANSPORT_PORT`      | core              | stdio (official SDK client, explicit env)           |
+| `MCP_TELEMETRY_PORT`      | core              | OpenTelemetry `app.ai.mcp.*`                        |
+| `RUN_REPOSITORY`          | core              | Postgres (`ai` schema); telemetry-only for Happy    |
+| `CLOCK_PORT`              | core              | System clock; fixed clock in tests                  |
+| `METRICS_PORT`            | Veronica `digest` | Grafana Cloud Prometheus                            |
+| `ANALYTICS_PORT`          | Veronica `digest` | GA4 Data API                                        |
+| `PRODUCT_STATS_PORT`      | Veronica `digest` | Postgres `reporting` views                          |
+| `LOGS_PORT`               | Veronica `chat`   | Grafana Cloud Loki `query_range`                    |
+| `NOTIFIER_PORT`           | Veronica `notify` | Telegram                                            |
+| `CONVERSATION_REPOSITORY` | Veronica `chat`   | Redis                                               |
+| `AGENT_GATEWAY_PORT`      | Veronica `chat`   | HTTP to other agent services                        |
+| `CODE_HOST_PORT`          | Happy `review`    | GitHub App: diff, files at a ref, review, check run |
 | `CODE_SNAPSHOT_PORT`      | DUM-E `investigation` | GitHub tarball of one commit; a local directory for the eval |
 
 Investigation tools wrap the digest ports; they never open their own clients.
@@ -607,7 +579,7 @@ The webhook secret is derived, not configured: `base64url(HMAC-SHA256(TELEGRAM_B
 
 No Railway logs, no free LogQL and no free SQL; those are left to DUM-E later.
 
-`ask_happy` ships in step 3; the other four shipped in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. `scheduler_last_runs` gives one row per job: last success and last failure (hours ago and Kyiv time), and, when the next-run metric answers, `scheduled`, `schedule`, `timezone`, `nextRunAtKyiv` and `nextRunInHours`; when it does not, the rows have no schedule fields and `schedules` says the data is missing. Their PromQL lives in `packages/ai-ops-tools/src/metrics/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
+`ask_happy` ships in step 3; the other four shipped in step 2. `metrics_query` templates: `queue_throughput`, `queue_backlog_peak`, `http_client_errors`, `site_requests`, `site_latency_p95`, `site_memory_peak`, `scheduler_last_runs`, `backup_status`, `infra_health`. `scheduler_last_runs` gives one row per job: last success and last failure (hours ago and Kyiv time), and, when the next-run metric answers, `scheduled`, `schedule`, `timezone`, `nextRunAtKyiv` and `nextRunInHours`; when it does not, the rows have no schedule fields and `schedules` says the data is missing. Their PromQL lives in `digest/domain/queries/prom-queries.ts`, shared with the digest collectors. Parameters are validated (queue and provider names, a three-digit status, a window from 1 hour to 7 days, an offset of 0 to 14 days) before they reach a query.
 
 ### Investigation run (step 2)
 
