@@ -4,12 +4,18 @@ SELECT
   c.relkind::text AS kind,
   coalesce(c.reloptions::text, '') AS options,
   a.attname AS column_name,
-  t.typname AS type_name,
-  t.typcategory::text AS type_category
+  a.atttypid::int AS type_oid,
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint k
+    WHERE k.contype = 'f'
+      AND k.conrelid = c.oid
+      AND k.confrelid = 'public.users'::regclass
+      AND a.attnum = ANY (k.conkey)
+  ) AS links_to_users
 FROM pg_attribute a
 JOIN pg_class c ON c.oid = a.attrelid
 JOIN pg_namespace n ON n.oid = c.relnamespace
-JOIN pg_type t ON t.oid = a.atttypid
 WHERE a.attnum > 0
   AND NOT a.attisdropped
   AND c.relkind IN ('r', 'p', 'v', 'm', 'f')

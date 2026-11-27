@@ -3,7 +3,12 @@ import { join } from 'node:path';
 
 import type * as postgres from 'postgres';
 
-import type { ExecutableFunction, ExplorerGrants, ReadableColumn } from './explorer-access.guard';
+import type {
+  ExecutableFunction,
+  ExplorerGrants,
+  PgType,
+  ReadableColumn,
+} from './explorer-access.guard';
 
 const SQL_DIR = __dirname;
 
@@ -13,8 +18,17 @@ interface ColumnRow {
   column_name: string;
   kind?: string;
   options?: string;
-  type_name?: string;
-  type_category?: string;
+  type_oid?: number;
+  links_to_users?: boolean;
+}
+
+interface TypeRow {
+  type_oid: number;
+  type_name: string;
+  type_kind: string;
+  base_type_oid: number;
+  element_type_oid: number;
+  type_category: string;
 }
 
 interface TableGrantRow {
@@ -35,8 +49,17 @@ const toColumn = (row: ColumnRow): ReadableColumn => ({
   column: row.column_name,
   kind: row.kind,
   options: row.options,
-  typeName: row.type_name,
-  typeCategory: row.type_category,
+  typeOid: row.type_oid,
+  linksToUsers: row.links_to_users,
+});
+
+const toType = (row: TypeRow): PgType => ({
+  oid: row.type_oid,
+  name: row.type_name,
+  kind: row.type_kind,
+  baseOid: row.base_type_oid,
+  elementOid: row.element_type_oid,
+  category: row.type_category,
 });
 
 const toFunction = (row: FunctionRow): ExecutableFunction => ({
@@ -51,6 +74,7 @@ export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerG
   const direct = await admin.file(join(SQL_DIR, 'direct-grants.sql'));
   const tableGrants = await admin.file(join(SQL_DIR, 'table-grants.sql'));
   const functions = await admin.file(join(SQL_DIR, 'executable-functions.sql'));
+  const types = await admin.file(join(SQL_DIR, 'type-catalog.sql'));
   return {
     readable: readable.map((row) => toColumn(row as unknown as ColumnRow)),
     direct: direct.map((row) => toColumn(row as unknown as ColumnRow)),
@@ -59,6 +83,7 @@ export const readExplorerGrants = async (admin: postgres.Sql): Promise<ExplorerG
       table: (row as unknown as TableGrantRow).table_name,
     })),
     functions: functions.map((row) => toFunction(row as unknown as FunctionRow)),
+    types: types.map((row) => toType(row as unknown as TypeRow)),
   };
 };
 

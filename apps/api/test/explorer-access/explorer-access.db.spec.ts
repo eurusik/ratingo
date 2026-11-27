@@ -125,7 +125,30 @@ describeWithDatabase('ai_explorer on the fully migrated database', () => {
 
     it('is caught when a function that can end or lock sessions becomes executable', async () => {
       await catches('dangerous-function.sql', 'dangerous-function.cleanup.sql', [
-        'pg_advisory_lock(bigint)',
+        'pg_catalog.pg_advisory_lock(bigint)',
+      ]);
+    });
+
+    it('is caught when a function that writes to the replication log becomes executable', async () => {
+      await catches('emit-message.sql', 'emit-message.cleanup.sql', [
+        'pg_catalog.pg_logical_emit_message(boolean, text, text)',
+      ]);
+    });
+
+    it('is caught when the link to users is a created_by foreign key', async () => {
+      await catches('created-by.sql', 'created-by.cleanup.sql', ['public.feedback_notes.topic']);
+    });
+
+    it('is caught when the link to users is a foreign key with any column name', async () => {
+      await catches('foreign-key-link.sql', 'foreign-key-link.cleanup.sql', [
+        'public.reactions.reaction',
+      ]);
+    });
+
+    it('is caught when a free-form column hides behind a domain, and when it is a tsvector', async () => {
+      await catches('domain-column.sql', 'domain-column.cleanup.sql', [
+        'public.domain_tickets.topic',
+        'public.domain_tickets.search',
       ]);
     });
 

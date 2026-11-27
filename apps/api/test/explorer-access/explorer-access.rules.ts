@@ -18,39 +18,39 @@ export interface AllowedFreeFormColumns extends Reviewed {
 
 export const ALLOWED_SENSITIVE_TABLE_NAMES: readonly AllowedTable[] = [
   {
-    table: 'key_health_checks',
+    table: 'public.key_health_checks',
     reason: 'health of provider keys: status and quota only, the key itself is never stored',
   },
 ];
 
 export const ALLOWED_SENSITIVE_COLUMNS: readonly AllowedColumn[] = [
   {
-    table: 'user_media_actions',
+    table: 'public.user_media_actions',
     column: 'reason_key',
     reason: 'verdict key such as trendingNow, not a credential',
   },
   {
-    table: 'user_saved_items',
+    table: 'public.user_saved_items',
     column: 'reason_key',
     reason: 'verdict key such as trendingNow, not a credential',
   },
   {
-    table: 'user_subscriptions',
+    table: 'public.user_subscriptions',
     column: 'last_notified_episode_key',
     reason: 'episode label such as S2E5, not a credential',
   },
   {
-    table: 'journal_posts',
+    table: 'public.journal_posts',
     column: 'body',
     reason: 'text written by the owner and published on the site',
   },
   {
-    table: 'journal_posts',
+    table: 'public.journal_posts',
     column: 'body_html',
     reason: 'rendered text written by the owner and published on the site',
   },
   {
-    table: 'provider_mappings',
+    table: 'public.provider_mappings',
     column: 'notes',
     reason: 'editorial note about a streaming provider mapping, written by the owner',
   },
@@ -58,48 +58,48 @@ export const ALLOWED_SENSITIVE_COLUMNS: readonly AllowedColumn[] = [
 
 export const ALLOWED_FREE_FORM_COLUMNS: readonly AllowedFreeFormColumns[] = [
   {
-    table: 'user_media_state',
+    table: 'public.user_media_state',
     columns: ['progress'],
     reason: 'watch progress json written by the application; unvalidated, follow-up',
   },
   {
-    table: 'user_media_actions',
+    table: 'public.user_media_actions',
     columns: ['action', 'context', 'reason_key'],
     reason: 'action names and client-supplied context keys; unvalidated client text, follow-up',
   },
   {
-    table: 'user_saved_items',
+    table: 'public.user_saved_items',
     columns: ['reason_key'],
     reason: 'verdict key chosen from a fixed list in the application',
   },
   {
-    table: 'user_subscriptions',
+    table: 'public.user_subscriptions',
     columns: ['channel', 'last_notified_episode_key'],
     reason: 'notification channel and episode label set by the application',
   },
   {
-    table: 'user_notifications',
+    table: 'public.user_notifications',
     columns: ['payload'],
     reason: 'event payload built by the application: season, episode, dates',
   },
   {
-    table: 'import_batches',
+    table: 'public.import_batches',
     columns: ['source'],
     reason: 'import source name chosen from a fixed list',
   },
   {
-    table: 'reviews',
+    table: 'public.reviews',
     columns: ['content'],
     reason:
       'public review text, at most 280 characters; soft-deleted rows stay readable, follow-up',
   },
   {
-    table: 'review_replies',
+    table: 'public.review_replies',
     columns: ['content'],
     reason: 'public reply text, at most 280 characters; soft-deleted rows stay readable, follow-up',
   },
   {
-    table: 'journal_posts',
+    table: 'public.journal_posts',
     columns: [
       'slug',
       'title',
@@ -115,31 +115,26 @@ export const ALLOWED_FREE_FORM_COLUMNS: readonly AllowedFreeFormColumns[] = [
   },
 ];
 
-export const ALLOWED_DEFINER_VIEWS: readonly AllowedTable[] = [
-  {
-    table: 'public_media_items',
-    reason: 'selects public catalog columns only and was created before the guard existed',
-  },
-];
+export const ALLOWED_DEFINER_VIEWS: readonly AllowedTable[] = [];
 
 export const ALLOWED_MATERIALIZED_VIEWS: readonly AllowedTable[] = [];
 
 export const PRIVATE_TABLES: readonly string[] = [
-  'refresh_tokens',
-  'oauth_exchange_codes',
-  'oauth_accounts',
+  'public.refresh_tokens',
+  'public.oauth_exchange_codes',
+  'public.oauth_accounts',
 ];
 
 export const CLOSED_COLUMNS: readonly { table: string; columns: readonly string[] }[] = [
   {
-    table: 'users',
+    table: 'public.users',
     columns: ['email', 'username', 'password_hash', 'avatar_url', 'bio', 'location', 'website'],
   },
-  { table: 'user_media_state', columns: ['notes'] },
-  { table: 'user_media_actions', columns: ['payload'] },
-  { table: 'review_replies', columns: ['reply_to_username'] },
-  { table: 'review_reports', columns: ['details', 'moderator_notes'] },
-  { table: 'job_failure_days', columns: ['last_message'] },
-  { table: 'key_health_checks', columns: ['detail'] },
-  { table: 'catalog_evaluation_runs', columns: ['promoted_by', 'error_sample'] },
+  { table: 'public.user_media_state', columns: ['notes'] },
+  { table: 'public.user_media_actions', columns: ['payload'] },
+  { table: 'public.review_replies', columns: ['reply_to_username'] },
+  { table: 'public.review_reports', columns: ['details', 'moderator_notes'] },
+  { table: 'public.job_failure_days', columns: ['last_message'] },
+  { table: 'public.key_health_checks', columns: ['detail'] },
+  { table: 'public.catalog_evaluation_runs', columns: ['promoted_by', 'error_sample'] },
 ];

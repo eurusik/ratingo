@@ -1,4 +1,10 @@
-import { findViolations, ViolationKind, type ReadableColumn } from './explorer-access.guard';
+import {
+  findViolations,
+  ViolationKind,
+  type ExplorerGrants,
+  type PgType,
+  type ReadableColumn,
+} from './explorer-access.guard';
 import {
   ALLOWED_DEFINER_VIEWS,
   ALLOWED_FREE_FORM_COLUMNS,
@@ -7,23 +13,57 @@ import {
   ALLOWED_SENSITIVE_TABLE_NAMES,
 } from './explorer-access.rules';
 
+const Oid = {
+  UUID: 1,
+  TEXT: 2,
+  VARCHAR: 3,
+  JSONB: 4,
+  INT4: 5,
+  TEXT_ARRAY: 6,
+  STATUS: 7,
+  SHORT_TEXT: 8,
+  TSVECTOR: 9,
+};
+
+const TYPES: PgType[] = [
+  { oid: Oid.UUID, name: 'uuid', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
+  { oid: Oid.TEXT, name: 'text', kind: 'b', baseOid: 0, elementOid: 0, category: 'S' },
+  { oid: Oid.VARCHAR, name: 'varchar', kind: 'b', baseOid: 0, elementOid: 0, category: 'S' },
+  { oid: Oid.JSONB, name: 'jsonb', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
+  { oid: Oid.INT4, name: 'int4', kind: 'b', baseOid: 0, elementOid: 0, category: 'N' },
+  {
+    oid: Oid.TEXT_ARRAY,
+    name: '_text',
+    kind: 'b',
+    baseOid: 0,
+    elementOid: Oid.TEXT,
+    category: 'A',
+  },
+  { oid: Oid.STATUS, name: 'status', kind: 'e', baseOid: 0, elementOid: 0, category: 'E' },
+  {
+    oid: Oid.SHORT_TEXT,
+    name: 'short_text',
+    kind: 'd',
+    baseOid: Oid.TEXT,
+    elementOid: 0,
+    category: 'S',
+  },
+  { oid: Oid.TSVECTOR, name: 'tsvector', kind: 'b', baseOid: 0, elementOid: 0, category: 'U' },
+];
+
 const column = (
-  table: string,
+  qualifiedTable: string,
   name: string,
   extra: Partial<ReadableColumn> = {},
-): ReadableColumn => ({
-  schema: 'public',
-  table,
-  column: name,
-  kind: 'r',
-  options: '',
-  typeName: 'uuid',
-  typeCategory: 'U',
-  ...extra,
-});
+): ReadableColumn => {
+  const [schema = 'public', table = ''] = qualifiedTable.includes('.')
+    ? qualifiedTable.split('.')
+    : ['public', qualifiedTable];
+  return { schema, table, column: name, kind: 'r', options: '', typeOid: Oid.UUID, ...extra };
+};
 
 const textColumn = (table: string, name: string): ReadableColumn =>
-  column(table, name, { typeName: 'text', typeCategory: 'S' });
+  column(table, name, { typeOid: Oid.TEXT });
 
 const everyAllowListEntryInUse: ReadableColumn[] = [
   ...ALLOWED_SENSITIVE_TABLE_NAMES.map((entry) => column(entry.table, 'id')),
@@ -42,17 +82,16 @@ const allowListEntryCount =
   ALLOWED_DEFINER_VIEWS.length +
   ALLOWED_MATERIALIZED_VIEWS.length;
 
-const kindsOf = (
-  readable: ReadableColumn[],
-  extra: { functions?: Parameters<typeof findViolations>[0]['functions'] } = {},
-) => {
+const kindsOf = (readable: ReadableColumn[], extra: Partial<ExplorerGrants> = {}) => {
   const all = [...everyAllowListEntryInUse, ...readable];
-  return findViolations({ readable: all, direct: all, ...extra }).map((item) => item.kind);
+  return findViolations({ readable: all, direct: all, types: TYPES, ...extra }).map(
+    (item) => item.kind,
+  );
 };
 
 describe('findViolations', () => {
   it('passes when only innocent columns and reviewed exceptions are readable', () => {
-    expect(kindsOf([column('genres', 'tmdb_id')])).toEqual([]);
+    expect(kindsOf([column('genres', 'tmdb_id', { typeOid: Oid.INT4 })])).toEqual([]);
   });
 
   it('flags a readable column whose name looks sensitive', () => {
@@ -88,32 +127,67 @@ describe('findViolations', () => {
     );
   });
 
+  it('does not confuse a table of the same name in another schema with a protected one', () => {
+    expect(kindsOf([column('other.refresh_tokens', 'id')])).not.toContain(
+      ViolationKind.PRIVATE_TABLE_READABLE,
+    );
+  });
+
   describe('free-form columns in a table linked to users', () => {
-    it('flags text, varchar, json and array columns that nobody reviewed', () => {
+    const unreviewed = (type: number, name = 'extra') => [
+      column('opaque_tickets', 'author_id'),
+      column('opaque_tickets', name, { typeOid: type }),
+    ];
+
+    it.each([
+      ['text', Oid.TEXT],
+      ['varchar', Oid.VARCHAR],
+      ['jsonb', Oid.JSONB],
+      ['an array of text', Oid.TEXT_ARRAY],
+      ['a domain over text', Oid.SHORT_TEXT],
+      ['tsvector', Oid.TSVECTOR],
+    ])('flags %s that nobody reviewed', (_label, type) => {
+      expect(kindsOf(unreviewed(type))).toEqual([ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE]);
+    });
+
+    it.each([
+      ['an integer', Oid.INT4],
+      ['an enum', Oid.STATUS],
+      ['a uuid', Oid.UUID],
+    ])('leaves %s alone', (_label, type) => {
+      expect(kindsOf(unreviewed(type))).toEqual([]);
+    });
+
+    it('flags a type the catalog does not know, because it needs a review', () => {
+      expect(kindsOf(unreviewed(9999))).toEqual([ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE]);
+    });
+
+    it('finds the user link through a foreign key, whatever the column is called', () => {
       const kinds = kindsOf([
-        column('opaque_tickets', 'author_id'),
-        column('opaque_tickets', 'topic', { typeName: 'varchar', typeCategory: 'S' }),
-        column('opaque_tickets', 'extra', { typeName: 'jsonb', typeCategory: 'U' }),
-        column('opaque_tickets', 'labels', { typeName: '_text', typeCategory: 'A' }),
+        column('feedback', 'created_by', { linksToUsers: true }),
+        column('feedback', 'who', { linksToUsers: true }),
+        textColumn('feedback', 'topic'),
       ]);
 
-      expect(kinds).toEqual([
+      expect(kinds).toEqual([ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE]);
+    });
+
+    it.each([
+      'created_by',
+      'account_id',
+      'profile_id',
+      'owner_id',
+      'viewer_id',
+      'follower_id',
+      'x_user_id',
+    ])('finds the user link by the name %s', (link) => {
+      expect(kindsOf([column('opaque', link), textColumn('opaque', 'topic')])).toContain(
         ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
-        ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
-        ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
-      ]);
+      );
     });
 
     it('leaves a table without a user link alone', () => {
       expect(kindsOf([textColumn('genres', 'name')])).toEqual([]);
-    });
-
-    it('recognizes every user-linked column name', () => {
-      for (const link of ['user_id', 'reporter_id', 'author_id', 'moderator_id', 'owner_user_id']) {
-        expect(kindsOf([column('opaque', link), textColumn('opaque', 'topic')])).toContain(
-          ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
-        );
-      }
     });
   });
 
@@ -124,11 +198,12 @@ describe('findViolations', () => {
       ]);
     });
 
-    it('accepts a security_invoker view', () => {
-      expect(
-        kindsOf([column('invoker_view', 'id', { kind: 'v', options: '{security_invoker=true}' })]),
-      ).toEqual([]);
-    });
+    it.each(['{security_invoker=true}', '{security_invoker=on}', '{security_invoker=1}'])(
+      'accepts a view with %s',
+      (options) => {
+        expect(kindsOf([column('invoker_view', 'id', { kind: 'v', options })])).toEqual([]);
+      },
+    );
 
     it('flags a materialized view that is not on the allow-list', () => {
       expect(kindsOf([column('leaky_matview', 'id', { kind: 'm' })])).toEqual([
@@ -143,7 +218,7 @@ describe('findViolations', () => {
         functions: [
           {
             schema: 'public',
-            signature: 'leaky_function()',
+            signature: 'public.leaky_function()',
             securityDefiner: true,
             systemFunction: false,
           },
@@ -158,7 +233,7 @@ describe('findViolations', () => {
         functions: [
           {
             schema: 'pg_catalog',
-            signature: 'pg_terminate_backend(integer,bigint)',
+            signature: 'pg_logical_emit_message(boolean,text,text)',
             securityDefiner: false,
             systemFunction: true,
           },
@@ -167,11 +242,32 @@ describe('findViolations', () => {
 
       expect(kinds).toEqual([ViolationKind.DANGEROUS_FUNCTION_EXECUTABLE]);
     });
+
+    it('prints the signature once', () => {
+      const [violation] = findViolations({
+        readable: everyAllowListEntryInUse,
+        direct: everyAllowListEntryInUse,
+        types: TYPES,
+        functions: [
+          {
+            schema: 'ps',
+            signature: 'ps.f()',
+            securityDefiner: true,
+            systemFunction: false,
+          },
+        ],
+      });
+
+      expect(violation?.target).toBe('ps.f()');
+    });
   });
 
   it('flags access that does not come from a grant to the role itself', () => {
-    const readable = [...everyAllowListEntryInUse, column('genres', 'tmdb_id')];
-    const kinds = findViolations({ readable, direct: everyAllowListEntryInUse }).map(
+    const readable = [
+      ...everyAllowListEntryInUse,
+      column('genres', 'tmdb_id', { typeOid: Oid.INT4 }),
+    ];
+    const kinds = findViolations({ readable, direct: everyAllowListEntryInUse, types: TYPES }).map(
       (item) => item.kind,
     );
 
@@ -179,13 +275,18 @@ describe('findViolations', () => {
   });
 
   it('flags a table-wide grant on a table that has closed columns', () => {
-    const readable = [...everyAllowListEntryInUse, column('genres', 'tmdb_id')];
+    const readable = [
+      ...everyAllowListEntryInUse,
+      column('genres', 'tmdb_id', { typeOid: Oid.INT4 }),
+    ];
     const kinds = findViolations({
       readable,
       direct: readable,
+      types: TYPES,
       tableGrants: [
         { schema: 'public', table: 'genres' },
         { schema: 'public', table: 'users' },
+        { schema: 'other', table: 'users' },
       ],
     }).map((item) => item.kind);
 
@@ -193,10 +294,10 @@ describe('findViolations', () => {
   });
 
   it('flags every allow-list entry that matches nothing', () => {
-    const kinds = findViolations({
-      readable: [column('genres', 'tmdb_id')],
-      direct: [column('genres', 'tmdb_id')],
-    }).map((item) => item.kind);
+    const readable = [column('genres', 'tmdb_id', { typeOid: Oid.INT4 })];
+    const kinds = findViolations({ readable, direct: readable, types: TYPES }).map(
+      (item) => item.kind,
+    );
 
     expect(kinds).toEqual(Array(allowListEntryCount).fill(ViolationKind.STALE_ALLOW_LIST_ENTRY));
   });

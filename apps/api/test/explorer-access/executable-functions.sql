@@ -1,6 +1,6 @@
 SELECT
   n.nspname AS schema_name,
-  p.oid::regprocedure::text AS signature,
+  format('%I.%s(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) AS signature,
   p.prosecdef AS security_definer,
   n.nspname = 'pg_catalog' AS system_function
 FROM pg_proc p
@@ -12,10 +12,10 @@ WHERE has_schema_privilege('ai_explorer', n.oid, 'USAGE')
     OR (
       n.nspname = 'pg_catalog'
       AND (
-        p.proname IN ('pg_terminate_backend', 'pg_cancel_backend')
+        p.proname IN ('pg_terminate_backend', 'pg_cancel_backend', 'pg_logical_emit_message')
         OR p.proname LIKE 'pg\_advisory\_%'
         OR p.proname LIKE 'pg\_try\_advisory\_%'
       )
     )
   )
-ORDER BY n.nspname, p.oid::regprocedure::text;
+ORDER BY n.nspname, p.proname, p.oid;

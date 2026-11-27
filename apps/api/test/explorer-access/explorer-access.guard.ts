@@ -15,8 +15,17 @@ export interface ReadableColumn {
   column: string;
   kind?: string;
   options?: string;
-  typeName?: string;
-  typeCategory?: string;
+  typeOid?: number;
+  linksToUsers?: boolean;
+}
+
+export interface PgType {
+  oid: number;
+  name: string;
+  kind: string;
+  baseOid: number;
+  elementOid: number;
+  category: string;
 }
 
 export interface TableGrant {
@@ -36,6 +45,7 @@ export interface ExplorerGrants {
   direct: readonly ReadableColumn[];
   tableGrants?: readonly TableGrant[];
   functions?: readonly ExecutableFunction[];
+  types?: readonly PgType[];
 }
 
 export const ViolationKind = {
@@ -60,38 +70,66 @@ export interface Violation {
   detail: string;
 }
 
-const USER_LINK_COLUMN = /^(user_id|reporter_id|author_id|moderator_id|.+_user_id)$/;
-const FREE_FORM_TYPES = new Set([
-  'text',
-  'varchar',
-  'bpchar',
-  'json',
-  'jsonb',
-  'inet',
-  'cidr',
-  'bytea',
-  'xml',
-  'citext',
-  'name',
+const USER_LINK_COLUMN =
+  /^(user_id|reporter_id|author_id|moderator_id|created_by|account_id|profile_id|owner_id|viewer_id|follower_id|.+_user_id)$/;
+const SAFE_TYPE_NAMES = new Set([
+  'uuid',
+  'int2',
+  'int4',
+  'int8',
+  'float4',
+  'float8',
+  'numeric',
+  'money',
+  'bool',
+  'date',
+  'time',
+  'timetz',
+  'timestamp',
+  'timestamptz',
+  'interval',
+  'oid',
 ]);
+const ENUM_KIND = 'e';
+const DOMAIN_KIND = 'd';
 const ARRAY_CATEGORY = 'A';
-const SECURITY_INVOKER = /security_invoker=(true|on)/;
+const SECURITY_INVOKER = /security_invoker=(true|on|1)/;
 const VIEW = 'v';
 const MATERIALIZED_VIEW = 'm';
+const MAX_TYPE_DEPTH = 8;
 
 const qualified = (item: ReadableColumn): string => `${item.schema}.${item.table}.${item.column}`;
 
+const tableKey = (item: { schema: string; table: string }): string =>
+  `${item.schema}.${item.table}`;
+
 const sameColumn = (left: ReadableColumn, right: ReadableColumn): boolean =>
-  left.schema === right.schema && left.table === right.table && left.column === right.column;
+  tableKey(left) === tableKey(right) && left.column === right.column;
 
-const tableNamed = (item: ReadableColumn, table: string): boolean => item.table === table;
-
-const isFreeForm = (item: ReadableColumn): boolean =>
-  FREE_FORM_TYPES.has(item.typeName ?? '') || item.typeCategory === ARRAY_CATEGORY;
+const tableNamed = (item: ReadableColumn, table: string): boolean => tableKey(item) === table;
 
 const tablesOf = (readable: readonly ReadableColumn[]): string[] => [
-  ...new Set(readable.map((item) => item.table)),
+  ...new Set(readable.map(tableKey)),
 ];
+
+const isSafeType = (
+  oid: number | undefined,
+  types: ReadonlyMap<number, PgType>,
+  depth = 0,
+): boolean => {
+  const type = oid === undefined ? undefined : types.get(oid);
+  if (type === undefined || depth > MAX_TYPE_DEPTH) return false;
+  if (type.kind === ENUM_KIND) return true;
+  if (type.kind === DOMAIN_KIND) return isSafeType(type.baseOid, types, depth + 1);
+  if (type.category === ARRAY_CATEGORY) return isSafeType(type.elementOid, types, depth + 1);
+  return SAFE_TYPE_NAMES.has(type.name);
+};
+
+const typeNameOf = (item: ReadableColumn, types: ReadonlyMap<number, PgType>): string =>
+  types.get(item.typeOid ?? 0)?.name ?? 'unknown type';
+
+const typeIndex = (types: readonly PgType[] | undefined): ReadonlyMap<number, PgType> =>
+  new Map((types ?? []).map((type) => [type.oid, type]));
 
 const privateTableViolations = (readable: readonly ReadableColumn[]): Violation[] =>
   PRIVATE_TABLES.flatMap((table) => {
@@ -120,7 +158,7 @@ const closedColumnViolations = (readable: readonly ReadableColumn[]): Violation[
 
 const sensitiveTableViolations = (readable: readonly ReadableColumn[]): Violation[] =>
   tablesOf(readable).flatMap((table) => {
-    const pattern = sensitivePatternIn(table);
+    const pattern = sensitivePatternIn(table.slice(table.indexOf('.') + 1));
     const allowed = ALLOWED_SENSITIVE_TABLE_NAMES.some((entry) => entry.table === table);
     return pattern === null || allowed
       ? []
@@ -137,7 +175,7 @@ const sensitiveColumnViolations = (readable: readonly ReadableColumn[]): Violati
   readable.flatMap((item) => {
     const pattern = sensitivePatternIn(item.column);
     const allowed = ALLOWED_SENSITIVE_COLUMNS.some(
-      (entry) => entry.table === item.table && entry.column === item.column,
+      (entry) => entry.table === tableKey(item) && entry.column === item.column,
     );
     return pattern === null || allowed
       ? []
@@ -150,14 +188,21 @@ const sensitiveColumnViolations = (readable: readonly ReadableColumn[]): Violati
         ];
   });
 
-const freeFormViolations = (readable: readonly ReadableColumn[]): Violation[] =>
+const linksToUsers = (readable: readonly ReadableColumn[], table: string): boolean =>
+  readable.some(
+    (item) =>
+      tableNamed(item, table) && (item.linksToUsers === true || USER_LINK_COLUMN.test(item.column)),
+  );
+
+const freeFormViolations = (
+  readable: readonly ReadableColumn[],
+  types: ReadonlyMap<number, PgType>,
+): Violation[] =>
   tablesOf(readable)
-    .filter((table) =>
-      readable.some((item) => tableNamed(item, table) && USER_LINK_COLUMN.test(item.column)),
-    )
+    .filter((table) => linksToUsers(readable, table))
     .flatMap((table) =>
       readable
-        .filter((item) => tableNamed(item, table) && isFreeForm(item))
+        .filter((item) => tableNamed(item, table) && !isSafeType(item.typeOid, types))
         .filter(
           (item) =>
             !ALLOWED_FREE_FORM_COLUMNS.some(
@@ -167,21 +212,19 @@ const freeFormViolations = (readable: readonly ReadableColumn[]): Violation[] =>
         .map((item) => ({
           kind: ViolationKind.FREE_FORM_COLUMN_IN_USER_TABLE,
           target: qualified(item),
-          detail: `a ${item.typeName ?? 'free-form'} column in a table linked to users must be reviewed and added to the free-form allow-list`,
+          detail: `a ${typeNameOf(item, types)} column in a table linked to users must be reviewed and added to the free-form allow-list`,
         })),
     );
 
 const viewViolations = (readable: readonly ReadableColumn[]): Violation[] => {
   const views = new Map<string, ReadableColumn>();
   for (const item of readable) {
-    if (item.kind === VIEW || item.kind === MATERIALIZED_VIEW) {
-      views.set(`${item.schema}.${item.table}`, item);
-    }
+    if (item.kind === VIEW || item.kind === MATERIALIZED_VIEW) views.set(tableKey(item), item);
   }
   return [...views.values()].flatMap((view): Violation[] => {
-    const name = `${view.schema}.${view.table}`;
+    const name = tableKey(view);
     if (view.kind === MATERIALIZED_VIEW) {
-      return ALLOWED_MATERIALIZED_VIEWS.some((entry) => entry.table === view.table)
+      return ALLOWED_MATERIALIZED_VIEWS.some((entry) => entry.table === name)
         ? []
         : [
             {
@@ -193,7 +236,7 @@ const viewViolations = (readable: readonly ReadableColumn[]): Violation[] => {
           ];
     }
     const invoker = SECURITY_INVOKER.test(view.options ?? '');
-    const allowed = ALLOWED_DEFINER_VIEWS.some((entry) => entry.table === view.table);
+    const allowed = ALLOWED_DEFINER_VIEWS.some((entry) => entry.table === name);
     return invoker || allowed
       ? []
       : [
@@ -217,7 +260,7 @@ const functionViolations = (functions: readonly ExecutableFunction[]): Violation
         }
       : {
           kind: ViolationKind.SECURITY_DEFINER_FUNCTION_EXECUTABLE,
-          target: `${item.schema}.${item.signature}`,
+          target: item.signature,
           detail: 'a SECURITY DEFINER function runs with its owner rights and bypasses the grants',
         },
   );
@@ -235,10 +278,10 @@ const protectedTables = new Set([...PRIVATE_TABLES, ...CLOSED_COLUMNS.map(({ tab
 
 const tableGrantViolations = (grants: ExplorerGrants): Violation[] =>
   (grants.tableGrants ?? [])
-    .filter((grant) => protectedTables.has(grant.table))
+    .filter((grant) => protectedTables.has(tableKey(grant)))
     .map((grant) => ({
       kind: ViolationKind.TABLE_GRANT_ON_PROTECTED_TABLE,
-      target: `${grant.schema}.${grant.table}`,
+      target: tableKey(grant),
       detail: 'a table-wide SELECT grant opens every column; grant the safe columns instead',
     }));
 
@@ -260,9 +303,7 @@ const staleAllowListViolations = (readable: readonly ReadableColumn[]): Violatio
     entry.columns
       .filter(
         (column) =>
-          !readable.some(
-            (item) => tableNamed(item, entry.table) && item.column === column && isFreeForm(item),
-          ),
+          !readable.some((item) => tableNamed(item, entry.table) && item.column === column),
       )
       .map((column) => stale(`free-form ${entry.table}.${column}`)),
   ),
@@ -280,7 +321,7 @@ export const findViolations = (grants: ExplorerGrants): Violation[] => [
   ...closedColumnViolations(grants.readable),
   ...sensitiveTableViolations(grants.readable),
   ...sensitiveColumnViolations(grants.readable),
-  ...freeFormViolations(grants.readable),
+  ...freeFormViolations(grants.readable, typeIndex(grants.types)),
   ...viewViolations(grants.readable),
   ...functionViolations(grants.functions ?? []),
   ...withoutDirectGrantViolations(grants),
