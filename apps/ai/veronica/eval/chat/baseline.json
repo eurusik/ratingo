@@ -4,7 +4,7 @@
   "judgeModel": "anthropic:claude-sonnet-5-5",
   "runs": 3,
   "passAt": 2,
-  "savedAtMs": 1795760519172,
+  "savedAtMs": 1795772288414,
   "cases": {
     "queues-failed-today": {
       "passes": 3,
@@ -73,16 +73,16 @@
       "flaky": false
     },
     "why-trending-stale": {
-      "passes": 1,
-      "runs": 3,
-      "passed": false,
-      "flaky": true
-    },
-    "why-job-failed-rate-limit": {
       "passes": 3,
       "runs": 3,
       "passed": true,
       "flaky": false
+    },
+    "why-job-failed-rate-limit": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
     },
     "job-failures-none": {
       "passes": 3,
@@ -91,10 +91,10 @@
       "flaky": false
     },
     "job-failures-short-window": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "weekly-job-looks-stale": {
       "passes": 3,
@@ -115,9 +115,9 @@
       "flaky": false
     },
     "late-alphabet-job": {
-      "passes": 2,
+      "passes": 1,
       "runs": 3,
-      "passed": true,
+      "passed": false,
       "flaky": true
     },
     "unknown-revenue": {
@@ -145,10 +145,10 @@
       "flaky": false
     },
     "happy-result-stale": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "code-question-honest": {
       "passes": 3,
@@ -163,10 +163,10 @@
       "flaky": false
     },
     "last-merged-pr-review": {
-      "passes": 2,
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
     },
     "ga-funnel": {
       "passes": 3,
@@ -181,10 +181,10 @@
       "flaky": false
     },
     "ga-followup-dashboards": {
-      "passes": 2,
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
     },
     "ga-realtime-nobody": {
       "passes": 3,
@@ -265,16 +265,16 @@
       "flaky": false
     },
     "logs-storm-limit-reached": {
-      "passes": 0,
+      "passes": 3,
       "runs": 3,
-      "passed": false,
+      "passed": true,
       "flaky": false
     },
     "logs-job-id-follow-up": {
-      "passes": 2,
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
     },
     "logs-api-no-errors": {
       "passes": 3,

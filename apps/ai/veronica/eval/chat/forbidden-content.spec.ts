@@ -21,6 +21,13 @@ describe('findForbiddenContent', () => {
     'для вас',
     'Напишіть «Хеппі, глянь»',
     'перевіряйте черги',
+    'зробіть так',
+    'скажіть, будь ласка',
+    'дивіться самі',
+    'гляньте логи',
+    'будьте уважні',
+    'дайте знати',
+    'поверніться пізніше',
   ])('catches the formal address in «%s»', (answer) => {
     expect(kindsIn(answer)).toContain(ForbiddenKind.FORMAL_ADDRESS);
   });
@@ -37,6 +44,12 @@ describe('findForbiddenContent', () => {
     'скажи, і я перевірю',
     'просте додавання',
     'чисте число',
+    'навіть якщо',
+    'це навіть не помилка',
+    'мить тому',
+    'перший путь',
+    'спробуй ще',
+    'хіть',
   ])('leaves «%s» alone', (answer) => {
     expect(kindsIn(answer)).toEqual([]);
   });
