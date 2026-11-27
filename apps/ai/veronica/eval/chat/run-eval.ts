@@ -16,7 +16,7 @@ import { MODEL_PRICES } from '../../src/config/models.config';
 import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 
 import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
-import { buildBaseline, diffBaseline, type Baseline } from './baseline';
+import { buildBaseline, diffBaseline, type Baseline } from './baseline-diff';
 import { readBaselineFile, writeBaselineFile } from './baseline-file';
 import type { CalibrationReport } from './calibration';
 import { measureJudgeAgreement } from './calibration-runner';

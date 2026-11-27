@@ -1,5 +1,5 @@
 import { aggregateCase, summarize } from './aggregate';
-import { buildBaseline, diffBaseline } from './baseline';
+import { buildBaseline, diffBaseline } from './baseline-diff';
 import { summarizeCalibration, CalibrationSource } from './calibration';
 import { EvalKind } from './eval-case';
 import { ForbiddenKind } from './forbidden-content';

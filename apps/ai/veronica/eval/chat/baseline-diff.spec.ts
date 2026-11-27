@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 
 import { aggregateCase, majorityPassAt, type CaseOutcome } from './aggregate';
-import { RegressionReason, buildBaseline, diffBaseline } from './baseline';
+import { RegressionReason, buildBaseline, diffBaseline } from './baseline-diff';
 import { EvalKind } from './eval-case';
 import { runsWithPasses } from './verdict.testing';
 

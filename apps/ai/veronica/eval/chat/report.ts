@@ -1,5 +1,5 @@
 import { asPercent, type CaseOutcome, type EvalSummary } from './aggregate';
-import type { BaselineDiff, CaseChange, Regression } from './baseline';
+import type { BaselineDiff, CaseChange, Regression } from './baseline-diff';
 import type { CalibrationReport, CalibrationVerdict } from './calibration';
 import type { RunVerdict } from './scorer';
 

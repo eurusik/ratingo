@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 
 import { z } from 'zod';
 
-import { BASELINE_VERSION, type Baseline } from './baseline';
+import { BASELINE_VERSION, type Baseline } from './baseline-diff';
 
 const JSON_INDENT = 2;
 

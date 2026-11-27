@@ -1,4 +1,4 @@
-import { buildBaseline, BASELINE_VERSION } from './baseline';
+import { buildBaseline, BASELINE_VERSION } from './baseline-diff';
 import { InvalidBaselineError, parseBaseline } from './baseline-file';
 import { aggregateCase } from './aggregate';
 import { EvalKind } from './eval-case';
