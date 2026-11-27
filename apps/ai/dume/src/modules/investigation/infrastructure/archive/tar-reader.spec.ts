@@ -1,22 +1,35 @@
-import { InvalidTarError, TarEntryType, readTarStream, type TarEntry } from './tar-reader';
+import {
+  InvalidTarError,
+  TarEntryType,
+  TarLimitError,
+  readTarStream,
+  type TarEntry,
+} from './tar-reader';
 import { buildTar, chunked, paxRecords, tarEntry } from '../testing/tar-builder.testing';
+
+const NO_LIMITS = { maxEntries: 1_000, maxStreamBytes: 10_000_000 };
 
 const collect = async (
   archive: Buffer,
   chunkSize: number,
   skip: (entry: TarEntry) => boolean = () => false,
+  limits = NO_LIMITS,
 ) => {
   const received: { path: string; body: string }[] = [];
   const decided: TarEntry[] = [];
-  await readTarStream(chunked(archive, chunkSize), {
-    decide: (entry) => {
-      decided.push(entry);
-      return skip(entry) ? 'skip' : 'read';
+  await readTarStream(
+    chunked(archive, chunkSize),
+    {
+      decide: (entry) => {
+        decided.push(entry);
+        return skip(entry) ? 'skip' : 'read';
+      },
+      receive: (entry, body) => {
+        received.push({ path: entry.path, body: body.toString('utf8') });
+      },
     },
-    receive: (entry, body) => {
-      received.push({ path: entry.path, body: body.toString('utf8') });
-    },
-  });
+    limits,
+  );
   return { received, decided };
 };
 
@@ -84,6 +97,20 @@ describe('readTarStream', () => {
     ]);
 
     await expect(collect(hostile, 512)).rejects.toBeInstanceOf(InvalidTarError);
+  });
+
+  it('stops an archive with too many entries or too many bytes', async () => {
+    const many = buildTar(
+      Array.from({ length: 5 }, (_, index) => tarEntry({ name: `r/f${index}`, body: 'x' })),
+    );
+
+    await expect(
+      collect(many, 512, () => false, { ...NO_LIMITS, maxEntries: 4 }),
+    ).rejects.toBeInstanceOf(TarLimitError);
+    await expect(
+      collect(many, 512, () => false, { ...NO_LIMITS, maxStreamBytes: 1_000 }),
+    ).rejects.toBeInstanceOf(TarLimitError);
+    await expect(collect(many, 512)).resolves.toBeDefined();
   });
 
   it('rejects a corrupt header and a truncated archive', async () => {

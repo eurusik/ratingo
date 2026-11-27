@@ -5,6 +5,7 @@ import { SkipReason, SnapshotLimits } from '../../domain/constants/snapshot.cons
 import type { SnapshotFile } from '../../domain/entities/code-snapshot';
 import { inspectFileBody } from '../../domain/policies/file-inspection';
 import { normalizeFilePath } from '../../domain/policies/repo-path';
+import { SkippedFiles } from './skipped-files';
 import type { TarEntry } from './tar-reader';
 
 const PRIVATE_DIRECTORY_MODE = 0o700;
@@ -12,7 +13,7 @@ const PRIVATE_FILE_MODE = 0o600;
 
 export class ArchiveCollector {
   readonly files: SnapshotFile[] = [];
-  readonly skipped = new Map<string, SkipReason>();
+  readonly skipped = new SkippedFiles();
   private unpackedBytes = 0;
   private fileCount = 0;
 
@@ -25,11 +26,11 @@ export class ArchiveCollector {
       this.fileCount >= SnapshotLimits.MAX_FILES ||
       this.unpackedBytes + entry.size > SnapshotLimits.MAX_UNPACKED_BYTES
     ) {
-      this.skipped.set(relative, SkipReason.LIMIT_REACHED);
+      this.skipped.record(relative, SkipReason.LIMIT_REACHED);
       return 'skip';
     }
     if (entry.size > SnapshotLimits.MAX_FILE_BYTES) {
-      this.skipped.set(relative, SkipReason.TOO_LARGE);
+      this.skipped.record(relative, SkipReason.TOO_LARGE);
       return 'skip';
     }
     return 'read';
@@ -40,24 +41,24 @@ export class ArchiveCollector {
     if (relative === undefined) return;
     const normalized = normalizeFilePath(relative);
     if (!normalized.ok) {
-      this.skipped.set(relative, SkipReason.UNSAFE_PATH);
+      this.skipped.record(relative, SkipReason.UNSAFE_PATH);
       return;
     }
     const inspection = inspectFileBody(body);
     if (inspection.kind === 'skipped') {
-      this.skipped.set(normalized.path, inspection.reason);
+      this.skipped.record(normalized.path, inspection.reason);
       return;
     }
     const target = path.resolve(this.directory, normalized.path);
     if (!target.startsWith(`${this.directory}${path.sep}`)) {
-      this.skipped.set(normalized.path, SkipReason.UNSAFE_PATH);
+      this.skipped.record(normalized.path, SkipReason.UNSAFE_PATH);
       return;
     }
     try {
       await mkdir(path.dirname(target), { recursive: true, mode: PRIVATE_DIRECTORY_MODE });
       await writeFile(target, body, { flag: 'wx', mode: PRIVATE_FILE_MODE });
     } catch {
-      this.skipped.set(normalized.path, SkipReason.UNSAFE_PATH);
+      this.skipped.record(normalized.path, SkipReason.UNSAFE_PATH);
       return;
     }
     this.fileCount += 1;

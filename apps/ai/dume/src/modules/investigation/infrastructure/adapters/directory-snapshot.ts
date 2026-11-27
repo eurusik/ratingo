@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
 import type { SkipReason } from '../../domain/constants/snapshot.constants';
+import type { SkippedFiles } from '../archive/skipped-files';
 import type { CodeSnapshot, SnapshotFile } from '../../domain/entities/code-snapshot';
 import { splitLines } from '../../domain/policies/file-inspection';
 
@@ -17,7 +18,7 @@ export class DirectorySnapshot implements CodeSnapshot {
     readonly sha: string,
     private readonly root: string,
     files: readonly SnapshotFile[],
-    private readonly skipped: ReadonlyMap<string, SkipReason>,
+    private readonly skipped: SkippedFiles,
   ) {
     this.sorted = [...files].sort(compareByPath);
     this.byPath = new Map(this.sorted.map((file) => [file.path, file]));
@@ -32,11 +33,11 @@ export class DirectorySnapshot implements CodeSnapshot {
   }
 
   skippedReasonOf(filePath: string): SkipReason | undefined {
-    return this.skipped.get(filePath);
+    return this.skipped.reasonOf(filePath);
   }
 
   skippedCount(): number {
-    return this.skipped.size;
+    return this.skipped.count();
   }
 
   async readLines(filePath: string): Promise<readonly string[] | undefined> {
@@ -44,7 +45,7 @@ export class DirectorySnapshot implements CodeSnapshot {
     const absolute = path.resolve(this.root, filePath);
     if (!absolute.startsWith(`${this.root}${path.sep}`)) return undefined;
     try {
-      return splitLines(await readFile(absolute, 'utf8'));
+      return splitLines(new TextDecoder().decode(await readFile(absolute)));
     } catch {
       return undefined;
     }

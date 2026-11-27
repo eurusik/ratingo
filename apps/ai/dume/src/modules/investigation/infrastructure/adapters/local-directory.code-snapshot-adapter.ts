@@ -14,6 +14,7 @@ import type { CodeSnapshot, SnapshotFile } from '../../domain/entities/code-snap
 import type { CodeSnapshotPort } from '../../domain/ports/code-snapshot.port';
 import { inspectFileBody } from '../../domain/policies/file-inspection';
 import { isUnderDirectory, normalizeFilePath } from '../../domain/policies/repo-path';
+import { SkippedFiles } from '../archive/skipped-files';
 import { DirectorySnapshot } from './directory-snapshot';
 
 const runFile = promisify(execFile);
@@ -27,7 +28,7 @@ export interface LocalDirectoryConfig {
 
 interface Indexed {
   files: SnapshotFile[];
-  skipped: Map<string, SkipReason>;
+  skipped: SkippedFiles;
 }
 
 @Injectable()
@@ -43,7 +44,7 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
 
   private async build(ref: string): Promise<CodeSnapshot> {
     const root = await realpath(this.config.root);
-    const indexed: Indexed = { files: [], skipped: new Map() };
+    const indexed: Indexed = { files: [], skipped: new SkippedFiles() };
     const paths = await this.listCandidatePaths(root);
     for (let offset = 0; offset < paths.length; offset += READ_BATCH_SIZE) {
       await Promise.all(
@@ -67,7 +68,7 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
   private async index(root: string, candidate: string, indexed: Indexed): Promise<void> {
     const normalized = normalizeFilePath(candidate);
     if (!normalized.ok) {
-      indexed.skipped.set(candidate, SkipReason.UNSAFE_PATH);
+      indexed.skipped.record(candidate, SkipReason.UNSAFE_PATH);
       return;
     }
     if (
@@ -80,16 +81,16 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
     try {
       const stats = await lstat(absolute);
       if (!stats.isFile()) {
-        indexed.skipped.set(normalized.path, SkipReason.NOT_REGULAR_FILE);
+        indexed.skipped.record(normalized.path, SkipReason.NOT_REGULAR_FILE);
         return;
       }
       if (stats.size > SnapshotLimits.MAX_FILE_BYTES) {
-        indexed.skipped.set(normalized.path, SkipReason.TOO_LARGE);
+        indexed.skipped.record(normalized.path, SkipReason.TOO_LARGE);
         return;
       }
       const inspection = inspectFileBody(await readFile(absolute));
       if (inspection.kind === 'skipped') {
-        indexed.skipped.set(normalized.path, inspection.reason);
+        indexed.skipped.record(normalized.path, inspection.reason);
         return;
       }
       indexed.files.push({
@@ -98,7 +99,7 @@ export class LocalDirectoryCodeSnapshotAdapter implements CodeSnapshotPort {
         lineCount: inspection.lines.length,
       });
     } catch {
-      indexed.skipped.set(normalized.path, SkipReason.NOT_REGULAR_FILE);
+      indexed.skipped.record(normalized.path, SkipReason.NOT_REGULAR_FILE);
     }
   }
 }

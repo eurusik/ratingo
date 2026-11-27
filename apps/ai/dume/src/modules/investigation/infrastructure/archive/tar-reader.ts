@@ -36,6 +36,13 @@ export interface TarVisitor {
   receive(entry: TarEntry, body: Buffer): Promise<void> | void;
 }
 
+export class TarLimitError extends Error {
+  constructor(reason: string) {
+    super(`Tar archive over its limit: ${reason}`);
+    this.name = 'TarLimitError';
+  }
+}
+
 export class InvalidTarError extends Error {
   constructor(reason: string) {
     super(`Invalid tar archive: ${reason}`);
@@ -127,10 +134,18 @@ interface PendingOverrides {
 
 const padding = (size: number): number => (BLOCK_BYTES - (size % BLOCK_BYTES)) % BLOCK_BYTES;
 
+export interface TarLimits {
+  maxEntries: number;
+  maxStreamBytes: number;
+}
+
 export const readTarStream = async (
   source: AsyncIterable<Uint8Array>,
   visitor: TarVisitor,
+  limits: TarLimits,
 ): Promise<void> => {
+  let entriesSeen = 0;
+  let streamBytes = 0;
   const queue = new ByteQueue();
   let pending: PendingOverrides = {};
   let current: {
@@ -178,6 +193,8 @@ export const readTarStream = async (
       return;
     }
     if (!checksumMatches(block)) throw new InvalidTarError('a header checksum does not match');
+    entriesSeen += 1;
+    if (entriesSeen > limits.maxEntries) throw new TarLimitError('too many entries');
     const flag = String.fromCharCode(block[TYPE_OFFSET] as number);
     const headerSize = octalOf(block, SIZE_START, SIZE_END);
     const isUstar = textOf(block, MAGIC_START, MAGIC_END) === USTAR_MAGIC;
@@ -227,6 +244,9 @@ export const readTarStream = async (
   };
 
   for await (const chunk of source) {
+    streamBytes += chunk.byteLength;
+    if (streamBytes > limits.maxStreamBytes)
+      throw new TarLimitError('too many bytes after decompression');
     queue.push(chunk);
     await pump();
     if (sawEnd) return;

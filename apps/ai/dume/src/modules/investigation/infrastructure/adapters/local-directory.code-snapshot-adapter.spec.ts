@@ -16,6 +16,10 @@ describe('LocalDirectoryCodeSnapshotAdapter', () => {
     mkdirSync(path.join(root, 'ignored'));
     mkdirSync(path.join(root, 'eval'));
     writeFileSync(path.join(root, 'src/a.ts'), 'one\ntwo\nthree\n');
+    writeFileSync(
+      path.join(root, 'src/bom.ts'),
+      Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('first\nsecond\n')]),
+    );
     writeFileSync(path.join(root, 'src/bin.dat'), Buffer.from([0, 1, 2]));
     writeFileSync(path.join(root, 'eval/cases.ts'), 'answers live here\n');
     writeFileSync(path.join(root, 'ignored/x.ts'), 'ignored\n');
@@ -32,7 +36,12 @@ describe('LocalDirectoryCodeSnapshotAdapter', () => {
     }).resolve('main');
 
     expect(snapshot.sha).toBe(LOCAL_SNAPSHOT_SHA);
-    expect(snapshot.files().map((file) => file.path)).toEqual(['.gitignore', 'src/a.ts']);
+    expect(snapshot.files().map((file) => file.path)).toEqual([
+      '.gitignore',
+      'src/a.ts',
+      'src/bom.ts',
+    ]);
+    await expect(snapshot.readLines('src/bom.ts')).resolves.toEqual(['first', 'second']);
     expect(snapshot.skippedReasonOf('src/bin.dat')).toBe(SkipReason.BINARY);
     expect(snapshot.skippedReasonOf('src/link.ts')).toBe(SkipReason.NOT_REGULAR_FILE);
     await expect(snapshot.readLines('src/a.ts')).resolves.toEqual(['one', 'two', 'three']);

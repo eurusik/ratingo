@@ -7,6 +7,7 @@ import { Logger } from '@nestjs/common';
 import { FixedClock } from '@ratingo/ai-core';
 
 import {
+  FAILED_BUILD_MEMORY_MS,
   MAX_RETAINED_SNAPSHOTS,
   REF_CHECK_INTERVAL_MS,
   SNAPSHOT_IN_USE_MS,
@@ -28,7 +29,13 @@ interface FakeGithub {
   url: string;
   requests: string[];
   headers: Record<string, string | string[] | undefined>[];
-  state: { sha: string; commitStatus: number; archive: Buffer };
+  state: {
+    sha: string;
+    commitStatus: number;
+    commitHeaders: Record<string, string>;
+    archive: Buffer;
+    stallArchive: boolean;
+  };
 }
 
 const archiveOf = (entries: Buffer[]): Buffer => gzipSync(buildTar(entries));
@@ -37,6 +44,8 @@ const startFakeGithub = async (): Promise<FakeGithub> => {
   const state = {
     sha: SHA_ONE,
     commitStatus: 200,
+    commitHeaders: {} as Record<string, string>,
+    stallArchive: false,
     archive: archiveOf([
       tarEntry({ name: 'repo-root/', flag: '5' }),
       tarEntry({ name: 'repo-root/readme.md', body: 'hello\nworld\n' }),
@@ -49,9 +58,12 @@ const startFakeGithub = async (): Promise<FakeGithub> => {
     headers.push(request.headers);
     if (request.url?.includes('/commits/')) {
       response.statusCode = state.commitStatus;
+      for (const [name, value] of Object.entries(state.commitHeaders))
+        response.setHeader(name, value);
       response.end(state.commitStatus === 200 ? state.sha : 'nope');
     } else if (request.url?.includes('/tarball/')) {
-      response.end(state.archive);
+      if (state.stallArchive) response.write(state.archive.subarray(0, 20));
+      else response.end(state.archive);
     } else {
       response.statusCode = 404;
       response.end();
@@ -70,6 +82,12 @@ describe('GithubCodeSnapshotAdapter', () => {
   let github: FakeGithub;
   let clock: FixedClock;
   let adapter: GithubCodeSnapshotAdapter;
+
+  const adapterWith = (extra: { downloadTimeoutMs?: number }) =>
+    new GithubCodeSnapshotAdapter(
+      { repository: 'owner/repo', apiUrl: github.url, ...extra },
+      clock,
+    );
 
   const adapterFor = (token?: string) =>
     new GithubCodeSnapshotAdapter(
@@ -221,6 +239,69 @@ describe('GithubCodeSnapshotAdapter', () => {
     await resolveAt('main', sha5);
 
     await expect(first.readLines('readme.md')).resolves.toBeUndefined();
+  });
+
+  it('reports a download that times out as a failed download, not as a crash', async () => {
+    github.state.stallArchive = true;
+    const slow = adapterWith({ downloadTimeoutMs: 300 });
+
+    const failure = await slow.resolve('main').catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(SnapshotUnavailableError);
+    expect(failure).toMatchObject({ failure: SnapshotFailure.DOWNLOAD_FAILED });
+    await slow.dispose();
+  });
+
+  it('treats a plain 403 as a failed request and a 403 with no quota left as rate limiting', async () => {
+    github.state.commitStatus = 403;
+    await expect(adapter.resolve('main')).rejects.toMatchObject({
+      failure: SnapshotFailure.DOWNLOAD_FAILED,
+    });
+
+    github.state.commitHeaders = { 'x-ratelimit-remaining': '0' };
+    await expect(adapter.resolve('main')).rejects.toMatchObject({
+      failure: SnapshotFailure.RATE_LIMITED,
+    });
+  });
+
+  it('serves the previous snapshot when a new commit cannot be downloaded, and does not retry at once', async () => {
+    const first = await adapter.resolve('main');
+    github.state.sha = SHA_TWO;
+    github.state.archive = gzipSync(Buffer.from('not a tar archive '.repeat(40)));
+    clock.advance(REF_CHECK_INTERVAL_MS);
+
+    const second = await adapter.resolve('main');
+    const third = await adapter.resolve('main');
+
+    expect(second).toBe(first);
+    expect(third).toBe(first);
+    expect(github.requests.filter((url) => url.includes('/tarball/'))).toHaveLength(2);
+  });
+
+  it('retries the download of a failed commit once the memory of the failure has expired', async () => {
+    await adapter.resolve('main');
+    github.state.sha = SHA_TWO;
+    github.state.archive = gzipSync(Buffer.from('not a tar archive '.repeat(40)));
+    clock.advance(REF_CHECK_INTERVAL_MS);
+    await adapter.resolve('main');
+    github.state.archive = archiveOf([
+      tarEntry({ name: 'repo-root/', flag: '5' }),
+      tarEntry({ name: 'repo-root/new.md', body: 'fresh\n' }),
+    ]);
+
+    clock.advance(FAILED_BUILD_MEMORY_MS);
+    const recovered = await adapter.resolve('main');
+
+    expect(recovered.sha).toBe(SHA_TWO);
+    await expect(recovered.readLines('new.md')).resolves.toEqual(['fresh']);
+  });
+
+  it('fails when there is no previous snapshot to fall back to', async () => {
+    github.state.archive = gzipSync(Buffer.from('not a tar archive '.repeat(40)));
+
+    await expect(adapter.resolve('main')).rejects.toMatchObject({
+      failure: SnapshotFailure.ARCHIVE_INVALID,
+    });
   });
 
   it('removes its files on dispose', async () => {
