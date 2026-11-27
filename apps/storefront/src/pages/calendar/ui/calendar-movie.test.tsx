@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@ratingo/web-core/auth';
-import { subscriptionsApi, type Subscription } from '@/shared/api';
+import { subscriptionsApi, type CalendarMovie, type Subscription } from '@/shared/api';
 import { I18nProvider, getDictionary } from '@/shared/i18n';
 import { calendarMovie } from '../model/calendar-episode.fixture';
 import { CalendarProvider } from './calendar-context';
@@ -37,7 +37,7 @@ function remindAbout(...mediaItemIds: string[]) {
     .mockResolvedValue({ data: subscriptions, meta: { hasMore: false } } as never);
 }
 
-function renderRows() {
+function renderRows(movies: readonly CalendarMovie[] = [DUNE, AURORA]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const calendar = {
     mode: 'everyone',
@@ -50,8 +50,9 @@ function renderRows() {
       <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
         <CalendarProvider value={calendar}>
           <ul>
-            <CalendarMovieItem movie={DUNE} />
-            <CalendarMovieItem movie={AURORA} />
+            {movies.map((movie) => (
+              <CalendarMovieItem key={movie.mediaItemId} movie={movie} />
+            ))}
           </ul>
         </CalendarProvider>
       </I18nProvider>
@@ -85,4 +86,41 @@ describe('CalendarMovieItem', () => {
     expect(await screen.findByText('в кіно')).toBeInTheDocument();
     expect(screen.queryByText(/нагадаємо/)).not.toBeInTheDocument();
   });
+
+  it('shows the movie backdrop in the same frame as an episode still', () => {
+    remindAbout();
+    renderRows([
+      calendarMovie({
+        title: 'Кадр',
+        backdrop: image('/backdrop.jpg'),
+        poster: image('/poster.jpg'),
+      }),
+    ]);
+
+    expect(movieImage('Кадр')).toHaveAttribute('src', expect.stringContaining('/backdrop.jpg'));
+  });
+
+  it('crops the poster into the frame when there is no backdrop', () => {
+    remindAbout();
+    renderRows([calendarMovie({ title: 'Постер', poster: image('/poster.jpg') })]);
+
+    expect(movieImage('Постер')).toHaveAttribute('src', expect.stringContaining('/poster.jpg'));
+  });
+
+  it('shows the movie icon when there is no image', () => {
+    remindAbout();
+    renderRows([calendarMovie({ title: 'Порожньо' })]);
+
+    expect(movieImage('Порожньо')).toBeNull();
+    expect(screen.getByText('Порожньо').closest('a')?.querySelector('svg')).not.toBeNull();
+  });
 });
+
+function image(path: string) {
+  const url = `https://image.tmdb.org/t/p/w300${path}`;
+  return { thumb: url, small: url, medium: url, large: url, original: url };
+}
+
+function movieImage(title: string): HTMLElement | null {
+  return screen.getByText(title).closest('a')?.querySelector('img') ?? null;
+}

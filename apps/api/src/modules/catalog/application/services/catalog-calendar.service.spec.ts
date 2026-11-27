@@ -38,6 +38,7 @@ const movie = (releaseDate: string, mediaItemId = 'm1'): CalendarMovie => ({
   slug: mediaItemId,
   title: mediaItemId,
   poster: null,
+  backdrop: null,
   releaseDate: new Date(releaseDate),
   releaseDateKind: 'theatrical',
   releaseCountry: 'US',

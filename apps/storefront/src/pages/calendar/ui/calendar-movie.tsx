@@ -1,13 +1,13 @@
 'use client';
 
 import { memo } from 'react';
-import { MediaPoster } from '@/entities/media';
+import { MediaTypeIcon } from '@/entities/media';
 import { useIsReminderOn } from '@/features/media-reminder';
 import { SaveButton } from '@/features/save-to-library';
 import type { CalendarMovie } from '@/shared/api';
 import { mediaRoute } from '@/shared/config';
 import { useTranslation } from '@/shared/i18n';
-import { ForwardLink } from '@/shared/ui';
+import { ForwardLink, StillFrame } from '@/shared/ui';
 import { movieLine } from '../model/movie-line';
 import { useCalendarContext } from './calendar-context';
 import { RELEASE_ROW } from './calendar-layout';
@@ -19,6 +19,23 @@ function ComingOutMovieLine({ movie }: { movie: CalendarMovie }) {
     'release',
   );
   return movieLine(movie, isReminderOn, dict);
+}
+
+function MovieStill({ movie }: { movie: CalendarMovie }) {
+  const src = movie.backdrop?.thumb ?? movie.poster?.thumb;
+
+  return (
+    <StillFrame
+      src={src}
+      size="row"
+      isPoster={!movie.backdrop}
+      placeholder={
+        <span className="flex size-full items-center justify-center text-muted">
+          <MediaTypeIcon type="movie" className="size-5" />
+        </span>
+      }
+    />
+  );
 }
 
 export const CalendarMovieItem = memo(function CalendarMovieItem({
@@ -36,7 +53,7 @@ export const CalendarMovieItem = memo(function CalendarMovieItem({
         href={mediaRoute('movie', movie.slug)}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-foreground no-underline outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
-        <MediaPoster type="movie" posterUrl={movie.poster?.small} size="row" />
+        <MovieStill movie={movie} />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate text-[15px] font-bold">{movie.title}</span>
           <span className="truncate text-[13px] text-muted">

@@ -15358,6 +15358,15 @@
               }
             ]
           },
+          "backdrop": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
           "releaseDate": {
             "format": "date-time",
             "type": "string",
@@ -15398,6 +15407,7 @@
           "slug",
           "title",
           "poster",
+          "backdrop",
           "releaseDate",
           "releaseDateKind",
           "releaseCountry",
