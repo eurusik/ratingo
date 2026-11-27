@@ -40,6 +40,7 @@ jobs:
       ai_core: ${{ steps.filter.outputs.ai_core }}
       veronica: ${{ steps.filter.outputs.veronica }}
       happy: ${{ steps.filter.outputs.happy }}
+      dume: ${{ steps.filter.outputs.dume }}
     steps:
       - id: filter
         env:
@@ -59,6 +60,7 @@ jobs:
             echo "ai_core=true" >> "$GITHUB_OUTPUT"
             echo "veronica=true" >> "$GITHUB_OUTPUT"
             echo "happy=true" >> "$GITHUB_OUTPUT"
+            echo "dume=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -71,7 +73,7 @@ jobs:
           large=$(( count >= 3000 ))
 
           if (( large )) || [[ $(match '^(package\.json|package-lock\.json|tsconfig\.json|eslint\.config\.mjs|eslint-rules/|\.github/)') == true ]]; then
-            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true; happy=true
+            api=true; web=true; storefront=true; contracts=true; backup=true; migrations=true; smoke=true; storefront_image=true; ai_core=true; veronica=true; happy=true; dume=true
           else
             api=$(match '^(apps/api/|packages/node-telemetry/|apps/ai/veronica/src/modules/chat/domain/constants/system-card\.json$|knip\.json$)')
             web=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|knip\.json$)')
@@ -83,6 +85,7 @@ jobs:
             storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
             ai_core=$(match '^(packages/(ai-core|node-telemetry)/|knip\.json$)')
             happy=$(match '^(apps/ai/happy/|packages/(ai-core|node-telemetry)/|knip\.json$)')
+            dume=$(match '^(apps/ai/dume/|packages/(ai-core|node-telemetry)/|knip\.json$)')
             veronica=$(match '^(apps/ai/veronica/|apps/api/drizzle_v2/|packages/(ai-core|node-telemetry)/|knip\.json$|\.dockerignore$)')
           fi
 
@@ -92,7 +95,7 @@ jobs:
             deps=$(match '^(package\.json|package-lock\.json|\.npmrc|(apps|packages)/[^/]+/package\.json|apps/ai/[^/]+/package\.json|\.dockerignore|apps/api/Dockerfile|\.github/(workflows/ci\.yml|scripts/load-native-modules\.cjs))$')
           fi
 
-          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica happy=$happy"
+          echo "api=$api web=$web storefront=$storefront contracts=$contracts backup=$backup migrations=$migrations deps=$deps smoke=$smoke storefront_image=$storefront_image ai_core=$ai_core veronica=$veronica happy=$happy dume=$dume"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "storefront=$storefront" >> "$GITHUB_OUTPUT"
@@ -105,6 +108,7 @@ jobs:
           echo "ai_core=$ai_core" >> "$GITHUB_OUTPUT"
           echo "veronica=$veronica" >> "$GITHUB_OUTPUT"
           echo "happy=$happy" >> "$GITHUB_OUTPUT"
+          echo "dume=$dume" >> "$GITHUB_OUTPUT"
 
   api:
     name: api
@@ -584,6 +588,37 @@ jobs:
       - name: Find unused files, exports and dependencies with knip
         run: npm run lint:dead-code --workspace=@ratingo/ai-happy
 
+  dume:
+    name: dume
+    needs: changes
+    if: needs.changes.outputs.dume == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared packages
+        run: npm run build:packages --workspace=@ratingo/ai-dume
+
+      - name: Lint
+        run: npm run lint --workspace=@ratingo/ai-dume
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=@ratingo/ai-dume
+
+      - name: Tests and the stub-model eval
+        run: npm test --workspace=@ratingo/ai-dume -- --ci
+
+      - name: Build
+        run: npm run build --workspace=@ratingo/ai-dume
+
+      - name: Find unused files, exports and dependencies with knip
+        run: npm run lint:dead-code --workspace=@ratingo/ai-dume
+
   web-smoke:
     name: web-smoke
     needs: changes
@@ -683,7 +718,7 @@ jobs:
 
   ci:
     name: ci
-    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, veronica, happy, web-smoke]
+    needs: [changes, api, api-test, api-e2e, api-dead-code, api-prod-install, api-audit, migrations, web, web-dead-code, web-audit, storefront, storefront-image, contracts, pg-backup, ai-core, veronica, happy, dume, web-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

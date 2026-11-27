@@ -2,7 +2,7 @@
 
 > Status: **Proposed** · Date: 2026-11-21
 >
-> A small agent platform. One shared core package and one service per agent. The first agents are **Veronica** (daily project digest and Telegram chat) and **Happy** (pull request code review). **DUM-E** (read-only search) comes later.
+> A small agent platform. One shared core package and one service per agent. The first agents are **Veronica** (daily project digest and Telegram chat) and **Happy** (pull request code review). **DUM-E** (read-only investigation of "why" questions) is being built in four steps; step 1, reading code, is done.
 
 ---
 
@@ -61,7 +61,7 @@ packages/
 apps/ai/
   veronica/               @ratingo/ai-veronica   digest, investigations, Telegram chat and router
   happy/                  @ratingo/ai-happy      GitHub PR review
-  dume/                   @ratingo/ai-dume       later: read-only search
+  dume/                   @ratingo/ai-dume       code investigator: answers "why" questions from the code of one commit, with verified citations
 ```
 
 - **Each agent is its own Railway service** with its own environment. A process only holds the credentials of the agent it runs. Happy reads untrusted PR content, so it must not share a process with Grafana, GA4 or database credentials.
@@ -266,9 +266,79 @@ apps/ai/happy/
 
 `internal-review.controller.ts` is what Veronica's `ask_happy` calls over the private network.
 
-### `apps/ai/dume` (later)
+### `apps/ai/dume`
 
-Same shape with a `search/` module and read-only tools over code, logs, metrics and the `reporting` views.
+DUM-E answers "why does the system behave like this" from the repository's code, in four steps: (1) code reading with verified citations and an eval, run from the command line only (done); (2) logs, job failures and metrics tools moved to the core; (3) Veronica delegates to DUM-E in the background and relays the answer; (4) read-only catalog data. It is its own service (not a Veronica module), imports only `@ratingo/ai-core` and `@ratingo/node-telemetry`, and has a Dockerfile (tini, then `node`), but no Railway service and no HTTP endpoint yet.
+
+```
+apps/ai/dume/
+├── package.json · tsconfig*.json · jest.config.js · Dockerfile · .env.example
+├── agent/
+│   ├── agent.yaml                      # alias review, $0.30 per run, $1.50 per day, 16 turns
+│   └── prompts/investigate.md          # role, how to investigate, answer contract, untrusted rule
+├── fixtures/retry-policy.fixture.ts    # a file with a planted instruction, for the eval
+├── eval/                               # see "DUM-E eval"
+└── src/
+    ├── main.ts                         # the CLI entry
+    ├── cli/cli-arguments.ts
+    ├── config/                         # env schema (zod), aliases, prices
+    ├── telemetry/                      # structured logger, OpenTelemetry metrics
+    ├── core/                           # Nest wiring for ai-core, AgentRunner, stub model script
+    └── modules/investigation/
+        ├── domain/
+        │   ├── constants/              # snapshot limits, search/read/list limits, citation limits
+        │   ├── entities/               # CodeSnapshot, investigation answer, outcome
+        │   ├── errors/
+        │   ├── ports/code-snapshot.port.ts
+        │   └── policies/               # repo-path guard, search pattern, line range, file inspection,
+        │                               # directory listing, evidence ledger, answer verifier
+        ├── application/
+        │   ├── services/               # CodeBrowser, InvestigationService
+        │   ├── tools/create-code-tools.ts
+        │   └── schemas/investigation-draft.schema.ts
+        ├── infrastructure/
+        │   ├── adapters/               # GitHub tarball, local directory, directory snapshot
+        │   └── archive/tar-reader.ts   # streaming tar parser
+        └── presentation/format-outcome.ts
+```
+
+**Code snapshot (`CODE_SNAPSHOT_PORT`).** `resolve(ref)` returns a `CodeSnapshot`: one commit of the repository, with the list of readable files (path, bytes, line count), the reason a file is skipped, and `readLines(path)`. Two adapters:
+
+- `GithubCodeSnapshotAdapter` (default): resolves the ref (`main` or `development` only, anything else is refused before any request) to a commit SHA with `GET /commits/<ref>` (media type `application/vnd.github.sha`), downloads that commit's tarball with `fetch`, streams it through gunzip and a small tar parser, and writes the files into a private temp directory (`0700`, files `0600`). Snapshots are kept per SHA (three at most, the least recently used is deleted). The ref is checked again at most once every five minutes; when the check fails and an older snapshot of that ref exists it is served with a warning. A download is shared between concurrent requests. A token (`GITHUB_READ_TOKEN`) is optional; the repository is public. The temp directory is removed on shutdown.
+- `LocalDirectoryCodeSnapshotAdapter`: serves a local checkout (`git ls-files` for tracked and untracked, not ignored, files) at the fixed label `local-checkout`. The eval and `DUME_LOCAL_CHECKOUT` use it.
+
+Guards: every path is normalized by the pure `normalizeFilePath` (no absolute paths, no `..`, no `.git`, no backslash or control characters, bounded length and depth); archive entries that are not regular files (links, devices) are skipped; a file is read only if it is in the index; files over 300 KB, binary files (NUL byte), invalid UTF-8 and files with a line over 6000 characters are skipped with a reason; the archive is limited in compressed size, unpacked size and file count. Limits are constants in `domain/constants/snapshot.constants.ts`.
+
+**Tools** (read-only, in-process, no shell; output is wrapped as untrusted data and cut by whole rows with `RowList`):
+
+| Tool          | Does                                                                                                                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `code_search` | Text or safe-regex search per line, optional path prefix and extensions. Returns `{path, line, text}` rows, `omitted` and a hint, and a coverage block. Regex mode refuses nested or group repeats, lookarounds, backreferences, unicode escapes and more than two open-ended repeats, and checks only lines up to 600 characters |
+| `code_read`   | Numbered whole lines of one file, 150 by default, 400 at most, cut by whole lines to fit the output budget with `nextStartLine`; a missing or skipped path is an error that says why and lists files with the same name                  |
+| `code_list`   | One directory level: subdirectories with file counts, then files with line counts                                                                                                                                                     |
+
+Each description states what the tool covers (only the tracked text files of one commit, no history, nothing generated or ignored), what it does not, and that an empty result does not prove the code lacks the behaviour. The handlers record in an `EvidenceLedger` exactly the lines the model was shown (using `countRowsThatFit`, so the ledger and the reply never disagree).
+
+**Answer contract.** The model returns JSON: a short `answer`, `claims` (each with `citations` of `{path, startLine, endLine}`), `assumptions` and `unknowns`. The pure `verifyAnswer` policy checks every citation: the path is valid, the file exists in the snapshot, the lines exist, the range is at most 80 lines, and the whole range was returned by a tool in this run. A claim whose citations all pass is a fact. A claim with any failing or missing citation is moved to the assumptions with the reason (`unverified_claim`), never dropped and never shown as a fact. The result carries `support`: `supported`, `partly_supported`, `unsupported` or `no_claims` (a valid answer for "the code does not say", with what was checked in `unknowns`).
+
+**Loop.** One `AgentLoop` run on alias `review`, at most 16 turns, 4 minutes and $0.30 (the agent's day budget is $1.50; with `REDIS_URL` the day total is shared between processes like Happy's). The registry is created with `guardRepeatedCalls`: a call with the same tool and input as an earlier one in the run that failed or returned nothing is not run again; the model gets the earlier result with a note. A failed tool is a tool result with `isError`, never an exception.
+
+**Telemetry.** Runs go through ai-core's `TelemetryRunRepository` (`app.ai.runs`, `app.ai.run.cost`, `app.ai.run.tokens`, `app.ai.run.duration`, `app.ai.tool.calls` with `agent=dume`). Logs use the shared structured logger (`ratingo-dume`): run ids, outcome, support and counts only, never the question, the prompt or file content. A signal closes the Nest context (removes the temp directory and the Redis client), flushes logs and metrics and exits 130 or 143.
+
+**Env** (`src/config/env.schema.ts`): `AI_MODEL_REVIEW` (default `stub:review`), `ANTHROPIC_API_KEY`, `GITHUB_REPOSITORY` (default `eurusik/ratingo`), `GITHUB_READ_TOKEN` (optional), `GITHUB_API_URL`, `DUME_LOCAL_CHECKOUT` (optional, reads a local checkout instead), `REDIS_URL` (optional), `LOG_LEVEL` (the CLI defaults to `warn`), `OTEL_*`.
+
+**CLI.** `npm run investigate --workspace=@ratingo/ai-dume -- "<question>" [--ref=main|development]` prints the answer, the facts with their citations, assumptions and unverified claims, unknowns, `support`, the commit, turns and cost. The exit code is 1 when there is no answer.
+
+**What was left in the agents.** `AgentRunner`, the run repository factory, `NestRunLogger` and the OpenTelemetry bootstrap are now written three times (Veronica, Happy, DUM-E). They are the first candidates for ai-core when step 2 touches them.
+
+### DUM-E eval
+
+`apps/ai/dume/eval` follows the chat eval's method: every case runs `--runs` times (3 with a real model, 1 with the stub), passes at a strict majority, and a case whose runs disagree is `FLAKY`. A Sonnet judge (`--judge-model`) decides, per short statement, what the answer must convey and must not claim. Code decides everything else: the answer exists, every citation points at a file and lines that exist, the required files are cited with a verified citation, no forbidden text (an injected code word), no gendered self-reference toward the owner, at least one verified fact on a question the code answers, and at least one unknown on a question it does not. The report and the baseline rules (`eval/baseline.json`; regressions exit 1, an incomplete run exits 2) are the same as in "Chat eval". It is DUM-E's own thin copy because the chat eval's generic parts live inside Veronica; moving both to a shared place is work for step 2.
+
+- **Snapshot.** The cases read the repository checkout through the local-directory adapter (`apps/ai/dume/eval` is excluded, so the model cannot read the answers), at the label `local-checkout`: no network.
+- **Cases** (18): 13 answered by the code, 4 whose honest answer is "the code does not say" (a signup count, a production key, the digest's chat id, the deployed commit) and 1 with an instruction planted in `fixtures/retry-policy.fixture.ts`. Each case lists `evidence` (a file and an `anchor` text, with where it was verified when the case was written), so a case survives edits to the file: the stub finds the anchor's current line.
+- **Stub run (CI).** The stub model replays each case's reference: it reads the evidence ranges through the real tools and answers with the reference claims, so cases, anchors, tools, citation policy and scoring are exercised together. A case whose anchor left the code fails with `StaleCaseError` and says which file to update. It says nothing about the model.
+- **Real run.** `AI_MODEL_REVIEW=anthropic:claude-sonnet-5-5 ANTHROPIC_API_KEY=… npm run eval --workspace=@ratingo/ai-dume`; add `-- --save-baseline` to accept it. A change to the prompt, tools or loop merges only with no regression against the committed baseline.
 
 ### Placement rules
 
@@ -313,6 +383,7 @@ They reference each other only by id. Happy keeps its review state on GitHub and
 | `CONVERSATION_REPOSITORY` | Veronica `chat`   | Redis                                               |
 | `AGENT_GATEWAY_PORT`      | Veronica `chat`   | HTTP to other agent services                        |
 | `CODE_HOST_PORT`          | Happy `review`    | GitHub App: diff, files at a ref, review, check run |
+| `CODE_SNAPSHOT_PORT`      | DUM-E `investigation` | GitHub tarball of one commit; a local directory for the eval |
 
 Investigation tools wrap the digest ports; they never open their own clients.
 
@@ -350,6 +421,7 @@ The core never imports a provider SDK outside its adapters.
 - Tool output is capped, and secrets and personal data are redacted before it reaches a model or Telegram.
 - **Lists are cut by whole rows, never mid-row.** A handler that returns a list returns a `RowList` (rows, a hint naming the filter that narrows them, and a frame for the rest of the answer). `defineTool` keeps as many complete rows as fit the tool's `maxOutputChars` and adds `omitted` (how many rows were left out) and `hint`. The registry's character cut stays only as a last-resort safety net.
 - No shell tool. Nothing runs code from a PR or from model output.
+- **Empty and failed calls are not repeated.** A registry built with `guardRepeatedCalls` remembers, per run, the calls that failed or returned nothing (a `RowList` with no rows, or whatever the tool's `isEmpty` says) and answers a repeat of the same tool and input with the earlier result and a note instead of running it again. It is off by default, so agents opt in. `countRowsThatFit(list, maxChars)` says how many rows `fitRowList` will keep, for handlers that must know exactly what the model saw.
 
 ### MCP gateway (`packages/ai-core/src/mcp`)
 
@@ -738,7 +810,7 @@ Before the first agent code lands:
 4. **Happy in shadow mode.**
 5. **Happy live,** CodeRabbit off.
 6. **Chat:** commands, mentions, patterns, then the router.
-7. **DUM-E:** read-only search across code, logs, metrics and data, as its own service.
+7. **DUM-E:** read-only investigation across code, logs, metrics and data, as its own service, in four steps: code reading and its eval (done), logs, job failures and metrics tools in the core, Veronica delegating in the background, read-only catalog data.
 8. **Later:** weekly digest, instant alerts without a model, more adapters.
 
 ---
