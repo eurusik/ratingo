@@ -49,6 +49,42 @@ describe('TvMazeEnrichmentService', () => {
   });
 
   describe('enrich', () => {
+    describe('duplicate episodes', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('keeps one episode per number and warns once', async () => {
+        const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+        const episode = (number: number) => ({
+          seasonNumber: 1,
+          number,
+          title: number === 11 ? "The Siblings' Room" : `Episode ${number}`,
+          airDate: new Date(`2024-05-${String(number).padStart(2, '0')}T03:00:00Z`),
+        });
+        episodeSchedule.getEpisodesByImdbId.mockResolvedValue([
+          episode(10),
+          episode(11),
+          episode(11),
+          episode(12),
+        ]);
+
+        const result = await service.enrich(mockShow);
+
+        const season = result.details?.seasons?.find((s) => s.number === 1);
+        expect(season?.episodes.map((e) => e.number)).toEqual([10, 11, 12]);
+        expect(season?.episodeCount).toBe(3);
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'TVMaze returned duplicate episodes',
+            tmdbId: 1000,
+            duplicates: ['S1E11'],
+          }),
+        );
+      });
+    });
+
     describe('skipped seasons', () => {
       afterEach(() => {
         jest.restoreAllMocks();
