@@ -29,7 +29,7 @@ describe('InvestigationLookupService', () => {
     const service = new InvestigationLookupService(
       store,
       folder,
-      new FixedClock(NOW_MS + 10 * 60_000),
+      new FixedClock(NOW_MS + 11 * 60_000),
     );
 
     const record = await service.find('tg1000001');

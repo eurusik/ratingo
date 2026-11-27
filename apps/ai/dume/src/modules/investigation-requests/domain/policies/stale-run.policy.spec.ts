@@ -43,13 +43,13 @@ describe('interruptedIfStale', () => {
     });
   });
 
-  it('gives the code download its own allowance before the run clock starts', () => {
-    expect(interruptedIfStale(downloading, NOW_MS + SNAPSHOT_PHASE_ALLOWANCE_MS, TIMEOUT_MS)).toBe(
-      downloading,
-    );
-    expect(
-      interruptedIfStale(downloading, NOW_MS + SNAPSHOT_PHASE_ALLOWANCE_MS + 1, TIMEOUT_MS),
-    ).toMatchObject({ reason: FailureReason.INTERRUPTED });
+  it('without a run clock, allows the whole code download, run and margin after the start', () => {
+    const longest = SNAPSHOT_PHASE_ALLOWANCE_MS + TIMEOUT_MS + STALE_RUNNING_MARGIN_MS;
+
+    expect(interruptedIfStale(downloading, NOW_MS + longest, TIMEOUT_MS)).toBe(downloading);
+    expect(interruptedIfStale(downloading, NOW_MS + longest + 1, TIMEOUT_MS)).toMatchObject({
+      reason: FailureReason.INTERRUPTED,
+    });
   });
 
   it('keeps a queued request while it can still be waiting behind the others', () => {

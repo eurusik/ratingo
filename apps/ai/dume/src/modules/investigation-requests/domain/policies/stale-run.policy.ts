@@ -22,7 +22,7 @@ const isRunningTooLong = (
     return nowMs - record.runStartedAtMs > runTimeoutMs + STALE_RUNNING_MARGIN_MS;
   }
   return (
-    record.startedAtMs !== undefined && nowMs - record.startedAtMs > SNAPSHOT_PHASE_ALLOWANCE_MS
+    record.startedAtMs !== undefined && nowMs - record.startedAtMs > longestRunMs(runTimeoutMs)
   );
 };
 
