@@ -48,5 +48,4 @@ COPY apps/ai/dume/agent ./apps/ai/dume/agent
 
 USER node
 
-ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "apps/ai/dume/dist/main.js"]
+ENTRYPOINT ["/sbin/tini", "--", "node", "apps/ai/dume/dist/main.js"]
