@@ -61,6 +61,11 @@ export function PickToggle({ label, isMarked, isDisabled, onPick }: PickTogglePr
   );
 }
 
+function isTouchContextMenu(event: MouseEvent<HTMLButtonElement>): boolean {
+  const { nativeEvent } = event;
+  return 'pointerType' in nativeEvent && nativeEvent.pointerType === 'touch';
+}
+
 interface WatchedButtonProps {
   label: string;
   isWatched: boolean;
@@ -81,6 +86,7 @@ export function WatchedButton({ label, isWatched, onWatchedChange, onMenu }: Wat
   const openMenu = (event: MouseEvent<HTMLButtonElement>) => {
     if (!onMenu) return;
     event.preventDefault();
+    if (isTouchContextMenu(event)) return;
     onMenu(event.currentTarget);
   };
 
@@ -117,7 +123,7 @@ export function StillDetailButton({ label, onOpen, onIntent }: StillDetailButton
       onClick={onOpen}
       onPointerEnter={onIntent}
       onFocus={onIntent}
-      className="group/still absolute top-[3px] left-[81px] z-10 flex size-11 cursor-pointer items-start justify-end rounded-[10px] p-[9px] pointer-fine:top-2 pointer-fine:left-2 pointer-fine:h-[63px] pointer-fine:w-28 pointer-fine:p-1"
+      className="group/still absolute -top-[5px] -right-[5px] z-10 flex size-11 cursor-pointer items-start justify-end rounded-[10px] p-[9px] pointer-fine:inset-0 pointer-fine:size-full pointer-fine:p-1"
     >
       <span
         aria-hidden

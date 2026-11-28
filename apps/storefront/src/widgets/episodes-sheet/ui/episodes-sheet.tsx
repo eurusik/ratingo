@@ -154,6 +154,7 @@ function SheetBody({
 
   const setPicking = (next: boolean) => {
     setPickTarget(undefined);
+    if (next) close();
     onPickingChange(next);
   };
 

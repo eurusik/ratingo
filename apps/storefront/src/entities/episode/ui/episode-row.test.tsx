@@ -12,7 +12,8 @@ const EPISODE: Episode = {
   runtimeMinutes: 40,
 };
 
-const MARK = 'С1 · Е3: Reckoning';
+const MARK = 'Переглянуто, С1 · Е3: Reckoning';
+const PICK = 'С1 · Е3: Reckoning';
 const OPEN = 'Опис серії С1 · Е3: Reckoning';
 
 function renderRow(props: Partial<Parameters<typeof EpisodeRow>[0]>) {
@@ -68,6 +69,18 @@ describe('EpisodeRow', () => {
     expect(onWatchedChange).not.toHaveBeenCalled();
   });
 
+  it('leaves a touch context menu to the long press so the menu opens once', () => {
+    const onMenu = jest.fn();
+    renderRow({ onMenu, onWatchedChange: jest.fn() });
+
+    const contextMenu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    Object.defineProperty(contextMenu, 'pointerType', { value: 'touch' });
+    fireEvent(screen.getByRole('button', { name: MARK }), contextMenu);
+
+    expect(onMenu).not.toHaveBeenCalled();
+    expect(contextMenu.defaultPrevented).toBe(true);
+  });
+
   it('keeps the browser menu when the row has no episode menu', () => {
     renderRow({ onWatchedChange: jest.fn() });
 
@@ -100,7 +113,7 @@ describe('EpisodeRow', () => {
     renderRow({ onOpen: jest.fn(), onWatchedChange: jest.fn(), onPick });
 
     expect(screen.queryByRole('button', { name: OPEN })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: MARK }));
+    fireEvent.click(screen.getByRole('button', { name: PICK }));
     expect(onPick).toHaveBeenCalledWith(EPISODE);
   });
 

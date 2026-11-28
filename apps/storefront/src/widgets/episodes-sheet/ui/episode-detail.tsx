@@ -237,7 +237,7 @@ export function EpisodeDetail({
           onChange={(isSelected) => tracker.toggle(episode, isSelected)}
         />
       ) : null}
-      <NoticeBar tracker={tracker} className="w-full" />
+      {layout === 'page' ? <NoticeBar tracker={tracker} className="w-full" /> : null}
       {previous || next ? (
         <nav aria-label={dict.episodes.detail.neighbours} className="grid grid-cols-2 gap-2">
           {previous ? (

@@ -955,6 +955,7 @@
       "spoilerHint": "You haven't watched {code} yet, so the description is hidden",
       "loadFailed": "Couldn't load the description, try again later",
       "close": "Close description",
+      "watchedToggle": "Watched, {code}: {title}",
       "describe": "About",
       "menuHint": "Press and hold or right-click to open the episode menu",
       "menu": {

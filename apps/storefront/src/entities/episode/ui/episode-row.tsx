@@ -103,13 +103,18 @@ export const EpisodeRow = memo(function EpisodeRow(props: EpisodeRowProps) {
       )}
     >
       <div className={cn(ROW, mode !== 'static' && 'pe-16')}>
-        <span className={cn('flex shrink-0 rounded-[10px]', isOpened && 'ring-2 ring-accent')}>
+        <span
+          className={cn('relative flex shrink-0 rounded-[10px]', isOpened && 'ring-2 ring-accent')}
+        >
           <EpisodeStill
             episode={episode}
             badge={episodeShortCode(episode, dict)}
             size="row"
             isDimmed={isWatched}
           />
+          {mode === 'mark' && open ? (
+            <StillDetailButton label={openLabel} onOpen={open} onIntent={showIntent} />
+          ) : null}
         </span>
         <EpisodeText episode={episode} isAired={isAired} isNext={isNext} isWatched={isWatched} />
       </div>
@@ -123,14 +128,11 @@ export const EpisodeRow = memo(function EpisodeRow(props: EpisodeRowProps) {
       ) : null}
       {mode === 'mark' && onWatchedChange ? (
         <WatchedButton
-          label={label}
+          label={interpolate(dict.episodes.detail.watchedToggle, labelValues)}
           isWatched={isWatched}
           onWatchedChange={(watched) => onWatchedChange(episode, watched)}
           onMenu={onMenu ? (anchor) => onMenu(episode, anchor) : undefined}
         />
-      ) : null}
-      {mode === 'mark' && open ? (
-        <StillDetailButton label={openLabel} onOpen={open} onIntent={showIntent} />
       ) : null}
       {mode === 'open' && open ? (
         <OpenRowButton label={openLabel} onOpen={open} onIntent={showIntent} />

@@ -75,6 +75,20 @@ describe('EpisodeDetail', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('beside the list it leaves the undo notice to the list footer', () => {
+    overviews();
+    renderDetail(
+      TRACKS,
+      {
+        notice: { id: 1, message: 'Позначили 2 серії', undo: { episodeIds: [], watched: false } },
+        holdNotice: jest.fn(),
+      },
+      'pane',
+    );
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('shows the Ukrainian overview of the season it loads by show and season', async () => {
     overviews({ number: 2, overview: 'Ліна знаходить сліди на піску.', isUkrainian: true });
     renderDetail(TRACKS);
