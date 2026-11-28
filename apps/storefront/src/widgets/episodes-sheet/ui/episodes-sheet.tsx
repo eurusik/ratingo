@@ -5,6 +5,7 @@ import { cn } from '@ratingo/web-core/lib';
 import {
   EpisodeRow,
   currentSeason,
+  episodeKey,
   hasAired,
   seasonProgress,
   unwatchedThrough,
@@ -12,14 +13,19 @@ import {
   type Episode,
   type Season,
 } from '@/entities/episode';
+import { WIDE_DESKTOP_MEDIA_QUERY } from '@/shared/config';
 import { interpolate, useTranslation } from '@/shared/i18n';
+import { useMediaQuery } from '@/shared/lib';
 import { ResponsiveDialog } from '@/shared/ui';
 import { useSeasonNavigation, type SlideDirection } from '../model/season-navigation';
 import type { EpisodesShow, EpisodesTracker } from '../model/use-episodes-tracker';
 import { isSeasonComplete } from '../model/season-status';
-import { useOpenedEpisode } from '../model/use-opened-episode';
+import { useOpenedEpisode, type OpenedEpisode } from '../model/use-opened-episode';
+import { useRowHint } from '../model/use-row-hint';
 import { EpisodeDetail } from './episode-detail';
+import { EpisodeMenu, type EpisodeMenuTarget } from './episode-menu';
 import { PickBanner } from './pick-banner';
+import { RowHint } from './row-hint';
 import { SeasonSummary } from './season-summary';
 import { SheetFooter } from './sheet-footer';
 import { SheetHeading, type MenuAction } from './sheet-heading';
@@ -62,7 +68,7 @@ const SLIDE_IN: Record<SlideDirection, string> = {
 type SheetBodyProps = Pick<
   EpisodesSheetProps,
   'show' | 'tracker' | 'isPicking' | 'initialSeason' | 'onPickingChange' | 'onNotStarted'
-> & { onClose: () => void };
+> & { opened: OpenedEpisode; canSplit: boolean; onClose: () => void };
 
 function SheetBody({
   show,
@@ -71,10 +77,14 @@ function SheetBody({
   initialSeason,
   onPickingChange,
   onNotStarted,
+  opened,
+  canSplit,
   onClose,
 }: SheetBodyProps) {
   const { dict } = useTranslation();
   const [pickTarget, setPickTarget] = useState<Episode>();
+  const [menuTarget, setMenuTarget] = useState<EpisodeMenuTarget>();
+  const rowHint = useRowHint();
   const { watched, now } = tracker;
   const isComplete = useCallback(
     (candidate: Season) => isSeasonComplete(candidate, watched, now),
@@ -95,6 +105,10 @@ function SheetBody({
     (episode: Episode, isWatched: boolean) => latestTracker.current.toggle(episode, isWatched),
     [],
   );
+  const showMenu = useCallback(
+    (episode: Episode, anchor: Element) => setMenuTarget({ episode, anchor }),
+    [],
+  );
   const { season, direction } = navigation;
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -102,18 +116,28 @@ function SheetBody({
     if (direction && topRef.current) revealInScroller(topRef.current);
   }, [season.number, direction]);
 
-  const {
-    episode: openedEpisode,
-    listRef: episodeListRef,
-    open: openEpisode,
-    close: closeEpisode,
-  } = useOpenedEpisode();
   const prefetchOverview = usePrefetchEpisodeOverview(show.slug);
+  const { episode: openedEpisode, listRef: episodeListRef, open, close } = opened;
+  const openedKey = openedEpisode ? episodeKey(openedEpisode) : undefined;
+  const listSeason = useRef({ number: season.number, select: navigation.select, canSplit });
+  useLayoutEffect(() => {
+    listSeason.current = { number: season.number, select: navigation.select, canSplit };
+  });
+  const openEpisode = useCallback(
+    (episode: Episode) => {
+      const current = listSeason.current;
+      if (current.canSplit && episode.seasonNumber !== current.number) {
+        current.select(episode.seasonNumber);
+      }
+      open(episode);
+    },
+    [open],
+  );
   const backToSeason = () => {
     if (openedEpisode && openedEpisode.seasonNumber !== season.number) {
       navigation.select(openedEpisode.seasonNumber);
     }
-    closeEpisode();
+    close();
   };
 
   const picked = new Set(
@@ -130,6 +154,7 @@ function SheetBody({
 
   const setPicking = (next: boolean) => {
     setPickTarget(undefined);
+    if (next) close();
     onPickingChange(next);
   };
 
@@ -152,22 +177,23 @@ function SheetBody({
     setPicking(false);
   };
 
-  if (openedEpisode && !isPicking) {
-    return (
-      <EpisodeDetail
-        showSlug={show.slug}
-        seasons={show.seasons}
-        episode={openedEpisode}
-        tracker={tracker}
-        onOpen={openEpisode}
-        onBack={backToSeason}
-        onClose={onClose}
-      />
-    );
-  }
+  const detail = openedEpisode ? (
+    <EpisodeDetail
+      layout={canSplit ? 'pane' : 'page'}
+      showSlug={show.slug}
+      seasons={show.seasons}
+      episode={openedEpisode}
+      tracker={tracker}
+      onOpen={openEpisode}
+      onBack={backToSeason}
+      onClose={onClose}
+    />
+  ) : null;
 
-  return (
-    <>
+  if (detail && !isPicking && !canSplit) return detail;
+
+  const list = (
+    <div className="min-w-0">
       {isPicking ? (
         <PickBanner onCancel={onNotStarted ? onClose : () => setPicking(false)} />
       ) : null}
@@ -214,18 +240,29 @@ function SheetBody({
                   }
                   isWatched={episode.id !== undefined && tracker.watched.has(episode.id)}
                   isPicked={episode.id !== undefined && picked.has(episode.id)}
+                  isOpened={canSplit && openedKey === episodeKey(episode)}
                   onWatchedChange={toggleEpisode}
                   onPick={isPicking ? togglePickTarget : undefined}
                   onOpen={openEpisode}
                   onOpenIntent={prefetchOverview}
+                  onMenu={showMenu}
                 />
               ))}
             </ul>
           </div>
         </div>
       </div>
+      <EpisodeMenu
+        target={menuTarget}
+        tracker={tracker}
+        onOpen={openEpisode}
+        onClose={() => setMenuTarget(undefined)}
+      />
       <div className="sticky bottom-0 z-20 h-0">
         <div className="absolute inset-x-0 bottom-[calc(var(--safe-bottom)+0.75rem)]">
+          {rowHint.isVisible && !isPicking && !tracker.notice ? (
+            <RowHint onDismiss={rowHint.dismiss} />
+          ) : null}
           <SheetFooter
             show={show}
             season={season}
@@ -238,7 +275,18 @@ function SheetBody({
           />
         </div>
       </div>
-    </>
+    </div>
+  );
+
+  if (!detail || isPicking) return list;
+
+  return (
+    <div className="grid grid-cols-[minmax(0,30rem)_minmax(0,1fr)] gap-6">
+      <div className="sticky top-0 max-h-[calc(100dvh-3rem)] self-start overflow-y-auto">
+        {detail}
+      </div>
+      {list}
+    </div>
   );
 }
 
@@ -253,13 +301,21 @@ export function EpisodesSheet({
   onNotStarted,
 }: EpisodesSheetProps) {
   const { dict } = useTranslation();
+  const opened = useOpenedEpisode();
+  const isWideScreen = useMediaQuery(WIDE_DESKTOP_MEDIA_QUERY);
+  const isSplit = isWideScreen && opened.episode !== undefined && !isPicking;
+  const changeOpen = (next: boolean) => {
+    if (!next) opened.close();
+    onOpenChange(next);
+  };
 
   return (
     <ResponsiveDialog
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={changeOpen}
       title={dict.episodes.title}
       isHeaderless
+      isWide={isSplit}
       size="full"
       desktop="side"
     >
@@ -270,7 +326,9 @@ export function EpisodesSheet({
         initialSeason={initialSeason}
         onPickingChange={onPickingChange}
         onNotStarted={onNotStarted}
-        onClose={() => onOpenChange(false)}
+        opened={opened}
+        canSplit={isWideScreen}
+        onClose={() => changeOpen(false)}
       />
     </ResponsiveDialog>
   );

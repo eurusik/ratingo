@@ -33,7 +33,11 @@ function overviews(...items: EpisodeOverview[]) {
   jest.mocked(catalogApi.getSeasonOverviews).mockResolvedValue(items);
 }
 
-function renderDetail(episode: Episode, tracker: Partial<EpisodesTracker> = {}) {
+function renderDetail(
+  episode: Episode,
+  tracker: Partial<EpisodesTracker> = {},
+  layout: 'page' | 'pane' = 'page',
+) {
   const callbacks = { onOpen: jest.fn(), onBack: jest.fn(), onClose: jest.fn() };
   const fullTracker = {
     now: NOW,
@@ -47,6 +51,7 @@ function renderDetail(episode: Episode, tracker: Partial<EpisodesTracker> = {}) 
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale="uk" dictionary={getDictionary('uk')}>
         <EpisodeDetail
+          layout={layout}
           showSlug="quiet-shore"
           seasons={SEASONS}
           episode={episode}
@@ -60,6 +65,30 @@ function renderDetail(episode: Episode, tracker: Partial<EpisodesTracker> = {}) 
 }
 
 describe('EpisodeDetail', () => {
+  it('beside the list it closes only itself and offers no way back to the season', () => {
+    overviews();
+    const { onBack, onClose } = renderDetail(TRACKS, {}, 'pane');
+
+    expect(screen.queryByRole('button', { name: 'Сезон 1' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Закрити опис' }));
+    expect(onBack).toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('beside the list it leaves the undo notice to the list footer', () => {
+    overviews();
+    renderDetail(
+      TRACKS,
+      {
+        notice: { id: 1, message: 'Позначили 2 серії', undo: { episodeIds: [], watched: false } },
+        holdNotice: jest.fn(),
+      },
+      'pane',
+    );
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('shows the Ukrainian overview of the season it loads by show and season', async () => {
     overviews({ number: 2, overview: 'Ліна знаходить сліди на піску.', isUkrainian: true });
     renderDetail(TRACKS);

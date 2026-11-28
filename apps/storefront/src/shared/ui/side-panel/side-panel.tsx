@@ -2,6 +2,7 @@
 
 import { Drawer } from '@heroui/react';
 import { DismissOnSystemBack } from '@ratingo/ui/overlay';
+import { cn } from '@ratingo/web-core/lib';
 import { useTranslation } from '@/shared/i18n';
 import type { DialogSurfaceProps } from '../sheet';
 
@@ -10,6 +11,7 @@ export function SidePanel({
   onOpenChange,
   title,
   isHeaderless = false,
+  isWide = false,
   footer,
   children,
 }: DialogSurfaceProps) {
@@ -18,7 +20,12 @@ export function SidePanel({
   return (
     <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Drawer.Content placement="right">
-        <Drawer.Dialog className="w-[35rem] max-w-full px-0">
+        <Drawer.Dialog
+          className={cn(
+            'max-w-full px-0 transition-[width] duration-300 ease-out motion-reduce:transition-none',
+            isWide ? 'w-[66rem]' : 'w-[35rem]',
+          )}
+        >
           <DismissOnSystemBack />
           {isHeaderless ? null : <Drawer.CloseTrigger aria-label={dict.common.close} />}
           <Drawer.Header className={isHeaderless ? 'sr-only' : 'px-5'}>

@@ -127,6 +127,29 @@ describe('useEpisodesTracker', () => {
     expect(result.current.notice).toBeUndefined();
   });
 
+  it('marks only the chosen episode even when earlier ones are unwatched', async () => {
+    const server = fakeServer([]);
+    const { result } = await renderTracker();
+
+    act(() => result.current.markOnly(SEASONS[0].episodes[2]));
+
+    await waitFor(() => expect(server.has('s1e3')).toBe(true));
+    expect(server.has('s1e1')).toBe(false);
+    expect(server.has('s1e2')).toBe(false);
+    expect(result.current.notice?.message).toBe('Переглянуто С1 · Е3');
+  });
+
+  it('lists the unwatched episodes a tap would mark, within the episode season', async () => {
+    fakeServer(['s1e1']);
+    const { result } = await renderTracker();
+
+    expect(result.current.rangeThrough(SEASONS[0].episodes[2]).map((e) => e.id)).toEqual([
+      's1e2',
+      's1e3',
+    ]);
+    expect(result.current.rangeThrough(SEASONS[1].episodes[0]).map((e) => e.id)).toEqual(['s2e1']);
+  });
+
   it('tracks a toggle once after it syncs and not its undo', async () => {
     fakeServer(['s1e1']);
     const { result } = await renderTracker();

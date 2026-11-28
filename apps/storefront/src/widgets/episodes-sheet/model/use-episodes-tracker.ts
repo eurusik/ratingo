@@ -24,7 +24,13 @@ import { track, useClientNow } from '@/shared/lib';
 const NOTICE_VISIBLE_MS = 8000;
 
 type TrackedAction =
-  'toggle' | 'mark_season' | 'reset_season' | 'reset_all' | 'catch_up' | 'mark_through';
+  | 'toggle'
+  | 'mark_only'
+  | 'mark_season'
+  | 'reset_season'
+  | 'reset_all'
+  | 'catch_up'
+  | 'mark_through';
 
 export interface EpisodesShow {
   showId: string;
@@ -55,6 +61,8 @@ export interface EpisodesTracker {
   undoNotice: () => void;
   narrowNotice: () => void;
   toggle: (episode: Episode, isWatched: boolean) => void;
+  markOnly: (episode: Episode) => void;
+  rangeThrough: (episode: Episode) => Episode[];
   markSeason: (season: Season) => void;
   resetSeason: (season: Season) => void;
   resetAll: () => void;
@@ -149,6 +157,12 @@ export function useEpisodesTracker({
     );
   };
 
+  const unwatchedIdsThrough = (episode: Episode) =>
+    unwatchedThrough(seasonsOfEpisode(seasons, episode), episode, watched, now);
+
+  const rangeThrough = (episode: Episode): Episode[] =>
+    unwatchedIdsThrough(episode).flatMap((id) => episodeById(seasons, id) ?? []);
+
   const toggle = (episode: Episode, isWatched: boolean) => {
     if (episode.id === undefined) return;
     const code = episodeCode(episode, dict);
@@ -160,7 +174,7 @@ export function useEpisodesTracker({
       );
       return;
     }
-    const episodeIds = unwatchedThrough(seasonsOfEpisode(seasons, episode), episode, watched, now);
+    const episodeIds = unwatchedIdsThrough(episode);
     if (episodeIds.length > 1) {
       markRange(episode, episodeIds);
       return;
@@ -169,6 +183,15 @@ export function useEpisodesTracker({
       'toggle',
       { episodeIds: [episode.id], watched: true },
       interpolate(labels.watched, { code }),
+    );
+  };
+
+  const markOnly = (episode: Episode) => {
+    if (episode.id === undefined) return;
+    apply(
+      'mark_only',
+      { episodeIds: [episode.id], watched: true },
+      interpolate(labels.watched, { code: episodeCode(episode, dict) }),
     );
   };
 
@@ -225,6 +248,8 @@ export function useEpisodesTracker({
     undoNotice: () => runNoticeAction(notice.current?.undo),
     narrowNotice: () => runNoticeAction(notice.current?.narrow?.change),
     toggle,
+    markOnly,
+    rangeThrough,
     markSeason,
     resetSeason,
     resetAll,
