@@ -18,7 +18,6 @@ export {
   tmdbPosterUrl,
   tmdbStillUrl,
   type TmdbPosterWidth,
-  type TmdbStillWidth,
 } from './images';
 export { SERVICE_TIME_ZONE } from './time-zone';
 export {
