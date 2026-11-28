@@ -29,7 +29,7 @@ describe('EpisodeStill', () => {
         fallbackPosterPath="/poster.jpg"
       />,
     );
-    expect(imageSource(container)).toContain('/w154/poster.jpg');
+    expect(imageSource(container)).toContain('/w342/poster.jpg');
   });
 
   it('shows only the badge when there is no image at all', () => {
