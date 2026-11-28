@@ -92,19 +92,23 @@ describe('CalendarMovieItem', () => {
     renderRows([
       calendarMovie({
         title: 'Кадр',
-        backdrop: image('/backdrop.jpg'),
-        poster: image('/poster.jpg'),
+        backdrop: backdropImage('/backdrop.jpg'),
+        poster: posterImage('/poster.jpg'),
       }),
     ]);
 
-    expect(movieImage('Кадр')).toHaveAttribute('src', expect.stringContaining('/backdrop.jpg'));
+    const still = movieImage('Кадр');
+    expect(still).toHaveAttribute('src', expect.stringContaining('/w300/backdrop.jpg'));
+    expect(still).not.toHaveClass('object-[center_20%]');
   });
 
   it('crops the poster into the frame when there is no backdrop', () => {
     remindAbout();
-    renderRows([calendarMovie({ title: 'Постер', poster: image('/poster.jpg') })]);
+    renderRows([calendarMovie({ title: 'Постер', poster: posterImage('/poster.jpg') })]);
 
-    expect(movieImage('Постер')).toHaveAttribute('src', expect.stringContaining('/poster.jpg'));
+    const still = movieImage('Постер');
+    expect(still).toHaveAttribute('src', expect.stringContaining('/w342/poster.jpg'));
+    expect(still).toHaveClass('object-[center_20%]');
   });
 
   it('shows the movie icon when there is no image', () => {
@@ -116,10 +120,22 @@ describe('CalendarMovieItem', () => {
   });
 });
 
-function image(path: string) {
-  const url = `https://image.tmdb.org/t/p/w300${path}`;
-  return { thumb: url, small: url, medium: url, large: url, original: url };
+function tmdbImage(
+  path: string,
+  [thumb, small, medium, large]: readonly [string, string, string, string],
+) {
+  const url = (size: string) => `https://image.tmdb.org/t/p/${size}${path}`;
+  return {
+    thumb: url(thumb),
+    small: url(small),
+    medium: url(medium),
+    large: url(large),
+    original: url('original'),
+  };
 }
+
+const posterImage = (path: string) => tmdbImage(path, ['w154', 'w342', 'w500', 'w780']);
+const backdropImage = (path: string) => tmdbImage(path, ['w300', 'w300', 'w780', 'w1280']);
 
 function movieImage(title: string): HTMLElement | null {
   return screen.getByText(title).closest('a')?.querySelector('img') ?? null;

@@ -21,14 +21,19 @@ function ComingOutMovieLine({ movie }: { movie: CalendarMovie }) {
   return movieLine(movie, isReminderOn, dict);
 }
 
+function movieStillImage(movie: CalendarMovie): { src?: string; isPoster: boolean } {
+  if (movie.backdrop) return { src: movie.backdrop.thumb, isPoster: false };
+  return { src: movie.poster?.small, isPoster: Boolean(movie.poster) };
+}
+
 function MovieStill({ movie }: { movie: CalendarMovie }) {
-  const src = movie.backdrop?.thumb ?? movie.poster?.thumb;
+  const { src, isPoster } = movieStillImage(movie);
 
   return (
     <StillFrame
       src={src}
       size="row"
-      isPoster={!movie.backdrop}
+      isPoster={isPoster}
       placeholder={
         <span className="flex size-full items-center justify-center text-muted">
           <MediaTypeIcon type="movie" className="size-5" />
