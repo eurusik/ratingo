@@ -107,7 +107,7 @@ function NeighbourLink({ episode, direction, onOpen }: NeighbourLinkProps) {
       aria-label={label}
       onPress={() => onOpen(episode)}
       className={cn(
-        'h-11 min-w-0 gap-1 rounded-full font-semibold',
+        'h-11 w-full min-w-0 gap-1 rounded-full font-semibold',
         isNext ? 'col-start-2 justify-end ps-3.5 pe-2' : 'justify-start ps-2 pe-3.5',
       )}
     >
