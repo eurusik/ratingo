@@ -585,6 +585,74 @@ describe('AgentLoop', () => {
       expect(model.requests.at(-1)?.toolChoice).toBe(ToolChoice.NONE);
     });
 
+    it('allows one repair turn after an invalid final answer instead of ending with max_turns', async () => {
+      const invalidThenValid: StubScript = {
+        respond: (request, callIndex) => {
+          const model = formatModelRef({ provider: 'stub', model: request.model });
+          if (request.toolChoice !== ToolChoice.NONE)
+            return createStubScript(StubScenario.RUNAWAY).respond(request, callIndex);
+          const repairing = request.messages.some((message) =>
+            message.content.some(
+              (part) => part.type === ContentPartType.TEXT && part.text.includes('did not match'),
+            ),
+          );
+          return {
+            model,
+            content: [
+              {
+                type: ContentPartType.TEXT,
+                text: repairing ? '{"headline":"repaired"}' : '{"nonsense":true}',
+              },
+            ],
+            stopReason: StopReason.END,
+            usage: DEFAULT_STUB_USAGE,
+          };
+        },
+      };
+      const model = scripted(invalidThenValid);
+      const { loop, run } = await harness(model);
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          limits: { ...LIMITS, maxTurns: 3 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toEqual({ headline: 'repaired' });
+      expect(result.run).toMatchObject({ stopReason: RunStopReason.END, turns: 4 });
+      expect(model.requests.at(-1)?.toolChoice).toBe(ToolChoice.NONE);
+    });
+
+    it('does not allow a second repair after the final answer turn', async () => {
+      const alwaysInvalid: StubScript = {
+        respond: (request, callIndex) =>
+          request.toolChoice !== ToolChoice.NONE
+            ? createStubScript(StubScenario.RUNAWAY).respond(request, callIndex)
+            : {
+                model: formatModelRef({ provider: 'stub', model: request.model }),
+                content: [{ type: ContentPartType.TEXT, text: '{"nonsense":true}' }],
+                stopReason: StopReason.END,
+                usage: DEFAULT_STUB_USAGE,
+              },
+      };
+      const { loop, run } = await harness(scripted(alwaysInvalid));
+
+      const result = await loop.run(
+        run,
+        baseRequest({
+          responseSchema: schema,
+          limits: { ...LIMITS, maxTurns: 3 },
+          finalAnswer: { prompt: FINAL_PROMPT },
+        }),
+      );
+
+      expect(result.value).toBeUndefined();
+      expect(result.run).toMatchObject({ stopReason: RunStopReason.INVALID_OUTPUT, turns: 4 });
+    });
+
     it('keeps the old behaviour when the option is not set', async () => {
       const { loop, run } = await harness(scripted(answersOnlyWithoutTools));
 
