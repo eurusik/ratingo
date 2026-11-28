@@ -13,7 +13,7 @@ interface EpisodeStillProps {
 function stillOrPoster(episode: Episode, fallbackPosterPath: string | undefined) {
   const still = tmdbStillUrl(episode.stillPath);
   if (still) return { src: still, isPoster: false };
-  return { src: tmdbPosterUrl(fallbackPosterPath, 'w154'), isPoster: true };
+  return { src: tmdbPosterUrl(fallbackPosterPath, 'w342'), isPoster: true };
 }
 
 export function EpisodeStill({

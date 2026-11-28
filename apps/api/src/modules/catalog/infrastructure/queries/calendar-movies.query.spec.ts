@@ -109,6 +109,19 @@ describe('CalendarMoviesQuery', () => {
     expect(result.movieCountByDay.get('2026-11-21')).toBe(7);
   });
 
+  it('leaves the backdrop empty when the movie has none', async () => {
+    jest
+      .spyOn(query, 'select')
+      .mockReturnValue(Promise.resolve([row({ backdropPath: null })]) as never);
+
+    const [movie] = (await query.execute(range)).movies;
+
+    expect(movie.backdrop).toBeNull();
+    expect(movie.poster).toEqual(
+      expect.objectContaining({ small: expect.stringContaining('/p.jpg') }),
+    );
+  });
+
   it('wraps database failures', async () => {
     jest.spyOn(query, 'select').mockReturnValue(Promise.reject(new Error('down')) as never);
 
