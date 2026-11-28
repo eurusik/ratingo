@@ -22,6 +22,10 @@ const run = (passed: boolean, overrides: Partial<RunVerdict> = {}): RunVerdict =
   fabricatedCitations: 0,
   unknownsStated: 0,
   answeredHonestlyUnknown: null,
+  answer: null,
+  stopReason: null,
+  stopDetail: null,
+  toolCalls: {},
   ...overrides,
 });
 

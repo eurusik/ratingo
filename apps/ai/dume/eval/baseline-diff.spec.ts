@@ -15,6 +15,10 @@ const verdict = (passed: boolean): RunVerdict => ({
   fabricatedCitations: 0,
   unknownsStated: 0,
   answeredHonestlyUnknown: null,
+  answer: null,
+  stopReason: null,
+  stopDetail: null,
+  toolCalls: {},
 });
 
 const outcome = (caseId: string, passes: number, runs: number): CaseOutcome =>

@@ -29,6 +29,10 @@ export interface RunVerdict {
   fabricatedCitations: number;
   unknownsStated: number;
   answeredHonestlyUnknown: boolean | null;
+  answer: string | null;
+  stopReason: string | null;
+  stopDetail: string | null;
+  toolCalls: Readonly<Record<string, number>>;
 }
 
 export const judgeInputOf = (testCase: EvalCase, outcome: InvestigationOutcome): JudgeInput => ({
@@ -50,6 +54,10 @@ const emptyVerdict = (problem: string | null, failures: readonly string[]): RunV
   fabricatedCitations: 0,
   unknownsStated: 0,
   answeredHonestlyUnknown: null,
+  answer: null,
+  stopReason: null,
+  stopDetail: null,
+  toolCalls: {},
 });
 
 export const erroredRun = (reason: string): RunVerdict =>
@@ -74,7 +82,13 @@ export const scoreRun = (
       ]),
     };
   }
-  const base = { turns: outcome.turns, costUsd: outcome.costUsd };
+  const base = {
+    turns: outcome.turns,
+    costUsd: outcome.costUsd,
+    stopReason: outcome.stopReason,
+    stopDetail: outcome.stopDetail,
+    toolCalls: outcome.toolCalls,
+  };
   const { answer } = outcome;
   if (answer === null) {
     return {
@@ -122,5 +136,6 @@ export const scoreRun = (
     unknownsStated: answer.unknowns.length,
     answeredHonestlyUnknown:
       testCase.kind === CaseKind.UNKNOWN ? meaningOk && answer.unknowns.length > 0 : null,
+    answer: plainTextOf(answer),
   };
 };

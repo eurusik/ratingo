@@ -21,6 +21,10 @@ const verdict = (passed: boolean): RunVerdict => ({
   fabricatedCitations: 0,
   unknownsStated: 0,
   answeredHonestlyUnknown: null,
+  answer: null,
+  stopReason: null,
+  stopDetail: null,
+  toolCalls: {},
 });
 
 const baselineOf = (passes: number) =>
