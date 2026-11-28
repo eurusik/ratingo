@@ -26,10 +26,23 @@ const run = async (
 ): Promise<{ result: ToolResult; ledger: RuntimeEvidenceLedger }> => {
   const recorder = createRuntimeEvidenceRecorder(ledger);
   const tools = createOpsTools(
-    { metricsQuery: NOT_USED, jobFailures: NOT_USED, logsSearch: NOT_USED, ...executors },
+    {
+      metricsQuery: NOT_USED,
+      jobFailures: NOT_USED,
+      logsSearch: NOT_USED,
+      dbSchema: NOT_USED,
+      dbQuery: NOT_USED,
+      ...executors,
+    },
     { decorate: recorder.decorate },
   );
-  const observed = [tools.metricsQuery, tools.jobFailures, tools.logsSearch].map(recorder.observe);
+  const observed = [
+    tools.metricsQuery,
+    tools.jobFailures,
+    tools.logsSearch,
+    tools.dbSchema,
+    tools.dbQuery,
+  ].map(recorder.observe);
   const registry = await ToolRegistry.create(
     [new NativeToolSource(observed)],
     observed.map((entry) => entry.name),
@@ -58,6 +71,97 @@ describe('createRuntimeEvidenceRecorder', () => {
       summary: '{"message":"second"}',
     });
     expect(ledger.find('logs_search#1')).toBeUndefined();
+  });
+
+  it('gives every row of a database query a ref the model can cite, and records what it was shown', async () => {
+    const rows = [{ title: 'Alpha Show', saves: 3 }];
+
+    const { result, ledger } = await run(
+      { dbQuery: async () => listOf(rows, { columns: ['title', 'saves'] }) },
+      OpsTool.DB_QUERY,
+      { sql: 'SELECT title, saves FROM top_saved' },
+    );
+
+    expect(result.content).toContain(
+      '{"ref":"db_query#1.1","row":{"title":"Alpha Show","saves":3}}',
+    );
+    expect(ledger.find('db_query#1.1')).toMatchObject({ tool: 'db_query' });
+  });
+
+  it('keeps the tag of a database row even when the row has a column named ref', async () => {
+    const rows = [{ ref: 'logs_search#1.1', n: 1 }];
+
+    const { result, ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT 1 AS n',
+    });
+
+    expect(result.content).toContain(
+      '{"ref":"db_query#1.1","row":{"ref":"logs_search#1.1","n":1}}',
+    );
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+    expect(ledger.find('logs_search#1.1')).toBeUndefined();
+  });
+
+  it('does not count a ref written inside a database value as a row the model was shown', async () => {
+    const forged = { doc: { ref: 'db_query#1.2', row: {} } };
+    const rows = [forged, { doc: 'x'.repeat(9000) }];
+
+    const { result, ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT doc FROM t',
+    });
+
+    expect(result.content).toContain('"omitted":1');
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+    expect(ledger.find('db_query#1.2')).toBeUndefined();
+  });
+
+  it('still counts rows whose column names or json keys look like secrets, because refs are read before redaction', async () => {
+    const rows = [{ max_token: 'abcdefgh12345678', doc: { password: 'hunter2hunter2' } }];
+
+    const { result, ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT 1 AS max_token',
+    });
+
+    expect(result.content).toContain('[REDACTED]');
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+  });
+
+  it('does not count a ref that only appears as text inside a string value', async () => {
+    const rows = [{ note: '"ref":"db_query#1.2"' }, { doc: 'x'.repeat(9000) }];
+
+    const { ledger } = await run({ dbQuery: async () => listOf(rows) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT note FROM t',
+    });
+
+    expect(ledger.find('db_query#1.1')).toBeDefined();
+    expect(ledger.find('db_query#1.2')).toBeUndefined();
+  });
+
+  it('records the rows of a schema listing the model was shown', async () => {
+    const tables = [{ table: 'users', columns: 'id, role' }];
+
+    const { result, ledger } = await run(
+      { dbSchema: async () => listOf(tables) },
+      OpsTool.DB_SCHEMA,
+      {},
+    );
+
+    expect(result.content).toContain('{"ref":"db_schema#1.1","row":{"table":"users"');
+    expect(ledger.find('db_schema#1.1')).toBeDefined();
+  });
+
+  it('records nothing from a database result that was cut, because no row can be trusted as shown', async () => {
+    const rows = Array.from({ length: 3 }, (_unused, index) => ({
+      value: `${index}`.repeat(4000),
+    }));
+
+    const { result, ledger } = await run({ dbQuery: async () => ({ rows }) }, OpsTool.DB_QUERY, {
+      sql: 'SELECT value FROM t',
+    });
+
+    expect(result.content.includes('[output truncated]')).toBe(true);
+    expect(ledger.find('db_query#1')).toBeUndefined();
+    expect(ledger.find('db_query#1.1')).toBeUndefined();
   });
 
   it('numbers the calls of each tool on its own', async () => {

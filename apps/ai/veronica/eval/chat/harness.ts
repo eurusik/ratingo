@@ -42,6 +42,7 @@ import {
 
 import type { ExternalTools } from '../../src/modules/chat/application/tools/external-tools';
 
+import { explorerExecutorsFor } from './explorer-eval-database';
 import { DumeScenario, callKey, type EvalCase, type Fixture } from './eval-case';
 import { EVAL_NOW_MS } from './eval-clock';
 import {
@@ -165,6 +166,7 @@ export const fixtureExecutors = (testCase: EvalCase): InvestigationExecutors => 
       ? answer('job_failures')
       : (input) => NO_RECORDED_FAILURES.run(input),
     logsSearch: (input) => lokiExecutor(testCase).run(input),
+    ...explorerExecutorsFor(testCase),
   };
 };
 

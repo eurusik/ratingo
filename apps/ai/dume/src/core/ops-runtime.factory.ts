@@ -1,6 +1,9 @@
 import { Logger } from '@nestjs/common';
 import type { ClockPort } from '@ratingo/ai-core';
 import {
+  connectExplorer,
+  DbQueryExecutor,
+  DbSchemaExecutor,
   GrafanaLokiLogsAdapter,
   JobFailuresExecutor,
   LogsSearchExecutor,
@@ -9,6 +12,7 @@ import {
   PrometheusMetricsAdapter,
   UnconfiguredJobFailuresAdapter,
   UnconfiguredLogsAdapter,
+  type ClosableExplorerPort,
   type JobFailuresPort,
   type LogsPort,
   type OpsExecutors,
@@ -48,6 +52,9 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
     config.readerDatabaseUrl === undefined
       ? new UnconfiguredJobFailuresAdapter()
       : PostgresJobFailuresAdapter.connect(config.readerDatabaseUrl);
+  const explorer: ClosableExplorerPort = connectExplorer(config.explorerDatabaseUrl, logger);
+  const dbSchema = new DbSchemaExecutor(explorer, new Logger(DbSchemaExecutor.name));
+  const dbQuery = new DbQueryExecutor(explorer, new Logger(DbQueryExecutor.name));
   const logs = new LogsSearchExecutor(
     logsPortFor(config.loki, logger),
     clock,
@@ -68,9 +75,18 @@ export const createOpsRuntime = (config: OpsConfig, clock: ClockPort): OpsRuntim
       logsSearch: (input) => logs.run(input),
       jobFailures: (input) => jobFailures.run(input),
       metricsQuery: (input) => metrics.run(input),
+      dbSchema: (input) => dbSchema.run(input),
+      dbQuery: (input) => dbQuery.run(input),
     },
     close: async () => {
-      await failures.close?.();
+      const results = await Promise.allSettled([failures.close?.(), explorer.close?.()]);
+      const firstFailure = results.find(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+      if (firstFailure !== undefined) {
+        const { reason } = firstFailure as { reason: unknown };
+        throw reason instanceof Error ? reason : new Error(String(reason));
+      }
     },
   };
 };

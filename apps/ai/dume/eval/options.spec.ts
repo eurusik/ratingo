@@ -28,12 +28,20 @@ describe('parseEvalOptions', () => {
     });
   });
 
+  it('reads --force-baseline together with --save-baseline', () => {
+    expect(parseEvalOptions(['--save-baseline', '--force-baseline'], false)).toMatchObject({
+      saveBaseline: true,
+      forceBaseline: true,
+    });
+  });
+
   it.each([
     [['--runs=0']],
     [['--runs=3', '--pass-at=4']],
     [['--unknown']],
     [['loose']],
     [['--save-baseline', '--only=a']],
+    [['--force-baseline']],
     [['--max-cost-usd=abc']],
     [['--concurrency=2.5']],
     [['--runs=2.5']],

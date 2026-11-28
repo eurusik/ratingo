@@ -84,13 +84,13 @@ jobs:
             storefront=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|knip\.json$)')
             contracts=$(match '^(apps/api/|packages/api-contract/)')
             backup=$(match '^apps/pg-backup/')
-            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$|test/reporting/)')
+            migrations=$(match '^apps/api/(drizzle_v2/.*\.sql$|\.squawk\.toml$|src/scripts/lint-migrations\.ts$|src/database/schema/|jest\.explorer-access\.config\.js$|test/(reporting|explorer-access)/)')
             smoke=$(match '^(apps/web-client/|packages/(api-contract|web-core)/|e2e/smoke/|playwright\.smoke\.config\.ts$|\.dockerignore$)')
             storefront_image=$(match '^(apps/storefront/|packages/(api-contract|web-core|ui|node-telemetry)/|\.dockerignore$)')
             ai_core=$(match '^(packages/(ai-core|node-telemetry)/|knip\.json$)')
-            ai_ops_tools=$(match '^(packages/(ai-ops-tools|ai-core|node-telemetry)/|knip\.json$)')
+            ai_ops_tools=$(match '^(packages/(ai-ops-tools|ai-core|node-telemetry)/|apps/api/drizzle_v2/|knip\.json$)')
             happy=$(match '^(apps/ai/happy/|packages/(ai-core|node-telemetry)/|knip\.json$)')
-            dume=$(match '^(apps/ai/|apps/api/src/|packages/(ai-core|ai-ops-tools|node-telemetry)/|knip\.json$)')
+            dume=$(match '^(apps/ai/|apps/api/(src|drizzle_v2)/|packages/(ai-core|ai-ops-tools|node-telemetry)/|knip\.json$)')
             dume_image=$(match '^(apps/ai/dume/|packages/(ai-core|ai-ops-tools|node-telemetry)/|package-lock\.json$|\.dockerignore$)')
             veronica=$(match '^(apps/ai/veronica/|apps/api/drizzle_v2/|packages/(ai-core|ai-ops-tools|node-telemetry)/|knip\.json$|\.dockerignore$)')
           fi
@@ -233,7 +233,7 @@ jobs:
     timeout-minutes: 10
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_PASSWORD: ci
         ports:
@@ -262,6 +262,12 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:ci@localhost:5432/postgres
         run: test/reporting/run-reporting-check.sh
+
+      - name: Check what the ai_explorer role can read
+        working-directory: apps/api
+        env:
+          EXPLORER_ACCESS_DATABASE_URL: postgres://postgres:ci@localhost:5432/postgres
+        run: npm run test:explorer-access
 
   api-prod-install:
     name: api-prod-install
@@ -517,6 +523,18 @@ jobs:
     if: needs.changes.outputs.ai_ops_tools == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -533,7 +551,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck --workspace=@ratingo/ai-ops-tools
 
-      - name: Unit tests
+      - name: Unit tests and the database tools against a migrated Postgres
+        env:
+          EXPLORER_TEST_DATABASE_URL: postgres://postgres:ci@localhost:5432/postgres
         run: npm test --workspace=@ratingo/ai-ops-tools -- --ci
 
       - name: Build
@@ -550,7 +570,7 @@ jobs:
     timeout-minutes: 10
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: ratingo
           POSTGRES_PASSWORD: ratingo
@@ -565,6 +585,7 @@ jobs:
     env:
       DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
       VERONICA_TEST_DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/veronica_test
+      EXPLORER_EVAL_DATABASE_URL: postgres://ratingo:ratingo@localhost:5432/postgres
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -643,6 +664,18 @@ jobs:
     if: needs.changes.outputs.dume == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -665,6 +698,8 @@ jobs:
         run: npm run typecheck --workspace=@ratingo/ai-dume
 
       - name: Tests and the stub-model eval
+        env:
+          EXPLORER_EVAL_DATABASE_URL: postgres://postgres:ci@localhost:5432/postgres
         run: npm test --workspace=@ratingo/ai-dume -- --ci
 
       - name: Build

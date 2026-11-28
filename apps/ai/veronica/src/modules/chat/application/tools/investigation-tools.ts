@@ -112,6 +112,8 @@ export const buildInvestigationTools = (
     }),
     ops.jobFailures,
     ops.logsSearch,
+    ops.dbSchema,
+    ops.dbQuery,
     defineTool({
       name: InvestigationTool.ASK_DUME,
       description: ASK_DUME_DESCRIPTION,

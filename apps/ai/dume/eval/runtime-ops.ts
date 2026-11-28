@@ -15,6 +15,7 @@ import {
 } from '@ratingo/ai-ops-tools';
 
 import type { RuntimeFixture } from './eval-case';
+import { explorerExecutorsFor } from './explorer-eval-database';
 import { EVAL_NOW_MS } from './eval-clock';
 
 const SILENT_LOGGER = { warn: () => undefined };
@@ -56,5 +57,6 @@ export const opsForFixture = (fixture: RuntimeFixture = NOTHING_SIMULATED): OpsE
     logsSearch: (input) => logs.run(input),
     jobFailures: (input) => failures.run(input),
     metricsQuery: (input) => metrics.run(input),
+    ...explorerExecutorsFor(fixture),
   };
 };

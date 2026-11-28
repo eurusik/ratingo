@@ -238,3 +238,35 @@ describe('scoreRun', () => {
     expect(verdict.failures).toContain('no verified fact in the answer');
   });
 });
+
+describe('what a run verdict keeps for the dump', () => {
+  it('keeps the stop reason, its detail and the tool calls of a run without a valid answer', () => {
+    const outcome = outcomeWith(null, {
+      stopReason: 'max_turns',
+      toolCalls: { code_read: 3, db_query: 2 },
+      turns: 8,
+    });
+
+    const verdict = scoreRun(testCase, outcome, { status: 'skipped' });
+
+    expect(verdict).toMatchObject({
+      answer: null,
+      stopReason: 'max_turns',
+      stopDetail: null,
+      toolCalls: { code_read: 3, db_query: 2 },
+      turns: 8,
+    });
+    expect(verdict.failures[0]).toContain('no valid answer (stop: max_turns)');
+  });
+
+  it('keeps the answer text of a run that answered', () => {
+    const verdict = scoreRun(
+      testCase,
+      outcomeWith(answerWith({ answer: 'The worker retries.' })),
+      judged(true),
+    );
+
+    expect(verdict.answer).toContain('The worker retries.');
+    expect(verdict.stopReason).toBe('end');
+  });
+});

@@ -52,6 +52,8 @@ const aiOpsToolsTestFiles = [
 const aiOpsToolsPostgresFiles = [
   'packages/ai-ops-tools/src/job-failures/postgres.job-failures-adapter.ts',
   'packages/ai-ops-tools/src/job-failures/reporting-connection.ts',
+  'packages/ai-ops-tools/src/database/postgres.explorer-adapter.ts',
+  'packages/ai-ops-tools/src/database/explorer-session.ts',
 ];
 const aiCoreAnthropicAdapterFiles = [
   'packages/ai-core/src/model/adapters/anthropic/anthropic.mapper.ts',
@@ -1388,7 +1390,7 @@ export default [
             },
             {
               group: ['postgres'],
-              message: 'The Postgres driver is imported only by the job failures adapter.',
+              message: 'The Postgres driver is imported only by the Postgres adapters.',
             },
             { group: ['node:*'], message: 'ai-ops-tools needs no Node built-ins.' },
           ],
@@ -1427,28 +1429,33 @@ export default [
           basePath: tsconfigRootDir,
           zones: [
             {
-              target: './packages/ai-ops-tools/src/{logs,job-failures,metrics}/**/*',
+              target: './packages/ai-ops-tools/src/{logs,job-failures,metrics,database}/**/*',
               from: './packages/ai-ops-tools/src/{tools,testing}/**/*',
               message: 'A capability never imports the tool builder or the simulators.',
             },
             {
               target: './packages/ai-ops-tools/src/logs/**/*',
-              from: './packages/ai-ops-tools/src/{job-failures,metrics}/**/*',
+              from: './packages/ai-ops-tools/src/{job-failures,metrics,database}/**/*',
               message: 'Capabilities never import each other; share through shared or time.',
             },
             {
               target: './packages/ai-ops-tools/src/job-failures/**/*',
-              from: './packages/ai-ops-tools/src/{logs,metrics}/**/*',
+              from: './packages/ai-ops-tools/src/{logs,metrics,database}/**/*',
               message: 'Capabilities never import each other; share through shared or time.',
             },
             {
               target: './packages/ai-ops-tools/src/metrics/**/*',
-              from: './packages/ai-ops-tools/src/{logs,job-failures}/**/*',
+              from: './packages/ai-ops-tools/src/{logs,job-failures,database}/**/*',
+              message: 'Capabilities never import each other; share through shared or time.',
+            },
+            {
+              target: './packages/ai-ops-tools/src/database/**/*',
+              from: './packages/ai-ops-tools/src/{logs,job-failures,metrics}/**/*',
               message: 'Capabilities never import each other; share through shared or time.',
             },
             {
               target: './packages/ai-ops-tools/src/{shared,time}/**/*',
-              from: './packages/ai-ops-tools/src/{logs,job-failures,metrics,tools,testing}/**/*',
+              from: './packages/ai-ops-tools/src/{logs,job-failures,metrics,database,tools,testing}/**/*',
               message: 'shared and time are the bottom of the package.',
             },
             {

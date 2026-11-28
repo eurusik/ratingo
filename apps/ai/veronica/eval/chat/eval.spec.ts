@@ -7,11 +7,15 @@ import { kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
 import { runEval } from './eval-runner';
 import { findForbiddenContent } from './forbidden-content';
 import { GA_EVAL_CASES } from './google-analytics.cases';
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { fixtureExecutors, runCase } from './harness';
 import { LOKI_EVAL_CASES } from './loki.cases';
 import { ReferenceJudge } from './reference-judge';
 
 const STUB = { modelRef: 'stub:digest' };
+const describeWithExplorerDatabase = explorerEval.adminUrl === undefined ? describe.skip : describe;
+const CASES_WITHOUT_DATABASE = EVAL_CASES.filter((testCase) => !needsExplorerDatabase(testCase));
+const CASES_WITH_DATABASE = EVAL_CASES.filter(needsExplorerDatabase);
 const STUB_EVAL_TIMEOUT_MS = 60_000;
 const KYIV_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 const KYIV_DATE_TIME = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/u;
@@ -42,9 +46,9 @@ const referenceKeys = (testCase: (typeof EVAL_CASES)[number]): string[] =>
   );
 
 describe('chat eval cases', () => {
-  it('has 12 to 60 cases with unique ids', () => {
+  it('has 12 to 80 cases with unique ids', () => {
     expect(EVAL_CASES.length).toBeGreaterThanOrEqual(12);
-    expect(EVAL_CASES.length).toBeLessThanOrEqual(60);
+    expect(EVAL_CASES.length).toBeLessThanOrEqual(80);
     expect(new Set(EVAL_CASES.map((testCase) => testCase.id)).size).toBe(EVAL_CASES.length);
   });
 
@@ -66,7 +70,7 @@ describe('chat eval cases', () => {
     expect(unknown.length).toBeGreaterThanOrEqual(2);
     for (const testCase of unknown) {
       expect(testCase.expectations.conveys.join(' ')).toMatch(
-        /unavailable|no data|does not know/iu,
+        /unavailable|no data|does not know|did not finish/iu,
       );
     }
   });
@@ -78,6 +82,8 @@ describe('chat eval cases', () => {
     expect([...tools].sort()).toEqual([
       'ask_dume',
       'ask_happy',
+      'db_query',
+      'db_schema',
       'digest_snapshot',
       'google-analytics__run_funnel_report',
       'google-analytics__run_realtime_report',
@@ -200,16 +206,16 @@ describe('chat eval cases', () => {
 
 describe('chat eval on the stub model', () => {
   it(
-    'passes every case when the model replays the reference answer and the judge compares with it',
+    'passes every case that needs no database when the model replays the reference answer and the judge compares with it',
     async () => {
       const run = await runEval(
-        EVAL_CASES,
+        CASES_WITHOUT_DATABASE,
         { runAgent: (testCase) => runCase(testCase, STUB), judge: new ReferenceJudge() },
         { repeat: { runs: 1, passAt: 1 }, concurrency: 4, maxCostUsd: 1 },
       );
       expect(summarize(run.outcomes)).toMatchObject({
-        cases: EVAL_CASES.length,
-        passedCases: EVAL_CASES.length,
+        cases: CASES_WITHOUT_DATABASE.length,
+        passedCases: CASES_WITHOUT_DATABASE.length,
         toolSelectionRate: 1,
         factRate: 1,
         answersWithFlags: 0,
@@ -264,6 +270,38 @@ describe('chat eval on the stub model', () => {
         toolsOk: false,
         factsOk: true,
         passed: false,
+      });
+    },
+    STUB_EVAL_TIMEOUT_MS,
+  );
+});
+
+describeWithExplorerDatabase('chat eval of the database tools on the stub model', () => {
+  beforeAll(async () => {
+    await explorerEval.startIfConfigured();
+  }, STUB_EVAL_TIMEOUT_MS);
+
+  afterAll(async () => {
+    await explorerEval.stop();
+  });
+
+  it(
+    'passes every case whose tools run against the migrated database, with every number taken from the real rows',
+    async () => {
+      const run = await runEval(
+        CASES_WITH_DATABASE,
+        { runAgent: (testCase) => runCase(testCase, STUB), judge: new ReferenceJudge() },
+        { repeat: { runs: 1, passAt: 1 }, concurrency: 2, maxCostUsd: 1 },
+      );
+      expect(summarize(run.outcomes)).toMatchObject({
+        cases: CASES_WITH_DATABASE.length,
+        passedCases: CASES_WITH_DATABASE.length,
+        answersWithFlags: 0,
+        wrongNumbers: 0,
+        fallbacks: 0,
+        unscorableRuns: 0,
+        failedCases: [],
+        flakyCases: [],
       });
     },
     STUB_EVAL_TIMEOUT_MS,

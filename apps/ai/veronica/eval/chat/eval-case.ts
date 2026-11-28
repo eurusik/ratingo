@@ -32,12 +32,17 @@ interface Expectations {
   mustNotClaim?: readonly string[];
 }
 
+interface ExplorerScenario {
+  statementTimeoutMs?: number;
+}
+
 export interface EvalCase {
   id: string;
   kind: EvalKind;
   question: string;
   history?: readonly ConversationTurn[];
   fixtures: readonly Fixture[];
+  database?: ExplorerScenario;
   requiredTools: readonly string[];
   forbiddenTools?: readonly string[];
   expectations: Expectations;
