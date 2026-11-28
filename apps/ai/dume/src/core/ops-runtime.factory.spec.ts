@@ -23,6 +23,12 @@ describe('createOpsRuntime', () => {
     await expect(executors.metricsQuery({ template: 'infra_health' })).rejects.toThrow(
       'Grafana не налаштована',
     );
+    await expect(executors.dbSchema({})).rejects.toThrow(
+      'db_schema is unavailable: AI_EXPLORER_DATABASE_URL is not set',
+    );
+    await expect(executors.dbQuery({ sql: 'SELECT 1' })).rejects.toThrow(
+      'db_query is unavailable: AI_EXPLORER_DATABASE_URL is not set',
+    );
   });
 
   it('says which Loki variables are missing when only some are set, and names no values', () => {
@@ -60,6 +66,7 @@ describe('the runtime variables of the environment', () => {
       GRAFANA_PROM_URL: '',
       GRAFANA_PROM_TOKEN: '',
       AI_READER_DATABASE_URL: '',
+      AI_EXPLORER_DATABASE_URL: '',
     });
 
     expect([
@@ -69,7 +76,8 @@ describe('the runtime variables of the environment', () => {
       parsed.GRAFANA_PROM_URL,
       parsed.GRAFANA_PROM_TOKEN,
       parsed.AI_READER_DATABASE_URL,
-    ]).toEqual([undefined, undefined, undefined, undefined, undefined, undefined]);
+      parsed.AI_EXPLORER_DATABASE_URL,
+    ]).toEqual([undefined, undefined, undefined, undefined, undefined, undefined, undefined]);
     expect(envSchema.safeParse({}).success).toBe(true);
   });
 

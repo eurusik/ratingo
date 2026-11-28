@@ -48,6 +48,10 @@ const lokiEnvSchema = z.object({
   GRAFANA_LOKI_TOKEN: unsetWhenEmpty,
 });
 
+const explorerEnvSchema = z.object({
+  AI_EXPLORER_DATABASE_URL: unsetWhenEmpty,
+});
+
 const analyticsEnvSchema = z.object({
   GA_CREDENTIALS_JSON: unsetWhenEmpty,
   GA_PROPERTY_ID: unsetWhenEmpty,
@@ -84,4 +88,5 @@ export const serviceEnvSchema = z.object({
   ...dumeEnvSchema.shape,
   ...analyticsEnvSchema.shape,
   ...lokiEnvSchema.shape,
+  ...explorerEnvSchema.shape,
 });

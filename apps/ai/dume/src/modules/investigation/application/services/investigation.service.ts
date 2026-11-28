@@ -14,11 +14,18 @@ import {
   InvestigationStatus,
   type InvestigationOutcome,
 } from '../../domain/entities/investigation-outcome';
+import type { CodeSnapshot } from '../../domain/entities/code-snapshot';
 import type { InvestigationDraft } from '../../domain/entities/investigation-answer';
 import { AssumptionOrigin } from '../../domain/entities/investigation-answer';
 import { InvalidQuestionError } from '../../domain/errors/invalid-question.error';
 import { SnapshotUnavailableError } from '../../domain/errors/investigation.errors';
 import { verifyAnswer } from '../../domain/policies/answer-verifier';
+import {
+  createLinkScrubber,
+  scrubDraft,
+  type LinkScrubber,
+  scrubShownEvidence,
+} from '../../domain/policies/foreign-link.policy';
 import { EvidenceLedger } from '../../domain/policies/evidence-ledger';
 import { RuntimeEvidenceLedger } from '../../domain/policies/runtime-evidence-ledger';
 import { investigationDraftSchema } from '../schemas/investigation-draft.schema';
@@ -106,7 +113,7 @@ export class InvestigationService {
     const ledger = new EvidenceLedger();
     const runtime = new RuntimeEvidenceLedger();
     const evidence = createRuntimeEvidenceRecorder(runtime);
-    const { metricsQuery, jobFailures, logsSearch } = createOpsTools(this.ops, {
+    const { metricsQuery, jobFailures, logsSearch, dbSchema, dbQuery } = createOpsTools(this.ops, {
       decorate: evidence.decorate,
     });
     const result = await this.runner.run({
@@ -120,6 +127,8 @@ export class InvestigationService {
         evidence.observe(metricsQuery),
         evidence.observe(jobFailures),
         evidence.observe(logsSearch),
+        evidence.observe(dbSchema),
+        evidence.observe(dbQuery),
       ],
       ...(request.budgetUsd === undefined ? {} : { budgetUsd: request.budgetUsd }),
       ...(request.ignoreDailyBudget === undefined
@@ -127,7 +136,20 @@ export class InvestigationService {
         : { ignoreDailyBudget: request.ignoreDailyBudget }),
     });
     const draft = result.value as InvestigationDraft | undefined;
-    const answer = draft === undefined ? null : verifyAnswer(draft, snapshot, ledger, runtime);
+    const scrubber = await this.linkScrubber(question, snapshot, ledger, runtime);
+    const answer =
+      draft === undefined
+        ? null
+        : scrubShownEvidence(
+            verifyAnswer(scrubDraft(draft, scrubber), snapshot, ledger, runtime),
+            scrubber,
+          );
+    if (scrubber.removedCount() > 0) {
+      this.logger.warn({
+        message: 'investigation.foreign_links_removed',
+        count: scrubber.removedCount(),
+      });
+    }
     const outcome: InvestigationOutcome = {
       status: answer === null ? InvestigationStatus.UNANSWERED : InvestigationStatus.ANSWERED,
       ref: snapshot.ref,
@@ -157,6 +179,21 @@ export class InvestigationService {
       costUsd: outcome.costUsd,
     });
     return outcome;
+  }
+
+  private async linkScrubber(
+    question: string,
+    snapshot: CodeSnapshot,
+    ledger: EvidenceLedger,
+    runtime: RuntimeEvidenceLedger,
+  ): Promise<LinkScrubber> {
+    const filesRead = await Promise.all(
+      ledger.pathsRead().map(async (path) => (await snapshot.readLines(path))?.join('\n') ?? ''),
+    );
+    return createLinkScrubber({
+      untrusted: runtime.shownText(),
+      trusted: [question, ...filesRead].join('\n'),
+    });
   }
 
   private async announceSnapshotReady(request: InvestigationRequest): Promise<void> {

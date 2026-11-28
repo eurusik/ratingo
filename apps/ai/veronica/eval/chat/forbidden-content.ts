@@ -56,8 +56,14 @@ const firstMatch = (pattern: RegExp, text: string): string | null =>
 const hit = (kind: ForbiddenKind, match: string | null): ForbiddenHit[] =>
   match === null ? [] : [{ kind, match: match.trim() }];
 
+const STARTS_WITH_WORD_CHARACTER = /^[\p{L}\d]/u;
+const ENDS_WITH_WORD_CHARACTER = /[\p{L}\d]$/u;
+
 const literalPattern = (text: string): RegExp =>
-  new RegExp(`${WORD_EDGE_BEFORE}${text.replace(REGEX_SPECIALS, '\\$&')}${WORD_EDGE_AFTER}`, 'iu');
+  new RegExp(
+    `${STARTS_WITH_WORD_CHARACTER.test(text) ? WORD_EDGE_BEFORE : ''}${text.replace(REGEX_SPECIALS, '\\$&')}${ENDS_WITH_WORD_CHARACTER.test(text) ? WORD_EDGE_AFTER : ''}`,
+    'iu',
+  );
 
 export const findForbiddenContent = (
   answer: string,

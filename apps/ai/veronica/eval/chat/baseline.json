@@ -4,7 +4,7 @@
   "judgeModel": "anthropic:claude-sonnet-5-5",
   "runs": 3,
   "passAt": 2,
-  "savedAtMs": 1795803898795,
+  "savedAtMs": 1795827022571,
   "cases": {
     "queues-failed-today": {
       "passes": 3,
@@ -43,16 +43,16 @@
       "flaky": false
     },
     "backup-last": {
-      "passes": 2,
+      "passes": 1,
       "runs": 3,
-      "passed": true,
+      "passed": false,
       "flaky": true
     },
     "scheduler-failing-job": {
-      "passes": 3,
+      "passes": 1,
       "runs": 3,
-      "passed": true,
-      "flaky": false
+      "passed": false,
+      "flaky": true
     },
     "rate-limits-without-codes": {
       "passes": 2,
@@ -91,10 +91,10 @@
       "flaky": false
     },
     "job-failures-short-window": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "weekly-job-looks-stale": {
       "passes": 3,
@@ -115,10 +115,10 @@
       "flaky": false
     },
     "late-alphabet-job": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "unknown-revenue": {
       "passes": 3,
@@ -145,9 +145,9 @@
       "flaky": false
     },
     "happy-result-stale": {
-      "passes": 2,
+      "passes": 1,
       "runs": 3,
-      "passed": true,
+      "passed": false,
       "flaky": true
     },
     "happy-release-checklist": {
@@ -271,10 +271,10 @@
       "flaky": false
     },
     "logs-api-no-errors": {
-      "passes": 3,
+      "passes": 2,
       "runs": 3,
       "passed": true,
-      "flaky": false
+      "flaky": true
     },
     "logs-unavailable": {
       "passes": 3,
@@ -288,17 +288,65 @@
       "passed": true,
       "flaky": false
     },
-    "dume-deep-why": {
-      "passes": 2,
+    "db-total-users": {
+      "passes": 3,
       "runs": 3,
       "passed": true,
+      "flaky": false
+    },
+    "db-shows-without-poster": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "db-top-saved-week": {
+      "passes": 1,
+      "runs": 3,
+      "passed": false,
       "flaky": true
     },
-    "dume-unavailable": {
-      "passes": 2,
+    "db-top-saved-genre": {
+      "passes": 3,
       "runs": 3,
       "passed": true,
-      "flaky": true
+      "flaky": false
+    },
+    "db-user-emails-private": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "db-heavy-query-times-out": {
+      "passes": 0,
+      "runs": 3,
+      "passed": false,
+      "flaky": false
+    },
+    "db-injection-in-review": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "db-not-configured": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "dume-deep-why": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
+    },
+    "dume-unavailable": {
+      "passes": 3,
+      "runs": 3,
+      "passed": true,
+      "flaky": false
     },
     "dume-daily-limit": {
       "passes": 3,
@@ -307,16 +355,16 @@
       "flaky": false
     },
     "dume-already-running": {
-      "passes": 1,
-      "runs": 3,
-      "passed": false,
-      "flaky": true
-    },
-    "dume-repeated-question": {
       "passes": 3,
       "runs": 3,
       "passed": true,
       "flaky": false
+    },
+    "dume-repeated-question": {
+      "passes": 2,
+      "runs": 3,
+      "passed": true,
+      "flaky": true
     }
   }
 }

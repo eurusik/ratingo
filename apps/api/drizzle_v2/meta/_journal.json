@@ -309,6 +309,20 @@
       "when": 1795783987749,
       "tag": "0043_episode_air_date_day_only",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795810200000,
+      "tag": "0044_ai_explorer_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1795811200000,
+      "tag": "0045_ai_explorer_function_limits",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,11 @@ import { loadVeronicaAgentFolder } from '../../src/core/agent-folder';
 import { summarize, type CaseOutcome, type EvalSummary } from './aggregate';
 import { buildBaseline, diffBaseline, type Baseline } from './baseline-diff';
 import { readBaselineFile, writeBaselineFile } from './baseline-file';
+import {
+  BaselineSaveDecision,
+  REGRESSIONS_NOT_SAVED_MESSAGE,
+  decideBaselineSave,
+} from './baseline-save.policy';
 import type { CalibrationReport } from './calibration';
 import { measureJudgeAgreement } from './calibration-runner';
 import { CALIBRATION_ITEMS } from './calibration.set';
@@ -25,6 +30,7 @@ import { EVAL_CASES } from './cases';
 import type { EvalCase } from './eval-case';
 import { parseEvalOptions, type EvalOptions } from './eval-options';
 import { runEval, type EvalRun } from './eval-runner';
+import { explorerEval, needsExplorerDatabase } from './explorer-eval-database';
 import { isStubModel, runCase } from './harness';
 import type { JudgePort } from './judge';
 import { ModelJudge } from './model-judge';
@@ -48,6 +54,12 @@ interface RunContext {
   identity: RunIdentity;
   options: EvalOptions;
   baseline: Baseline | null;
+  skippedCases: readonly string[];
+}
+
+interface ExecutedCases {
+  run: EvalRun;
+  skippedCases: readonly string[];
 }
 
 const write = (text: string): void => {
@@ -82,23 +94,35 @@ const executeCases = async (
   identity: RunIdentity,
   options: EvalOptions,
   judge: JudgePort,
-): Promise<EvalRun> => {
+): Promise<ExecutedCases> => {
   const folder = await loadVeronicaAgentFolder();
   const setup = {
     modelRef: identity.modelRef,
     anthropicApiKey: identity.apiKey,
     anthropicMaxRetries: ANTHROPIC_MAX_RETRIES,
   };
-  return runEval(
-    selectCases(options.only),
-    { runAgent: (testCase) => runCase(testCase, setup, folder), judge },
-    {
-      repeat: { runs: options.runs, passAt: options.passAt },
-      concurrency: options.concurrency,
-      maxCostUsd: options.maxCostUsd,
-      onCaseFinished: printCase,
-    },
-  );
+  const {
+    runnable,
+    skipped: skippedCases,
+    notice,
+  } = explorerEval.plan(selectCases(options.only), needsExplorerDatabase);
+  if (notice !== null) write(notice);
+  await explorerEval.startIfConfigured();
+  try {
+    const run = await runEval(
+      runnable,
+      { runAgent: (testCase) => runCase(testCase, setup, folder), judge },
+      {
+        repeat: { runs: options.runs, passAt: options.passAt },
+        concurrency: options.concurrency,
+        maxCostUsd: options.maxCostUsd,
+        onCaseFinished: printCase,
+      },
+    );
+    return { run, skippedCases };
+  } finally {
+    await explorerEval.stop();
+  }
 };
 
 const printSummary = (
@@ -137,14 +161,27 @@ const saveBaseline = async ({ identity, options }: RunContext, run: EvalRun): Pr
   write(`baseline saved to ${options.baselinePath}`);
 };
 
-const exitCodeAgainstBaseline = ({ options, baseline }: RunContext, run: EvalRun): number => {
+interface BaselineComparison {
+  exitCode: number;
+  regressions: number;
+}
+
+const compareWithBaseline = (
+  { options, baseline, skippedCases }: RunContext,
+  run: EvalRun,
+): BaselineComparison => {
   if (baseline === null) {
     write(`no baseline at ${options.baselinePath}: nothing to compare with`);
-    return 0;
+    return { exitCode: 0, regressions: 0 };
   }
-  const diff = diffBaseline(baseline, run.outcomes, { fullRun: options.only === null });
+  const diff = diffBaseline(baseline, run.outcomes, {
+    fullRun: options.only === null && skippedCases.length === 0,
+  });
   write(`\ncompared with the baseline at ${options.baselinePath}:\n${renderDiff(diff)}`);
-  return diff.regressions.length > 0 ? EXIT_REGRESSION : 0;
+  return {
+    exitCode: diff.regressions.length > 0 ? EXIT_REGRESSION : 0,
+    regressions: diff.regressions.length,
+  };
 };
 
 const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => {
@@ -157,8 +194,22 @@ const reportRun = async (context: RunContext, run: EvalRun): Promise<number> => 
     write('the results are incomplete: not compared with the baseline and not saved');
     return EXIT_INCOMPLETE;
   }
-  const exitCode = exitCodeAgainstBaseline(context, run);
-  if (options.saveBaseline) await saveBaseline(context, run);
+  const { exitCode, regressions } = compareWithBaseline(context, run);
+  const decision = decideBaselineSave({
+    saveBaseline: options.saveBaseline,
+    forceBaseline: options.forceBaseline,
+    skippedCases: context.skippedCases.length,
+    regressions,
+  });
+  if (decision === BaselineSaveDecision.SKIPPED_CASES) {
+    write(`baseline not saved: ${context.skippedCases.length} cases were skipped`);
+    return Math.max(exitCode, EXIT_INCOMPLETE);
+  }
+  if (decision === BaselineSaveDecision.REGRESSIONS) {
+    write(REGRESSIONS_NOT_SAVED_MESSAGE);
+    return exitCode;
+  }
+  if (decision === BaselineSaveDecision.SAVE) await saveBaseline(context, run);
   return exitCode;
 };
 
@@ -200,9 +251,10 @@ async function main(): Promise<number> {
       : await readBaselineFile(options.baselinePath);
   let exitCode = 0;
   if (!options.calibrateOnly) {
+    const executed = await executeCases(identity, options, judge);
     exitCode = await reportRun(
-      { identity, options, baseline },
-      await executeCases(identity, options, judge),
+      { identity, options, baseline, skippedCases: executed.skippedCases },
+      executed.run,
     );
   }
   if (options.calibrate && !(await calibrate(options, judge)).trustworthy) {

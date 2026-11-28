@@ -5,6 +5,7 @@ import { jobFailures } from './job-failure-fixtures';
 import { ASK_DUME, DUME_EVAL_CASES } from './dume.cases';
 import { EvalKind, type EvalCase } from './eval-case';
 import { clockTimeOf, kyivDayFromEvalNow, kyivTimeFromEvalNow } from './eval-clock';
+import { EXPLORER_EVAL_CASES } from './explorer.cases';
 import { GA_EVAL_CASES } from './google-analytics.cases';
 import { LOKI_EVAL_CASES } from './loki.cases';
 import { LOKI_FIXTURE, TRENDING_STALE_LOGS } from './loki.dataset';
@@ -1031,6 +1032,8 @@ const withoutDelegation = (testCase: EvalCase): EvalCase =>
     : { ...testCase, forbiddenTools: [...(testCase.forbiddenTools ?? []), ASK_DUME] };
 
 export const EVAL_CASES: readonly EvalCase[] = [
-  ...[...SERVICE_CASES, ...GA_EVAL_CASES, ...LOKI_EVAL_CASES].map(withoutDelegation),
+  ...[...SERVICE_CASES, ...GA_EVAL_CASES, ...LOKI_EVAL_CASES, ...EXPLORER_EVAL_CASES].map(
+    withoutDelegation,
+  ),
   ...DUME_EVAL_CASES,
 ];

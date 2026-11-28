@@ -18,6 +18,7 @@ export interface EvalOptions {
   judgeModel: string;
   baselinePath: string;
   saveBaseline: boolean;
+  forceBaseline: boolean;
   calibrate: boolean;
   calibrateOnly: boolean;
   only: readonly string[] | null;
@@ -41,7 +42,7 @@ const VALUE_FLAGS = [
   'only',
   'dump',
 ] as const;
-const SWITCH_FLAGS = ['save-baseline', 'calibrate', 'calibrate-only'] as const;
+const SWITCH_FLAGS = ['save-baseline', 'force-baseline', 'calibrate', 'calibrate-only'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 type SwitchFlag = (typeof SWITCH_FLAGS)[number];
 
@@ -105,6 +106,10 @@ export const parseEvalOptions = (argv: readonly string[], stubModel: boolean): E
   if (saveBaseline && only !== null) {
     throw new InvalidEvalOptionError('--save-baseline cannot be combined with --only');
   }
+  const forceBaseline = switches.has('force-baseline');
+  if (forceBaseline && !saveBaseline) {
+    throw new InvalidEvalOptionError('--force-baseline only makes sense with --save-baseline');
+  }
   return {
     runs,
     passAt,
@@ -113,6 +118,7 @@ export const parseEvalOptions = (argv: readonly string[], stubModel: boolean): E
     judgeModel: nonEmpty(values['judge-model']) ?? DEFAULT_JUDGE_MODEL,
     baselinePath: nonEmpty(values.baseline) ?? DEFAULT_BASELINE_PATH,
     saveBaseline,
+    forceBaseline,
     calibrate: switches.has('calibrate') || switches.has('calibrate-only'),
     calibrateOnly: switches.has('calibrate-only'),
     only,

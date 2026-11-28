@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { UnrecoverableError } from 'bullmq';
 
 import { NotificationError } from '../../../notify/public';
@@ -24,6 +25,7 @@ const abandoningWorker = () => {
     { handle: jest.fn(), abandon } as never,
     { purge: jest.fn() } as never,
     {} as never,
+    {} as never,
   );
   return { abandon, worker };
 };
@@ -39,6 +41,7 @@ const workerWith = (
     { handle: followUp } as never,
     { handle: dumeFollowUp } as never,
     { purge } as never,
+    {} as never,
     {} as never,
   );
 
@@ -164,5 +167,96 @@ describe('ChatWorker', () => {
 
       expect(abandon).not.toHaveBeenCalled();
     });
+  });
+
+  const deferred = () => {
+    let settle: () => void = () => undefined;
+    const promise = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    return { promise, settle };
+  };
+
+  it('closes the explorer connection only after the worker has finished its jobs', async () => {
+    const order: string[] = [];
+    const finishing = deferred();
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => order.push('redis') } as never,
+      { close: async () => void order.push('explorer') } as never,
+    );
+    Object.assign(worker, {
+      worker: {
+        close: async () => {
+          await finishing.promise;
+          order.push('worker');
+        },
+      },
+    });
+
+    const shutdown = worker.onApplicationShutdown();
+    await Promise.resolve();
+    expect(order).toEqual([]);
+    finishing.settle();
+    await shutdown;
+
+    expect(order).toEqual(['worker', 'explorer', 'redis']);
+  });
+
+  it('closes the explorer connection and redis even when the worker fails to close', async () => {
+    const order: string[] = [];
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => order.push('redis') } as never,
+      { close: async () => void order.push('explorer') } as never,
+    );
+    Object.assign(worker, { worker: { close: async () => Promise.reject(new Error('stuck')) } });
+
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('stuck');
+
+    expect(order).toEqual(['explorer', 'redis']);
+  });
+
+  it('reports every failed close and rethrows the first one', async () => {
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect: () => undefined } as never,
+      { close: async () => Promise.reject(new Error('explorer broken')) } as never,
+    );
+    Object.assign(worker, { worker: { close: async () => Promise.reject(new Error('stuck')) } });
+    const logged = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('stuck');
+
+    expect(logged.mock.calls.map(([message]) => String(message))).toEqual([
+      expect.stringContaining('worker'),
+      expect.stringContaining('explorer'),
+    ]);
+    logged.mockRestore();
+  });
+
+  it('still disconnects redis when the explorer connection fails to close', async () => {
+    const disconnect = jest.fn();
+    const worker = new ChatWorker(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { disconnect } as never,
+      { close: async () => Promise.reject(new Error('broken')) } as never,
+    );
+
+    await expect(worker.onApplicationShutdown()).rejects.toThrow('broken');
+
+    expect(disconnect).toHaveBeenCalledTimes(1);
   });
 });

@@ -33,8 +33,8 @@ const CARD = renderSystemCard(SYSTEM_CARD);
 
 const PRICES = {
   'stub:digest': {
-    inputPerMTokUsd: 1,
-    outputPerMTokUsd: 5,
+    inputPerMTokUsd: 0.1,
+    outputPerMTokUsd: 0.5,
     cacheReadPerMTokUsd: 0,
     cacheWritePerMTokUsd: 0,
     reasoningPerMTokUsd: 0,
@@ -49,7 +49,11 @@ const FOLDER = {
     budgets: { perRunUsd: 0.05, perDayUsd: 0.5 },
     limits: { maxTurns: 8, timeoutMs: 120_000, maxTokensPerCall: 4096, callTimeoutMs: 60_000 },
   },
-  prompts: { chat: 'SYSTEM PROMPT', 'chat-google-analytics': 'GA PROMPT' },
+  prompts: {
+    chat: 'SYSTEM PROMPT',
+    'chat-google-analytics': 'GA PROMPT',
+    'final-answer': 'FINAL PROMPT',
+  },
 } as unknown as AgentFolder;
 
 const GA_TOOL = 'google-analytics__run_report';
@@ -103,6 +107,8 @@ class Harness {
     askHappy: async () => ({ found: false }),
     jobFailures: async () => ({ window: '24h', failures: [] }),
     logsSearch: async () => ({ service: 'ratingo-worker', groups: [] }),
+    dbSchema: async () => ({ tables: [] }),
+    dbQuery: async () => ({ columns: [], rows: [] }),
   };
 
   readonly delegated: unknown[] = [];
@@ -326,6 +332,21 @@ describe('InvestigationRunner', () => {
     expect(chat.finalHtml).toContain('СУХІ ДАНІ');
   });
 
+  it('asks for an answer on the last turn, so a run that keeps calling tools still ends with an answer', async () => {
+    const chat = new Harness().script(
+      ...Array.from({ length: 7 }, () => callStep('digest_snapshot', {})),
+      answerStep('Не вдалося порахувати: запит зупинила база.'),
+    );
+
+    const result = await chat.ask('що там?');
+
+    const last = chat.scripted.requests[chat.scripted.requests.length - 1];
+    expect(result.outcome).not.toBe(ChatOutcome.FALLBACK);
+    expect(chat.finalHtml).toContain('запит зупинила база');
+    expect(JSON.stringify(last?.messages)).toContain('FINAL PROMPT');
+    expect(last?.toolChoice).toBe('none');
+  });
+
   it('answers with the raw snapshot and a budget note when the budget runs out', async () => {
     const chat = new Harness().script(
       callStep('digest_snapshot', {}, EXPENSIVE_USAGE),
@@ -399,12 +420,14 @@ describe('InvestigationRunner', () => {
     expect(chat.scripted.requests).toEqual([]);
   });
 
-  it('only exposes the eight tools', async () => {
+  it('only exposes the ten tools', async () => {
     const chat = new Harness().script(answerStep('Усе гаразд.'));
     await chat.ask('як справи?');
     expect(chat.scripted.requests[0].tools.map((tool) => tool.name).sort()).toEqual([
       'ask_dume',
       'ask_happy',
+      'db_query',
+      'db_schema',
       'digest_snapshot',
       'job_failures',
       'logs_search',

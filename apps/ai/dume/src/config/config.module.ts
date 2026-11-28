@@ -38,6 +38,7 @@ const commonProviders = (env: CommonEnv): { provide: symbol; useValue: unknown }
     },
     prometheus: { baseUrl: env.GRAFANA_PROM_URL, token: env.GRAFANA_PROM_TOKEN },
     readerDatabaseUrl: env.AI_READER_DATABASE_URL,
+    explorerDatabaseUrl: env.AI_EXPLORER_DATABASE_URL,
   };
   return [
     { provide: OPS_CONFIG, useValue: ops },

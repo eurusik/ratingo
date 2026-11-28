@@ -77,6 +77,7 @@ const FAST_ALIAS = 'fast';
 const CHAT_PROMPT_KEY = 'chat';
 const ISO_DATE_LENGTH = 10;
 const EXTERNAL_TOOLS_PROMPT_KEY = 'chat-google-analytics';
+const FINAL_ANSWER_PROMPT_KEY = 'final-answer';
 
 type FallbackReason = keyof typeof FALLBACK_INTRO;
 
@@ -232,6 +233,7 @@ export class InvestigationRunner {
     const { manifest, prompts } = this.folder;
     const nowMs = this.clock.nowMs();
     const external = this.offeredExternalTools();
+    const finalAnswerPrompt = prompts[FINAL_ANSWER_PROMPT_KEY];
     const delegate = ({ question: dumeQuestion }: AskDumeInput) =>
       this.delegation.delegate({ ...conversation, question: dumeQuestion });
     const tools = [...buildInvestigationTools(this.executors, delegate), ...external].map((tool) =>
@@ -254,6 +256,7 @@ export class InvestigationRunner {
       },
       priorSpend: await this.spend(manifest.name, nowMs - CHAT_BUDGET_WINDOW_MS),
       limits: { ...manifest.limits, maxTurns: CHAT_MAX_TURNS },
+      ...(finalAnswerPrompt === undefined ? {} : { finalAnswer: { prompt: finalAnswerPrompt } }),
     });
   }
 

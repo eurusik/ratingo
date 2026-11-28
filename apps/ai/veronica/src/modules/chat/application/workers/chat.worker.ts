@@ -9,6 +9,8 @@ import {
 import { UnrecoverableError, Worker, type Job } from 'bullmq';
 import type IORedis from 'ioredis';
 
+import type { ClosableExplorerPort } from '@ratingo/ai-ops-tools';
+
 import { NotificationError } from '../../../notify/public';
 import {
   CHAT_JOB_TYPES,
@@ -20,6 +22,7 @@ import {
 import type { IncomingMessage } from '../../domain/entities/incoming-message';
 import type { DumeFollowUp } from '../../domain/entities/dume';
 import { HappyReviewMode, type HappyFollowUp } from '../../domain/entities/happy';
+import { EXPLORER_PORT } from '../../domain/ports/explorer.port';
 import { ChatExchangeRetention } from '../services/chat-exchange-retention.service';
 import { ChatService } from '../services/chat.service';
 import { DumeFollowUpService } from '../services/dume-follow-up.service';
@@ -70,6 +73,7 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
     private readonly dumeFollowUps: DumeFollowUpService,
     private readonly retention: ChatExchangeRetention,
     @Inject(REDIS_CONNECTION) private readonly connection: IORedis,
+    @Inject(EXPLORER_PORT) private readonly explorer: ClosableExplorerPort,
   ) {}
 
   onModuleInit(): void {
@@ -94,8 +98,26 @@ export class ChatWorker implements OnModuleInit, OnApplicationShutdown {
   }
 
   async onApplicationShutdown(): Promise<void> {
-    await this.worker?.close();
-    this.connection.disconnect();
+    const failures: Error[] = [];
+    await this.closeStep('worker', failures, async () => this.worker?.close());
+    await this.closeStep('explorer', failures, async () => this.explorer.close?.());
+    await this.closeStep('redis', failures, async () => this.connection.disconnect());
+    const [first] = failures;
+    if (first !== undefined) throw first;
+  }
+
+  private async closeStep(
+    step: string,
+    failures: Error[],
+    close: () => Promise<unknown>,
+  ): Promise<void> {
+    try {
+      await close();
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Не вдалося закрити ${step} під час зупинки: ${failure.message}`);
+      failures.push(failure);
+    }
   }
 
   async process(job: Pick<Job, 'name' | 'data'>): Promise<string> {

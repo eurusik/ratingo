@@ -80,6 +80,7 @@ interface LoopState {
   model: ModelPort;
   messages: ChatMessage[];
   repairUsed: boolean;
+  repairPending: boolean;
   finalizing: boolean;
   output: string;
   value?: unknown;
@@ -117,6 +118,7 @@ export class AgentLoop {
       model: this.buildModel(request.models),
       messages: [textMessage(MessageRole.USER, request.prompt)],
       repairUsed: false,
+      repairPending: false,
       finalizing: false,
       output: '',
     };
@@ -174,7 +176,7 @@ export class AgentLoop {
     for (;;) {
       this.finalizeBeforeLastChance(run, request, state, deadlineMs);
       const blocked =
-        this.checkLimits(run, request, deadlineMs) ??
+        this.checkLimits(run, request, state, deadlineMs) ??
         this.checkBudgetOrFinalize(run, request, state);
       if (blocked !== undefined) {
         return blocked;
@@ -242,12 +244,15 @@ export class AgentLoop {
   private checkLimits(
     run: Run,
     request: AgentLoopRequest,
+    state: LoopState,
     deadlineMs: number,
   ): LoopStop | undefined {
     if (this.deps.clock.nowMs() >= deadlineMs) {
       return { reason: RunStopReason.TIMEOUT };
     }
-    if (run.turns >= request.limits.maxTurns) {
+    const repairAfterFinalTurn =
+      state.finalizing && state.repairPending && run.turns === request.limits.maxTurns;
+    if (run.turns >= request.limits.maxTurns && !repairAfterFinalTurn) {
       return { reason: RunStopReason.MAX_TURNS };
     }
     return undefined;
@@ -324,6 +329,7 @@ export class AgentLoop {
     deadlineMs: number,
   ): LoopStop | Promise<LoopStop | undefined> | undefined {
     state.messages.push({ role: MessageRole.ASSISTANT, content: response.content });
+    state.repairPending = false;
     switch (response.stopReason) {
       case StopReason.END:
         return this.handleEnd(request, state, response);
@@ -359,6 +365,7 @@ export class AgentLoop {
       return { reason: RunStopReason.INVALID_OUTPUT, detail: outcome.issues };
     }
     state.repairUsed = true;
+    state.repairPending = true;
     state.messages.push(textMessage(MessageRole.USER, buildRepairPrompt(outcome.issues)));
     return undefined;
   }

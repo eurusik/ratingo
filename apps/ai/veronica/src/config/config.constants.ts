@@ -9,6 +9,7 @@ export const CHANGES_CONFIG = Symbol('CHANGES_CONFIG');
 export const HAPPY_CONFIG = Symbol('HAPPY_CONFIG');
 export const DUME_CONFIG = Symbol('DUME_CONFIG');
 export const LOKI_CONFIG = Symbol('LOKI_CONFIG');
+export const EXPLORER_CONFIG = Symbol('EXPLORER_CONFIG');
 export const ANALYTICS_MCP_CONFIG = Symbol('ANALYTICS_MCP_CONFIG');
 
 export interface GrafanaConfig {
@@ -20,6 +21,10 @@ export interface LokiConfig {
   baseUrl?: string;
   user?: string;
   token?: string;
+}
+
+export interface ExplorerConfig {
+  databaseUrl?: string;
 }
 
 export interface AnthropicConfig {
