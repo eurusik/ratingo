@@ -22,10 +22,9 @@ const codeLinkPattern = (repository: string): RegExp =>
 
 const isAllowedOpening = (name: string, attributes: string, codeLink: RegExp | null): boolean => {
   const trimmed = attributes.trim();
+  if (name === 'a') return codeLink !== null && codeLink.test(trimmed);
   return (
-    trimmed === '' ||
-    (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE) ||
-    (name === 'a' && codeLink !== null && codeLink.test(trimmed))
+    trimmed === '' || (name === 'blockquote' && trimmed === TELEGRAM_BLOCKQUOTE_EXPANDABLE)
   );
 };
 

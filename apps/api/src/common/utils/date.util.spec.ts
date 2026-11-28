@@ -19,6 +19,23 @@ const calendarDate = fc
 const dateIn = (timeZone: string, instant: Date): string =>
   new Intl.DateTimeFormat('en-CA', { timeZone, dateStyle: 'short' }).format(instant);
 
+const fixedUtcOffsetZone = (hoursEastOfUtc: number): string => {
+  if (hoursEastOfUtc === 0) return 'Etc/GMT';
+  const posixSign = hoursEastOfUtc > 0 ? '-' : '+';
+  return `Etc/GMT${posixSign}${Math.abs(hoursEastOfUtc)}`;
+};
+
+const zoneWithinElevenHoursOfUtc = fc.oneof(
+  fc.constantFrom(
+    'Europe/Kyiv',
+    'America/New_York',
+    'America/Los_Angeles',
+    'Asia/Tokyo',
+    'Pacific/Pago_Pago',
+  ),
+  fc.integer({ min: -11, max: 11 }).map(fixedUtcOffsetZone),
+);
+
 describe('date.util', () => {
   it('formatUtcDayId formats YYYYMMDD', () => {
     expect(formatUtcDayId(new Date('2025-12-21T19:45:10Z'))).toBe('20251221');
@@ -52,21 +69,21 @@ describe('date.util', () => {
 
     it('stays on the same calendar day in Kyiv and in every zone from UTC-11 to UTC+11', () => {
       fc.assert(
-        fc.property(
-          calendarDate,
-          fc.constantFrom(
-            'Europe/Kyiv',
-            'America/New_York',
-            'America/Los_Angeles',
-            'Asia/Tokyo',
-            'Pacific/Pago_Pago',
-            'Pacific/Noumea',
-          ),
-          (date, timeZone) => {
-            expect(dateIn(timeZone, middayUtcOfCalendarDate(date))).toBe(date);
-          },
-        ),
+        fc.property(calendarDate, zoneWithinElevenHoursOfUtc, (date, timeZone) => {
+          expect(dateIn(timeZone, middayUtcOfCalendarDate(date))).toBe(date);
+        }),
+        {
+          examples: [
+            ['1977-12-04', fixedUtcOffsetZone(11)],
+            ['1977-12-04', fixedUtcOffsetZone(-11)],
+          ],
+        },
       );
+    });
+
+    it('moves to the next day only where the clock runs at UTC+12, as Noumea did on 1977-12-04', () => {
+      expect(dateIn('Pacific/Noumea', middayUtcOfCalendarDate('1977-12-04'))).toBe('1977-12-05');
+      expect(dateIn('Pacific/Noumea', middayUtcOfCalendarDate('1977-12-03'))).toBe('1977-12-03');
     });
 
     it('keeps a value that already carries a time', () => {

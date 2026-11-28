@@ -46,6 +46,10 @@ describe('sanitizeTelegramHtml', () => {
     );
   });
 
+  it('removes a link without an address in any case but keeps its text', () => {
+    expect(sanitizeTelegramHtml('<a>x</a> <A>y</A>')).toBe('x y');
+  });
+
   it('drops attributes other than expandable on a blockquote', () => {
     expect(sanitizeTelegramHtml('<b onclick="x">a</b>')).toBe('a');
     expect(sanitizeTelegramHtml('<blockquote cite="x">a</blockquote>')).toBe('a');
@@ -87,6 +91,7 @@ describe('sanitizeTelegramHtml', () => {
         expect(hasOnlyKeptMarkup(result)).toBe(true);
         expect(result.length).toBeLessThanOrEqual(TELEGRAM_MESSAGE_LIMIT);
       }),
+      { examples: [[['<', 'A>']], [['<a>', 'x', '</a>']]] },
     );
   });
 
