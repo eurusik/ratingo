@@ -109,6 +109,7 @@ export const createRuntimeEvidenceRecorder = (
     ...tool,
     run: async (rawInput, context) => {
       const content = await tool.run(rawInput, context);
+      ledger.noteShownText(content);
       confirmShown(tool, content);
       return content;
     },
