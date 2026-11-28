@@ -8,6 +8,7 @@ import {
   hasAired,
   seasonProgress,
   unwatchedThrough,
+  usePrefetchEpisodeOverview,
   type Episode,
   type Season,
 } from '@/entities/episode';
@@ -107,6 +108,7 @@ function SheetBody({
     open: openEpisode,
     close: closeEpisode,
   } = useOpenedEpisode();
+  const prefetchOverview = usePrefetchEpisodeOverview(show.slug);
   const backToSeason = () => {
     if (openedEpisode && openedEpisode.seasonNumber !== season.number) {
       navigation.select(openedEpisode.seasonNumber);
@@ -215,6 +217,7 @@ function SheetBody({
                   onWatchedChange={toggleEpisode}
                   onPick={isPicking ? togglePickTarget : undefined}
                   onOpen={openEpisode}
+                  onOpenIntent={prefetchOverview}
                 />
               ))}
             </ul>

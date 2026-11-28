@@ -5,12 +5,7 @@ import { Checkbox, ToggleButton } from '@heroui/react';
 import { Check } from 'lucide-react';
 import { cn } from '@ratingo/web-core/lib';
 import { interpolate, useTranslation } from '@/shared/i18n';
-import {
-  EPISODE_KEY_ATTRIBUTE,
-  episodeCode,
-  episodeKey,
-  episodeShortCode,
-} from '../model/episode-code';
+import { episodeCode, episodeKey, episodeShortCode } from '../model/episode-code';
 import { episodeMeta, episodeTitle } from '../model/episode-format';
 import type { Episode } from '../model/season';
 import { NextBadge, TvMazeRating } from './episode-badges';
@@ -25,7 +20,14 @@ interface EpisodeRowProps {
   onWatchedChange?: (episode: Episode, watched: boolean) => void;
   onPick?: (episode: Episode) => void;
   onOpen?: (episode: Episode) => void;
+  onOpenIntent?: (episode: Episode) => void;
 }
+
+export function episodeRowSelector(episode: Pick<Episode, 'seasonNumber' | 'number'>): string {
+  return `[data-episode-key="${episodeKey(episode)}"]`;
+}
+
+type ControlLayout = 'overlay' | 'inline';
 
 type EpisodeState = Required<Pick<EpisodeRowProps, 'episode' | 'isAired' | 'isNext' | 'isWatched'>>;
 
@@ -74,25 +76,33 @@ const CHECKBOX_INDICATOR = "[&_[data-slot='checkbox-default-indicator--checkmark
 const CHECKBOX_CONTROL =
   'size-11 shrink-0 rounded-full border-2 border-muted/40 bg-transparent before:rounded-full in-data-[selected=true]:border-accent';
 
+const CHECKBOX_LAYOUT: Record<ControlLayout, { root: string; content: string }> = {
+  overlay: {
+    root: 'absolute inset-0',
+    content: 'size-full pe-2 transition-colors hover:bg-default/40',
+  },
+  inline: { root: 'relative shrink-0 pe-2', content: 'size-11' },
+};
+
 interface WatchedCheckboxProps {
   label: string;
   isWatched: boolean;
-  isInline: boolean;
+  layout: ControlLayout;
   onWatchedChange: (watched: boolean) => void;
 }
 
-function WatchedCheckbox({ label, isWatched, isInline, onWatchedChange }: WatchedCheckboxProps) {
+function WatchedCheckbox({ label, isWatched, layout, onWatchedChange }: WatchedCheckboxProps) {
   return (
     <Checkbox
       aria-label={label}
       isSelected={isWatched}
       onChange={onWatchedChange}
-      className={cn(isInline ? 'relative shrink-0 pe-2' : 'absolute inset-0', CHECKBOX_INDICATOR)}
+      className={cn(CHECKBOX_LAYOUT[layout].root, CHECKBOX_INDICATOR)}
     >
       <Checkbox.Content
         className={cn(
           'flex cursor-pointer items-center justify-end rounded-2xl select-none',
-          isInline ? 'size-11' : 'size-full pe-2 transition-colors hover:bg-default/40',
+          CHECKBOX_LAYOUT[layout].content,
         )}
       >
         <Checkbox.Control className={CHECKBOX_CONTROL}>
@@ -108,7 +118,7 @@ interface RowControlProps {
   isAired: boolean;
   isWatched: boolean;
   isPicked: boolean;
-  isInline: boolean;
+  layout: ControlLayout;
   onWatchedChange?: (watched: boolean) => void;
   onPick?: () => void;
 }
@@ -118,7 +128,7 @@ function RowControl({
   isAired,
   isWatched,
   isPicked,
-  isInline,
+  layout,
   onWatchedChange,
   onPick,
 }: RowControlProps) {
@@ -144,7 +154,7 @@ function RowControl({
     <WatchedCheckbox
       label={label}
       isWatched={isWatched}
-      isInline={isInline}
+      layout={layout}
       onWatchedChange={onWatchedChange}
     />
   );
@@ -159,12 +169,15 @@ export const EpisodeRow = memo(function EpisodeRow({
   onWatchedChange,
   onPick,
   onOpen,
+  onOpenIntent,
 }: EpisodeRowProps) {
   const { dict } = useTranslation();
   const labelValues = { code: episodeCode(episode, dict), title: episodeTitle(episode, dict) };
   const label = interpolate(dict.episodes.episodeAria, labelValues);
-  const opens = onOpen !== undefined && onPick === undefined;
-  const hasOverlay = onPick !== undefined || (!opens && onWatchedChange !== undefined && isAired);
+  const opensDetail = onOpen !== undefined && onPick === undefined;
+  const hasOverlay =
+    onPick !== undefined || (!opensDetail && onWatchedChange !== undefined && isAired);
+  const showIntent = onOpenIntent ? () => onOpenIntent(episode) : undefined;
   const isDimmed = !isAired || (onPick !== undefined && isWatched);
   const content = (
     <>
@@ -180,19 +193,21 @@ export const EpisodeRow = memo(function EpisodeRow({
 
   return (
     <li
-      {...{ [EPISODE_KEY_ATTRIBUTE]: episodeKey(episode) }}
+      data-episode-key={episodeKey(episode)}
       className={cn(
         'relative -mx-2 rounded-2xl',
-        opens && 'flex items-center',
+        opensDetail && 'flex items-center',
         isDimmed && 'opacity-60',
         isPicked && 'bg-accent-soft',
       )}
     >
-      {opens ? (
+      {opensDetail ? (
         <button
           type="button"
           aria-label={interpolate(dict.episodes.detail.open, labelValues)}
           onClick={() => onOpen(episode)}
+          onPointerEnter={showIntent}
+          onFocus={showIntent}
           className={cn(ROW, 'min-w-0 flex-1 cursor-pointer transition-colors hover:bg-default/40')}
         >
           {content}
@@ -205,7 +220,7 @@ export const EpisodeRow = memo(function EpisodeRow({
         isAired={isAired}
         isWatched={isWatched}
         isPicked={isPicked}
-        isInline={opens}
+        layout={opensDetail ? 'inline' : 'overlay'}
         onWatchedChange={
           onWatchedChange ? (watched) => onWatchedChange(episode, watched) : undefined
         }

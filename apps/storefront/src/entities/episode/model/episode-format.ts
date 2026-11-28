@@ -36,9 +36,18 @@ export function seasonName(season: Season, dict: Dictionary): string {
   return season.name ?? interpolate(dict.episodes.season, { number: season.number });
 }
 
-function upcomingDateLabel(episode: Episode, dict: Dictionary, locale: Locale): string {
+function airDateLabel(episode: Episode, dict: Dictionary, locale: Locale): string {
   const date = episode.airDate ? formatAirDate(locale, episode.airDate) : undefined;
   return date ?? dict.episodes.dateUnknown;
+}
+
+function runtimeLabel(episode: Episode, dict: Dictionary): string | undefined {
+  if (episode.runtimeMinutes === undefined) return undefined;
+  return interpolate(dict.details.runtime.minutes, { minutes: episode.runtimeMinutes });
+}
+
+function joinMeta(parts: readonly (string | undefined)[]): string {
+  return parts.filter(Boolean).join(' · ');
 }
 
 export function episodeMeta(
@@ -47,12 +56,12 @@ export function episodeMeta(
   dict: Dictionary,
   locale: Locale,
 ): string {
-  const date = isAired ? undefined : upcomingDateLabel(episode, dict, locale);
-  const runtime =
-    episode.runtimeMinutes === undefined
-      ? undefined
-      : interpolate(dict.details.runtime.minutes, { minutes: episode.runtimeMinutes });
-  return [date, runtime].filter(Boolean).join(' · ');
+  const date = isAired ? undefined : airDateLabel(episode, dict, locale);
+  return joinMeta([date, runtimeLabel(episode, dict)]);
+}
+
+export function episodeFullMeta(episode: Episode, dict: Dictionary, locale: Locale): string {
+  return joinMeta([airDateLabel(episode, dict, locale), runtimeLabel(episode, dict)]);
 }
 
 export function typicalRuntime(seasons: readonly Season[]): number | undefined {

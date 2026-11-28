@@ -1,8 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogApi, type EpisodeOverview } from '@/shared/api';
 import type { Episode } from './season';
 
 const OVERVIEWS_STALE_MS = 60 * 60 * 1000;
+
+function seasonOverviewsQuery(showSlug: string, seasonNumber: number) {
+  return queryOptions({
+    queryKey: ['catalog', 'season-overviews', showSlug, seasonNumber] as const,
+    queryFn: ({ signal }) => catalogApi.getSeasonOverviews(showSlug, seasonNumber, signal),
+    staleTime: OVERVIEWS_STALE_MS,
+  });
+}
 
 function byEpisodeNumber(overviews: EpisodeOverview[]): ReadonlyMap<number, EpisodeOverview> {
   return new Map(overviews.map((overview) => [overview.number, overview]));
@@ -16,12 +25,20 @@ export interface EpisodeOverviewState {
 
 export function useEpisodeOverview(showSlug: string, episode: Episode): EpisodeOverviewState {
   const { data, isPending, isError } = useQuery({
-    queryKey: ['catalog', 'season-overviews', showSlug, episode.seasonNumber] as const,
-    queryFn: ({ signal }) => catalogApi.getSeasonOverviews(showSlug, episode.seasonNumber, signal),
-    staleTime: OVERVIEWS_STALE_MS,
+    ...seasonOverviewsQuery(showSlug, episode.seasonNumber),
     select: byEpisodeNumber,
   });
   return { overview: data?.get(episode.number), isLoading: isPending, isFailed: isError };
+}
+
+export function usePrefetchEpisodeOverview(showSlug: string): (episode: Episode) => void {
+  const queryClient = useQueryClient();
+  return useCallback(
+    (episode: Episode) => {
+      void queryClient.prefetchQuery(seasonOverviewsQuery(showSlug, episode.seasonNumber));
+    },
+    [queryClient, showSlug],
+  );
 }
 
 function comesAfter(episode: Episode, other: Episode): boolean {

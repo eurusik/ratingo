@@ -19,6 +19,7 @@ interface StillFrameProps {
   size: StillSize;
   isPoster?: boolean;
   isDimmed?: boolean;
+  isPriority?: boolean;
   placeholder?: ReactNode;
   children?: ReactNode;
 }
@@ -28,6 +29,7 @@ export function StillFrame({
   size,
   isPoster = false,
   isDimmed = false,
+  isPriority = false,
   placeholder,
   children,
 }: StillFrameProps) {
@@ -42,7 +44,8 @@ export function StillFrame({
           alt=""
           width={width}
           height={height}
-          loading="lazy"
+          loading={isPriority ? 'eager' : 'lazy'}
+          fetchPriority={isPriority ? 'high' : undefined}
           className={cn('size-full object-cover', isPoster && 'object-[center_20%]')}
         />
       ) : (

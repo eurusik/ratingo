@@ -9,17 +9,17 @@ import {
   NextBadge,
   TvMazeRating,
   episodeCode,
+  episodeFullMeta,
   episodeKey,
   episodeShortCode,
   episodeTitle,
-  formatAirDate,
   hasAired,
   isOverviewSpoiler,
   useEpisodeOverview,
   type Episode,
   type Season,
 } from '@/entities/episode';
-import { interpolate, useTranslation } from '@/shared/i18n';
+import { interpolate, useTranslation, type Dictionary } from '@/shared/i18n';
 import { episodeNeighbours } from '../model/episode-neighbours';
 import type { EpisodesTracker } from '../model/use-episodes-tracker';
 import { EpisodeOverviewBlock } from './episode-overview-block';
@@ -35,18 +35,22 @@ interface EpisodeDetailProps {
   onClose: () => void;
 }
 
+function spoilerHintFor(
+  episode: Episode,
+  tracker: EpisodesTracker,
+  dict: Dictionary,
+): string | undefined {
+  const nextToWatch = tracker.summary.next;
+  if (!nextToWatch || !isOverviewSpoiler(episode, tracker.watched, nextToWatch)) return undefined;
+  return interpolate(dict.episodes.detail.spoilerHint, { code: episodeCode(nextToWatch, dict) });
+}
+
 function EpisodeFacts({ episode }: { episode: Episode }) {
   const { dict, locale } = useTranslation();
-  const date = episode.airDate ? formatAirDate(locale, episode.airDate) : undefined;
-  const runtime =
-    episode.runtimeMinutes === undefined
-      ? undefined
-      : interpolate(dict.details.runtime.minutes, { minutes: episode.runtimeMinutes });
-  const meta = [date ?? dict.episodes.dateUnknown, runtime].filter(Boolean).join(' · ');
 
   return (
     <p className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted tabular-nums">
-      {meta}
+      {episodeFullMeta(episode, dict, locale)}
       {episode.rating !== undefined ? <TvMazeRating rating={episode.rating} /> : null}
     </p>
   );
@@ -134,15 +138,9 @@ export function EpisodeDetail({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const overview = useEpisodeOverview(showSlug, episode);
   const { previous, next } = episodeNeighbours(seasons, episode);
-  const { watched, summary } = tracker;
-  const isWatched = episode.id !== undefined && watched.has(episode.id);
+  const isWatched = episode.id !== undefined && tracker.watched.has(episode.id);
   const canMark = episode.id !== undefined && hasAired(episode, tracker.now);
-  const nextToWatch = summary.next;
-  const spoilerHint = isOverviewSpoiler(episode, watched, nextToWatch)
-    ? interpolate(dict.episodes.detail.spoilerHint, {
-        code: nextToWatch ? episodeCode(nextToWatch, dict) : '',
-      })
-    : undefined;
+  const isNextToWatch = episode.id !== undefined && tracker.summary.next?.id === episode.id;
   const key = episodeKey(episode);
 
   useEffect(() => {
@@ -175,22 +173,26 @@ export function EpisodeDetail({
           <X aria-hidden className="size-5" />
         </Button>
       </div>
-      <EpisodeStill episode={episode} badge={episodeCode(episode, dict)} size="hero" />
+      <EpisodeStill episode={episode} badge={episodeCode(episode, dict)} size="hero" isPriority />
       <div className="flex flex-col gap-1.5">
         <div className="flex min-w-0 items-center gap-2">
           <h2
             ref={headingRef}
             id={headingId}
             tabIndex={-1}
-            className="text-[22px] leading-tight font-extrabold tracking-tight outline-none"
+            className="min-w-0 text-[22px] leading-tight font-extrabold tracking-tight break-words outline-none"
           >
             {episodeTitle(episode, dict)}
           </h2>
-          {summary.next?.id === episode.id ? <NextBadge /> : null}
+          {isNextToWatch ? <NextBadge /> : null}
         </div>
         <EpisodeFacts episode={episode} />
       </div>
-      <EpisodeOverviewBlock key={key} state={overview} spoilerHint={spoilerHint} />
+      <EpisodeOverviewBlock
+        key={key}
+        state={overview}
+        spoilerHint={spoilerHintFor(episode, tracker, dict)}
+      />
       {canMark ? (
         <WatchedToggle
           isWatched={isWatched}

@@ -7,6 +7,7 @@ interface EpisodeStillProps {
   badge: string;
   size: StillSize;
   isDimmed?: boolean;
+  isPriority?: boolean;
   fallbackPosterPath?: string;
 }
 
@@ -21,12 +22,19 @@ export function EpisodeStill({
   badge,
   size,
   isDimmed = false,
+  isPriority = false,
   fallbackPosterPath,
 }: EpisodeStillProps) {
   const { src, isPoster } = stillOrPoster(episode, size, fallbackPosterPath);
 
   return (
-    <StillFrame src={src} size={size} isPoster={isPoster} isDimmed={isDimmed}>
+    <StillFrame
+      src={src}
+      size={size}
+      isPoster={isPoster}
+      isDimmed={isDimmed}
+      isPriority={isPriority}
+    >
       <span className="absolute start-1.5 bottom-1.5 inline-flex h-5 items-center rounded-md bg-black/80 px-1.5 text-xs font-extrabold text-white tabular-nums">
         {badge}
       </span>

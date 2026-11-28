@@ -1,11 +1,7 @@
-export {
-  EPISODE_KEY_ATTRIBUTE,
-  episodeCode,
-  episodeKey,
-  episodeShortCode,
-} from './model/episode-code';
+export { episodeCode, episodeKey, episodeShortCode } from './model/episode-code';
 export {
   countEpisodes,
+  episodeFullMeta,
   episodeMeta,
   episodeTitle,
   formatAirDate,
@@ -39,8 +35,9 @@ export { rememberTrackingState, useTrackingHintsSession } from './model/tracking
 export {
   isOverviewSpoiler,
   useEpisodeOverview,
+  usePrefetchEpisodeOverview,
   type EpisodeOverviewState,
 } from './model/episode-overview';
 export { NextBadge, TvMazeRating } from './ui/episode-badges';
-export { EpisodeRow } from './ui/episode-row';
+export { EpisodeRow, episodeRowSelector } from './ui/episode-row';
 export { EpisodeStill } from './ui/episode-still';

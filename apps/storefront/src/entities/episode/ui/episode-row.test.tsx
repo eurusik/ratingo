@@ -56,6 +56,17 @@ describe('EpisodeRow', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('signals intent to open on hover and focus so the description can load early', () => {
+    const onOpenIntent = jest.fn();
+    renderRow({ onOpen: jest.fn(), onOpenIntent });
+    const open = screen.getByRole('button', { name: /Опис серії/ });
+
+    fireEvent.pointerEnter(open);
+    fireEvent.focus(open);
+    expect(onOpenIntent).toHaveBeenCalledTimes(2);
+    expect(onOpenIntent).toHaveBeenCalledWith(EPISODE);
+  });
+
   it('opens an episode that has not aired, with nothing to mark', () => {
     const onOpen = jest.fn();
     renderRow({ isAired: false, onOpen, onWatchedChange: jest.fn() });

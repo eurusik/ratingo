@@ -2064,6 +2064,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "maxLength": 255,
               "example": "shetland",
               "type": "string"
             }
