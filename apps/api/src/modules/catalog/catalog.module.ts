@@ -58,6 +58,7 @@ import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
 import { PopularMoviesQuery } from './infrastructure/queries/popular-movies.query';
 import { PopularShowsQuery } from './infrastructure/queries/popular-shows.query';
 import { ProvidersQuery } from './infrastructure/queries/providers.query';
+import { SeasonOverviewsQuery } from './infrastructure/queries/season-overviews.query';
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
 import { RecentRatersQuery } from './infrastructure/queries/shared/recent-raters.query';
 import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.query';
@@ -128,6 +129,7 @@ import { CatalogSitemapController } from './presentation/controllers/catalog.sit
     TrendingShowsQuery,
     PopularShowsQuery,
     ShowDetailsQuery,
+    SeasonOverviewsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
     AnticipatedShowsQuery,

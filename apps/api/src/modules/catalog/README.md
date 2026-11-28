@@ -313,14 +313,15 @@ import {
 
 ### Shows
 
-| Method | Path                          | Description                                  |
-| ------ | ----------------------------- | -------------------------------------------- |
-| `GET`  | `/catalog/shows/trending`     | Trending shows                               |
-| `GET`  | `/catalog/shows/popular`      | Popular shows (classics)                     |
-| `GET`  | `/catalog/shows/new-episodes` | Shows with recent episodes (`days`, `limit`) |
-| `GET`  | `/catalog/shows/anticipated`  | Trakt-anticipated premieres ahead, by date   |
-| `GET`  | `/catalog/shows/calendar`     | Episode calendar (`startDate`, `days`)       |
-| `GET`  | `/catalog/shows/:slug`        | Full show details with seasons               |
+| Method | Path                                                   | Description                                                                                                                                       |
+| ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/catalog/shows/trending`                              | Trending shows                                                                                                                                    |
+| `GET`  | `/catalog/shows/popular`                               | Popular shows (classics)                                                                                                                          |
+| `GET`  | `/catalog/shows/new-episodes`                          | Shows with recent episodes (`days`, `limit`)                                                                                                      |
+| `GET`  | `/catalog/shows/anticipated`                           | Trakt-anticipated premieres ahead, by date                                                                                                        |
+| `GET`  | `/catalog/shows/calendar`                              | Episode calendar (`startDate`, `days`)                                                                                                            |
+| `GET`  | `/catalog/shows/:slug`                                 | Full show details with seasons                                                                                                                    |
+| `GET`  | `/catalog/shows/:slug/seasons/:seasonNumber/overviews` | Episode overviews of one season, each with `isUkrainian`; loaded when a viewer opens an episode, kept out of show details so the page stays small |
 
 ### Release calendar
 

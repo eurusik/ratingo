@@ -13,6 +13,7 @@ import {
   type AnticipatedShowsQueryOptions,
   type CalendarEpisode,
   type CalendarEpisodesOptions,
+  type EpisodeOverview,
   type IShowRepository,
   type NewEpisodeItem,
   type ShowDetails,
@@ -32,6 +33,7 @@ import { AnticipatedShowsQuery } from '../queries/anticipated-shows.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 import { NewEpisodesQuery } from '../queries/new-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
+import { SeasonOverviewsQuery } from '../queries/season-overviews.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { toDrizzleTx, type DrizzleTransaction } from '../utils/drizzle-transaction';
@@ -71,6 +73,7 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
     private readonly newEpisodesQuery: NewEpisodesQuery,
     private readonly anticipatedShowsQuery: AnticipatedShowsQuery,
+    private readonly seasonOverviewsQuery: SeasonOverviewsQuery,
   ) {}
 
   /**
@@ -331,6 +334,10 @@ export class DrizzleShowRepository implements IShowRepository {
    */
   async findBySlug(slug: string): Promise<ShowDetails | null> {
     return this.showDetailsQuery.execute(slug);
+  }
+
+  findSeasonOverviews(slug: string, seasonNumber: number): Promise<EpisodeOverview[]> {
+    return this.seasonOverviewsQuery.execute(slug, seasonNumber);
   }
 
   /**

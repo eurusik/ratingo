@@ -2054,6 +2054,98 @@
         ]
       }
     },
+    "/api/catalog/shows/{slug}/seasons/{seasonNumber}/overviews": {
+      "get": {
+        "description": "Returns the stored overview of each episode in the season, loaded when a viewer opens an episode.",
+        "operationId": "CatalogShowsController_getSeasonOverviews",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "shetland",
+              "type": "string"
+            }
+          },
+          {
+            "name": "seasonNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "minimum": 0,
+              "maximum": 500,
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EpisodeOverviewDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get episode overviews of one season",
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/shows/{slug}/sync": {
       "post": {
         "description": "Queues a full metadata re-sync from TMDB/TVMaze. Rate-limited to once per 7 days per show globally; 5 requests per minute per user.",
@@ -16356,6 +16448,29 @@
           "ingestionStatus",
           "showId",
           "seasons"
+        ]
+      },
+      "EpisodeOverviewDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "example": 3
+          },
+          "overview": {
+            "type": "string",
+            "example": "Шторм відрізає острів від материка."
+          },
+          "isUkrainian": {
+            "type": "boolean",
+            "example": true,
+            "description": "False when only a non-Ukrainian overview is stored"
+          }
+        },
+        "required": [
+          "number",
+          "overview",
+          "isUkrainian"
         ]
       },
       "SyncRequestResponseDto": {

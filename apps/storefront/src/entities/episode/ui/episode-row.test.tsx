@@ -42,6 +42,36 @@ describe('EpisodeRow', () => {
     expect(onWatchedChange).toHaveBeenCalledWith(EPISODE, false);
   });
 
+  it('opens the episode from its title and keeps the checkbox for marking it', () => {
+    const onOpen = jest.fn();
+    const onWatchedChange = jest.fn();
+    renderRow({ onOpen, onWatchedChange });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опис серії С1 · Е3: Reckoning' }));
+    expect(onOpen).toHaveBeenCalledWith(EPISODE);
+    expect(onWatchedChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'С1 · Е3: Reckoning' }));
+    expect(onWatchedChange).toHaveBeenCalledWith(EPISODE, true);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens an episode that has not aired, with nothing to mark', () => {
+    const onOpen = jest.fn();
+    renderRow({ isAired: false, onOpen, onWatchedChange: jest.fn() });
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Опис серії/ }));
+    expect(onOpen).toHaveBeenCalledWith(EPISODE);
+  });
+
+  it('picks instead of opening while choosing where the viewer stopped', () => {
+    const onOpen = jest.fn();
+    renderRow({ onOpen, onPick: jest.fn() });
+
+    expect(screen.queryByRole('button', { name: /Опис серії/ })).not.toBeInTheDocument();
+  });
+
   it('offers no toggle for an episode that has not aired', () => {
     renderRow({ isAired: false, onWatchedChange: jest.fn() });
 

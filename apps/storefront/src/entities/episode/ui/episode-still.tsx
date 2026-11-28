@@ -10,8 +10,8 @@ interface EpisodeStillProps {
   fallbackPosterPath?: string;
 }
 
-function stillOrPoster(episode: Episode, fallbackPosterPath: string | undefined) {
-  const still = tmdbStillUrl(episode.stillPath);
+function stillOrPoster(episode: Episode, size: StillSize, fallbackPosterPath: string | undefined) {
+  const still = tmdbStillUrl(episode.stillPath, size === 'hero' ? 'w780' : 'w300');
   if (still) return { src: still, isPoster: false };
   return { src: tmdbPosterUrl(fallbackPosterPath, 'w342'), isPoster: true };
 }
@@ -23,7 +23,7 @@ export function EpisodeStill({
   isDimmed = false,
   fallbackPosterPath,
 }: EpisodeStillProps) {
-  const { src, isPoster } = stillOrPoster(episode, fallbackPosterPath);
+  const { src, isPoster } = stillOrPoster(episode, size, fallbackPosterPath);
 
   return (
     <StillFrame src={src} size={size} isPoster={isPoster} isDimmed={isDimmed}>

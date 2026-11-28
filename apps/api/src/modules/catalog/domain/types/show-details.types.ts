@@ -14,3 +14,9 @@ export interface EnrichedShowDetails extends ShowDetails {
   verdict: ShowVerdict;
   statusHint: ShowStatusHint | null;
 }
+
+export interface EpisodeOverviewText {
+  number: number;
+  overview: string;
+  isUkrainian: boolean;
+}

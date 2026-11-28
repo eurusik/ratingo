@@ -11,6 +11,7 @@ export {
   type CatalogCache,
   type CatalogListQuery,
   type CatalogPage,
+  type EpisodeOverview,
   type MovieListPath,
   type ShowListPath,
   type HomeItem,

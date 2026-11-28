@@ -9,6 +9,7 @@ import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 import { AnticipatedShowsQuery } from '../queries/anticipated-shows.query';
 import { NewEpisodesQuery } from '../queries/new-episodes.query';
+import { SeasonOverviewsQuery } from '../queries/season-overviews.query';
 
 // Chainable thenable mock
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
@@ -50,6 +51,7 @@ describe('DrizzleShowRepository', () => {
   let calendarQuery: any;
   let newEpisodesQuery: any;
   let anticipatedShowsQuery: { execute: jest.Mock };
+  let seasonOverviewsQuery: { execute: jest.Mock };
   let insertChain: any;
   let updateChain: any;
   let selectChain: any;
@@ -71,6 +73,7 @@ describe('DrizzleShowRepository', () => {
     calendarQuery = { execute: jest.fn().mockResolvedValue(['calendar']) };
     newEpisodesQuery = { execute: jest.fn().mockResolvedValue([]) };
     anticipatedShowsQuery = { execute: jest.fn() };
+    seasonOverviewsQuery = { execute: jest.fn().mockResolvedValue([]) };
 
     return Test.createTestingModule({
       providers: [
@@ -82,6 +85,7 @@ describe('DrizzleShowRepository', () => {
         { provide: CalendarEpisodesQuery, useValue: calendarQuery },
         { provide: NewEpisodesQuery, useValue: newEpisodesQuery },
         { provide: AnticipatedShowsQuery, useValue: anticipatedShowsQuery },
+        { provide: SeasonOverviewsQuery, useValue: seasonOverviewsQuery },
       ],
     }).compile();
   };
@@ -466,6 +470,14 @@ describe('DrizzleShowRepository', () => {
       const res = await repository.findBySlug('slug');
       expect(res).toEqual('details');
       expect(detailsQuery.execute).toHaveBeenCalledWith('slug');
+    });
+
+    it('findSeasonOverviews delegates to seasonOverviewsQuery', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleShowRepository);
+
+      await repository.findSeasonOverviews('slug', 2);
+      expect(seasonOverviewsQuery.execute).toHaveBeenCalledWith('slug', 2);
     });
 
     it('findTrending delegates to trendingShowsQuery', async () => {

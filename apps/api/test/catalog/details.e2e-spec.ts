@@ -38,6 +38,28 @@ describe('Catalog E2E - Details (movies/shows)', () => {
     await ctx.get('/api/catalog/shows/unknown').expect(404);
   });
 
+  it('season overviews: marks Ukrainian text, drops empty ones, validates the season', async () => {
+    ctx.showsRepo.seasonOverviews.set('show-one:1', [
+      { number: 1, overview: '  Шторм відрізає острів від материка.  ' },
+      { number: 2, overview: 'The ferry never arrives.' },
+      { number: 3, overview: null },
+      { number: 4, overview: '   ' },
+    ]);
+
+    const res = await ctx.get('/api/catalog/shows/show-one/seasons/1/overviews').expect(200);
+
+    expect(res.body.data).toEqual([
+      { number: 1, overview: 'Шторм відрізає острів від материка.', isUkrainian: true },
+      { number: 2, overview: 'The ferry never arrives.', isUkrainian: false },
+    ]);
+    await ctx.get('/api/catalog/shows/show-one/seasons/2/overviews').expect(200, {
+      success: true,
+      data: [],
+    });
+    await ctx.get('/api/catalog/shows/show-one/seasons/-1/overviews').expect(400);
+    await ctx.get('/api/catalog/shows/show-one/seasons/abc/overviews').expect(400);
+  });
+
   describe('show verdict + statusHint', () => {
     it('should return verdict for good show with statusHint', async () => {
       const res = await ctx.get('/api/catalog/shows/show-one').expect(200);

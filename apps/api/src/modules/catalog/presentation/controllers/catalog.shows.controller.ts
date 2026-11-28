@@ -49,7 +49,8 @@ import {
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesQueryDto } from '../dtos/new-episodes-query.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
-import { ShowResponseDto } from '../dtos/show-response.dto';
+import { SeasonOverviewsParamsDto } from '../dtos/season-overviews-params.dto';
+import { EpisodeOverviewDto, ShowResponseDto } from '../dtos/show-response.dto';
 import { SyncRequestResponseDto } from '../dtos/sync-request-response.dto';
 import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
@@ -241,6 +242,17 @@ export class CatalogShowsController {
   @ApiOkResponse({ type: ShowResponseDto })
   async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
     return this.showDetailsService.getBySlug(slug, user?.id);
+  }
+
+  @Get(':slug/seasons/:seasonNumber/overviews')
+  @ApiOperation({
+    summary: 'Get episode overviews of one season',
+    description:
+      'Returns the stored overview of each episode in the season, loaded when a viewer opens an episode.',
+  })
+  @ApiOkResponse({ type: [EpisodeOverviewDto] })
+  async getSeasonOverviews(@Param() params: SeasonOverviewsParamsDto) {
+    return this.showDetailsService.getSeasonOverviews(params.slug, params.seasonNumber);
   }
 
   @Post(':slug/sync')

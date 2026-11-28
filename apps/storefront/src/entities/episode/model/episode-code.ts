@@ -10,6 +10,12 @@ export function episodeCode(episode: EpisodeNumbers, dict: Dictionary): string {
   });
 }
 
+export const EPISODE_KEY_ATTRIBUTE = 'data-episode-key';
+
+export function episodeKey(episode: EpisodeNumbers): string {
+  return `${episode.seasonNumber}-${episode.number}`;
+}
+
 export function episodeShortCode(episode: EpisodeNumbers, dict: Dictionary): string {
   return interpolate(dict.episodes.episodeShort, { episode: episode.number });
 }

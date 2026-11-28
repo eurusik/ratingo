@@ -5,6 +5,7 @@ import { ReturningImage } from '../returning-image/returning-image';
 const STILL_SIZES = {
   row: { width: 112, height: 63, className: 'h-[63px] w-28' },
   card: { width: 88, height: 52, className: 'h-13 w-22' },
+  hero: { width: 780, height: 439, className: 'aspect-video w-full rounded-[14px]' },
 } as const;
 
 export type StillSize = keyof typeof STILL_SIZES;
