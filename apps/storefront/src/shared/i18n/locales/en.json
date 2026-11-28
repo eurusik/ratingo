@@ -942,6 +942,18 @@
       "undo": "Undo",
       "failed": "Couldn't save your progress. Try again.",
       "allReset": "All progress reset"
+    },
+    "detail": {
+      "open": "About episode {code}: {title}",
+      "markWatched": "Mark as watched",
+      "watched": "Watched",
+      "neighbours": "Nearby episodes",
+      "previous": "Previous episode, {code}: {title}",
+      "next": "Next episode, {code}: {title}",
+      "notUkrainian": "No Ukrainian description yet, showing the English one",
+      "spoiler": "Spoiler · show",
+      "spoilerHint": "You haven't watched {code} yet, so the description is hidden",
+      "loadFailed": "Couldn't load the description, try again later"
     }
   },
   "reviews": {

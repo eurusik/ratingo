@@ -284,6 +284,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/shows/{slug}/seasons/{seasonNumber}/overviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get episode overviews of one season
+         * @description Returns the stored overview of each episode in the season, loaded when a viewer opens an episode.
+         */
+        get: operations["CatalogShowsController_getSeasonOverviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/shows/{slug}/sync": {
         parameters: {
             query?: never;
@@ -3544,6 +3564,17 @@ export interface components {
             verdict?: components["schemas"]["ShowVerdictDto"] | null;
             /** @description Status hint - explains "why now?" (secondary, optional) */
             statusHint?: components["schemas"]["ShowStatusHintDto"] | null;
+        };
+        EpisodeOverviewDto: {
+            /** @example 3 */
+            number: number;
+            /** @example Шторм відрізає острів від материка. */
+            overview: string;
+            /**
+             * @description False when only a non-Ukrainian overview is stored
+             * @example true
+             */
+            isUkrainian: boolean;
         };
         SyncRequestResponseDto: {
             /** @description Whether a sync job was queued */
@@ -7372,6 +7403,59 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["ShowResponseDto"];
+                    };
+                };
+            };
+            /** @description Validation failed or malformed input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CatalogShowsController_getSeasonOverviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                seasonNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["EpisodeOverviewDto"][];
                     };
                 };
             };

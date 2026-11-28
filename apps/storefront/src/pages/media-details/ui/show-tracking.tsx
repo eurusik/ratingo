@@ -256,7 +256,13 @@ interface TrackedShow {
 }
 
 function EpisodeTracking({ media, showId, seasons }: TrackedShow) {
-  const show = { showId, mediaItemId: media.mediaItemId, seasons, title: media.title };
+  const show = {
+    showId,
+    mediaItemId: media.mediaItemId,
+    slug: media.slug,
+    seasons,
+    title: media.title,
+  };
   const tracker = useEpisodesTracker(show);
   useRememberTracking(media.slug, seasons, tracker);
   const { dialog, open, setOpen, setPicking } = useEpisodesDialog({

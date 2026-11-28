@@ -2,36 +2,11 @@
 
 import { useEffect, useId, useState } from 'react';
 import { Button } from '@heroui/react';
-import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { useIsClamped } from '@/shared/lib';
+import { SpoilerCover } from '@/shared/ui';
 
 const CHARS_THAT_USUALLY_OVERFLOW_CLAMP = 160;
-
-function SpoilerCover({ text, onReveal }: { text: string; onReveal: () => void }) {
-  const { dict } = useTranslation();
-
-  return (
-    <div className="relative min-h-19 overflow-hidden rounded-2xl bg-default">
-      <p
-        aria-hidden
-        className="pointer-events-none absolute inset-x-3 inset-y-2.5 line-clamp-3 text-[15px] leading-normal break-words blur-sm select-none"
-      >
-        {text}
-      </p>
-      <div className="relative flex min-h-19 items-center justify-center">
-        <Button
-          variant="tertiary"
-          onPress={onReveal}
-          className="min-h-tap rounded-full bg-background/85 px-4 font-bold"
-        >
-          <TriangleAlert aria-hidden className="size-4 text-warning" />
-          {dict.reviews.card.spoiler}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function ClampedText({ text, takesFocus }: { text: string; takesFocus: boolean }) {
   const { dict } = useTranslation();
@@ -75,7 +50,16 @@ function ClampedText({ text, takesFocus }: { text: string; takesFocus: boolean }
 }
 
 export function ReviewBody({ text, hasSpoiler }: { text: string; hasSpoiler: boolean }) {
+  const { dict } = useTranslation();
   const [isRevealed, setIsRevealed] = useState(!hasSpoiler);
-  if (!isRevealed) return <SpoilerCover text={text} onReveal={() => setIsRevealed(true)} />;
+  if (!isRevealed) {
+    return (
+      <SpoilerCover
+        text={text}
+        revealLabel={dict.reviews.card.spoiler}
+        onReveal={() => setIsRevealed(true)}
+      />
+    );
+  }
   return <ClampedText text={text} takesFocus={hasSpoiler} />;
 }

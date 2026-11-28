@@ -7,11 +7,15 @@ import {
   SHOW_REPOSITORY,
   type ShowDetails,
 } from '@/modules/catalog/domain/repositories/show.repository.interface';
-import type { EnrichedShowDetails } from '@/modules/catalog/domain/types/show-details.types';
+import type {
+  EnrichedShowDetails,
+  EpisodeOverviewText,
+} from '@/modules/catalog/domain/types/show-details.types';
 import { CARD_LIST_CONTEXT } from '@/modules/shared/cards';
 import { isHitQuality } from '@/modules/shared/cards';
 import { buildCardMeta, extractContinuePoint } from '@/modules/shared/cards';
 import { CLOCK_PORT, type IClockPort } from '@/modules/shared/clock';
+import { pickUkrainianText } from '@/modules/shared/episode-text';
 import { computeShowVerdict } from '@/modules/shared/verdict';
 import { mapBadgeToPopularitySignal } from '@/modules/shared/verdict';
 
@@ -57,6 +61,15 @@ export class ShowDetailsService {
       verdict,
       statusHint,
     };
+  }
+
+  async getSeasonOverviews(slug: string, seasonNumber: number): Promise<EpisodeOverviewText[]> {
+    const episodes = await this.showRepository.findSeasonOverviews(slug, seasonNumber);
+    return episodes.flatMap(({ number, overview }) => {
+      const text = overview?.trim();
+      if (!text) return [];
+      return [{ number, overview: text, isUkrainian: pickUkrainianText(text) !== null }];
+    });
   }
 
   private buildCard(

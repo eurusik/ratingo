@@ -19,6 +19,7 @@ export type AnticipatedShow = components['schemas']['AnticipatedShowDto'];
 export type MovieDetails = components['schemas']['MovieResponseDto'];
 export type ShowDetails = components['schemas']['ShowResponseDto'];
 export type ShowSeason = components['schemas']['SeasonDto'];
+export type EpisodeOverview = components['schemas']['EpisodeOverviewDto'];
 export type MediaBadge = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 type PageMeta = components['schemas']['OffsetPaginationMetaDto'];
 
@@ -156,6 +157,17 @@ export const catalogApi = {
 
   getShowBySlug(slug: string, cache?: CatalogCache): Promise<ShowDetails> {
     return apiGet<ShowDetails>(`catalog/shows/${encodeURIComponent(slug)}`, cacheOptions(cache));
+  },
+
+  getSeasonOverviews(
+    slug: string,
+    seasonNumber: number,
+    signal?: AbortSignal,
+  ): Promise<EpisodeOverview[]> {
+    return apiGet<EpisodeOverview[]>(
+      `catalog/shows/${encodeURIComponent(slug)}/seasons/${seasonNumber}/overviews`,
+      { signal },
+    );
   },
 
   getHomeHero(cache?: CatalogCache): Promise<HomeItem[]> {

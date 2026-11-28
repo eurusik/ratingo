@@ -16,6 +16,7 @@ import {
   TrendingShowsOptions,
   CalendarEpisode,
   CalendarEpisodesOptions,
+  EpisodeOverview,
   NewEpisodeItem,
 } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { SHOW_ONE_ID, daysAgo, moviesFixture, showsFixture } from './_fixtures';
@@ -374,5 +375,11 @@ export class FakeShowRepository implements IShowRepository {
       tmdbId: item.tmdbId ?? 0,
       lastSyncedAt: null,
     };
+  }
+
+  seasonOverviews = new Map<string, EpisodeOverview[]>();
+
+  async findSeasonOverviews(slug: string, seasonNumber: number): Promise<EpisodeOverview[]> {
+    return this.seasonOverviews.get(`${slug}:${seasonNumber}`) ?? [];
   }
 }

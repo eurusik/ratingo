@@ -24,10 +24,15 @@ export function tmdbPosterUrl(
   return `${TMDB_IMAGE_BASE_URL}/${width}${path}`;
 }
 
-export function tmdbStillUrl(path: string | null | undefined): string | undefined {
+export type TmdbStillWidth = 'w300' | 'w780';
+
+export function tmdbStillUrl(
+  path: string | null | undefined,
+  width: TmdbStillWidth = 'w300',
+): string | undefined {
   if (!path) return undefined;
   if (ABSOLUTE_URL.test(path)) return absoluteImageUrl(path);
-  return `${TMDB_IMAGE_BASE_URL}/w300${path}`;
+  return `${TMDB_IMAGE_BASE_URL}/${width}${path}`;
 }
 
 export function tmdbPosterSrcSet(

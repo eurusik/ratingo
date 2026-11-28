@@ -159,6 +159,11 @@ interface EpisodeInfo {
   voteAverage: number | null;
 }
 
+export interface EpisodeOverview {
+  number: number;
+  overview: string | null;
+}
+
 /**
  * Season info for show details.
  */
@@ -294,6 +299,8 @@ export interface IShowRepository {
    * Use this instead of findBySlug when full details are not needed.
    */
   findIdentityBySlug(slug: string): Promise<ShowIdentity | null>;
+
+  findSeasonOverviews(slug: string, seasonNumber: number): Promise<EpisodeOverview[]>;
 }
 
 /**

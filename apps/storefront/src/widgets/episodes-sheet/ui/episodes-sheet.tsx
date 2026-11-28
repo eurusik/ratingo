@@ -8,6 +8,7 @@ import {
   hasAired,
   seasonProgress,
   unwatchedThrough,
+  usePrefetchEpisodeOverview,
   type Episode,
   type Season,
 } from '@/entities/episode';
@@ -16,6 +17,8 @@ import { ResponsiveDialog } from '@/shared/ui';
 import { useSeasonNavigation, type SlideDirection } from '../model/season-navigation';
 import type { EpisodesShow, EpisodesTracker } from '../model/use-episodes-tracker';
 import { isSeasonComplete } from '../model/season-status';
+import { useOpenedEpisode } from '../model/use-opened-episode';
+import { EpisodeDetail } from './episode-detail';
 import { PickBanner } from './pick-banner';
 import { SeasonSummary } from './season-summary';
 import { SheetFooter } from './sheet-footer';
@@ -23,7 +26,7 @@ import { SheetHeading, type MenuAction } from './sheet-heading';
 import { SeasonTiles } from './season-tiles';
 
 export interface EpisodesSheetProps {
-  show: EpisodesShow & { title: string };
+  show: EpisodesShow & { title: string; slug: string };
   tracker: EpisodesTracker;
   isOpen: boolean;
   isPicking: boolean;
@@ -99,6 +102,20 @@ function SheetBody({
     if (direction && topRef.current) revealInScroller(topRef.current);
   }, [season.number, direction]);
 
+  const {
+    episode: openedEpisode,
+    listRef: episodeListRef,
+    open: openEpisode,
+    close: closeEpisode,
+  } = useOpenedEpisode();
+  const prefetchOverview = usePrefetchEpisodeOverview(show.slug);
+  const backToSeason = () => {
+    if (openedEpisode && openedEpisode.seasonNumber !== season.number) {
+      navigation.select(openedEpisode.seasonNumber);
+    }
+    closeEpisode();
+  };
+
   const picked = new Set(
     isPicking && pickTarget
       ? unwatchedThrough(show.seasons, pickTarget, tracker.watched, tracker.now)
@@ -135,6 +152,20 @@ function SheetBody({
     setPicking(false);
   };
 
+  if (openedEpisode && !isPicking) {
+    return (
+      <EpisodeDetail
+        showSlug={show.slug}
+        seasons={show.seasons}
+        episode={openedEpisode}
+        tracker={tracker}
+        onOpen={openEpisode}
+        onBack={backToSeason}
+        onClose={onClose}
+      />
+    );
+  }
+
   return (
     <>
       {isPicking ? (
@@ -167,6 +198,7 @@ function SheetBody({
               onMarkSeason={() => tracker.markSeason(season)}
             />
             <ul
+              ref={episodeListRef}
               aria-label={interpolate(dict.episodes.season, { number: season.number })}
               className="flex flex-col gap-1.5 pb-[calc(6rem+var(--safe-bottom))]"
             >
@@ -184,6 +216,8 @@ function SheetBody({
                   isPicked={episode.id !== undefined && picked.has(episode.id)}
                   onWatchedChange={toggleEpisode}
                   onPick={isPicking ? togglePickTarget : undefined}
+                  onOpen={openEpisode}
+                  onOpenIntent={prefetchOverview}
                 />
               ))}
             </ul>

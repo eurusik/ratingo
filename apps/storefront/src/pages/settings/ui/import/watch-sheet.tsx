@@ -86,7 +86,7 @@ function OpenSheet(props: WatchSheetProps & { episodes: ShowEpisodes }) {
 
   return (
     <EpisodesSheet
-      show={{ ...episodes, mediaItemId: show.mediaItemId, title: show.title }}
+      show={{ ...episodes, mediaItemId: show.mediaItemId, slug: show.slug, title: show.title }}
       tracker={tracker}
       isOpen
       isPicking

@@ -35,6 +35,17 @@ export class EpisodeDto {
   voteAverage: number | null;
 }
 
+export class EpisodeOverviewDto {
+  @ApiProperty({ example: 3 })
+  number: number;
+
+  @ApiProperty({ example: 'Шторм відрізає острів від материка.' })
+  overview: string;
+
+  @ApiProperty({ example: true, description: 'False when only a non-Ukrainian overview is stored' })
+  isUkrainian: boolean;
+}
+
 export class SeasonDto {
   @ApiProperty({ example: 1 })
   number: number;
