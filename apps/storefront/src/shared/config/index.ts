@@ -11,7 +11,7 @@ export {
   buildRevision,
 } from './env';
 export { BRAND_NAME, BRAND_TAGLINE } from './brand';
-export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY } from './breakpoints';
+export { DESKTOP_MEDIA_QUERY, PHONE_MEDIA_QUERY, WIDE_DESKTOP_MEDIA_QUERY } from './breakpoints';
 export {
   IMAGE_HOST_ORIGIN,
   tmdbPosterSrcSet,

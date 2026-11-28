@@ -25,7 +25,10 @@ import type { EpisodesTracker } from '../model/use-episodes-tracker';
 import { EpisodeOverviewBlock } from './episode-overview-block';
 import { NoticeBar } from './notice-bar';
 
+type DetailLayout = 'page' | 'pane';
+
 interface EpisodeDetailProps {
+  layout?: DetailLayout;
   showSlug: string;
   seasons: Season[];
   episode: Episode;
@@ -123,6 +126,58 @@ function NeighbourLink({ episode, direction, onOpen }: NeighbourLinkProps) {
   );
 }
 
+interface DetailHeaderProps {
+  episode: Episode;
+  layout: DetailLayout;
+  onBack: () => void;
+  onClose: () => void;
+}
+
+function DetailHeader({ episode, layout, onBack, onClose }: DetailHeaderProps) {
+  const { dict } = useTranslation();
+
+  if (layout === 'pane') {
+    return (
+      <div className="flex items-center justify-between gap-2.5">
+        <span className="text-sm font-semibold text-muted tabular-nums">
+          {episodeCode(episode, dict)}
+        </span>
+        <Button
+          isIconOnly
+          variant="tertiary"
+          aria-label={dict.episodes.detail.close}
+          onPress={onBack}
+          className="size-11 rounded-full"
+        >
+          <X aria-hidden className="size-5" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2.5">
+      <Button
+        variant="tertiary"
+        onPress={onBack}
+        className="h-11 gap-1 rounded-full ps-2.5 pe-4 font-semibold text-foreground"
+      >
+        <ChevronLeft aria-hidden className="size-5 text-muted" />
+        {interpolate(dict.episodes.season, { number: episode.seasonNumber })}
+      </Button>
+      <Button
+        isIconOnly
+        variant="tertiary"
+        aria-label={dict.common.close}
+        onPress={onClose}
+        className="size-11 rounded-full"
+      >
+        <X aria-hidden className="size-5" />
+      </Button>
+    </div>
+  );
+}
+
 export function EpisodeDetail({
   showSlug,
   seasons,
@@ -131,6 +186,7 @@ export function EpisodeDetail({
   onOpen,
   onBack,
   onClose,
+  layout = 'page',
 }: EpisodeDetailProps) {
   const { dict } = useTranslation();
   const headingId = useId();
@@ -144,9 +200,9 @@ export function EpisodeDetail({
   const key = episodeKey(episode);
 
   useEffect(() => {
-    sectionRef.current?.scrollIntoView({ block: 'nearest' });
+    if (layout === 'page') sectionRef.current?.scrollIntoView({ block: 'nearest' });
     headingRef.current?.focus({ preventScroll: true });
-  }, [key]);
+  }, [key, layout]);
 
   return (
     <section
@@ -154,25 +210,7 @@ export function EpisodeDetail({
       aria-labelledby={headingId}
       className="flex flex-col gap-4 pb-[calc(1.5rem+var(--safe-bottom))]"
     >
-      <div className="flex items-center justify-between gap-2.5">
-        <Button
-          variant="tertiary"
-          onPress={onBack}
-          className="h-11 gap-1 rounded-full ps-2.5 pe-4 font-semibold text-foreground"
-        >
-          <ChevronLeft aria-hidden className="size-5 text-muted" />
-          {interpolate(dict.episodes.season, { number: episode.seasonNumber })}
-        </Button>
-        <Button
-          isIconOnly
-          variant="tertiary"
-          aria-label={dict.common.close}
-          onPress={onClose}
-          className="size-11 rounded-full"
-        >
-          <X aria-hidden className="size-5" />
-        </Button>
-      </div>
+      <DetailHeader episode={episode} layout={layout} onBack={onBack} onClose={onClose} />
       <EpisodeStill episode={episode} badge={episodeCode(episode, dict)} size="hero" isPriority />
       <div className="flex flex-col gap-1.5">
         <div className="flex min-w-0 items-center gap-2">

@@ -953,7 +953,23 @@
       "notUkrainian": "No Ukrainian description yet, showing the English one",
       "spoiler": "Spoiler · show",
       "spoilerHint": "You haven't watched {code} yet, so the description is hidden",
-      "loadFailed": "Couldn't load the description, try again later"
+      "loadFailed": "Couldn't load the description, try again later",
+      "close": "Close description",
+      "describe": "About",
+      "menuHint": "Press and hold or right-click to open the episode menu",
+      "menu": {
+        "label": "Episode {code}: {title}",
+        "open": "About this episode",
+        "markOnly": "Mark only this one",
+        "markThrough": "Mark all up to this one",
+        "markThroughCount": "{from}–{to}, {episodes}",
+        "unmark": "Unmark"
+      },
+      "hint": {
+        "touch": "Tap an episode to mark it. For the description, tap ⓘ on the still or press and hold.",
+        "pointer": "Click an episode to mark it. For the description, click the still or right-click.",
+        "dismiss": "Got it"
+      }
     }
   },
   "reviews": {
